@@ -1846,7 +1846,7 @@ function lgSyncFromSheets() {
     })
     .catch(err => console.log('LG Sheets read error:', err));
 }
-let lgActivePage = 'dashboard';
+let lgActivePage = 'rodzina';
 let lgOpenGoals = {};
 let editOpenGoal = null;
 let editActiveArea = null;
@@ -2195,49 +2195,14 @@ function lgSaveEdit() {
 
 function lgRender() {
   const data = getLGData();
-  const pages = [{id:'dashboard', emoji:'🏠', name:'Dziś'}, ...data];
+  const pages = [...data];
   document.getElementById('lgNav').innerHTML = pages.map((p,i) => {
     const isPriority = p.id !== 'dashboard' && LG_PRIORITY_IDS.includes(p.id);
     const label = p.id === 'dashboard' ? 'Dziś' : p.name.split(' ')[0];
     return `<button class="lg-nav-btn ${isPriority?'priority':''} ${p.id===lgActivePage?'active':''}" onclick="lgSwitchPage('${p.id}')">${p.emoji} ${label}</button>`;
   }).join('');
 
-  let html = `<div class="lg-page ${lgActivePage==='dashboard'?'active':''}" id="lgpage-dashboard">
-    <div class="dash">
-      <div class="focus-section-title">🎯 Priorytety</div>
-      ${data.filter(a=>LG_PRIORITY_IDS.includes(a.id)).map(a => {
-        const next = lgGetNextStep(a);
-        if (!next) return `<div class="dash-all-done priority-card"><div class="dash-all-done-text">${a.emoji} ${a.name} — ukończone! 🎉</div></div>`;
-        const checked = LG_S[next.gid+'_'+next.idx];
-        return `<div class="dash-card priority-card">
-          <div class="dash-card-left">
-            <div class="dash-card-area"><span class="priority-dot"></span>${a.emoji} ${a.name}</div>
-            <div class="dash-card-step">${next.ms.t}</div>
-            <div class="dash-card-meta">${lgFreqBadge(next.ms.f)}<span class="dash-card-goal">${next.goalTitle}</span></div>
-          </div>
-          <div class="dash-card-right" onclick="lgMsDone('${next.gid}',${next.idx})">
-            <div class="dash-check ${checked?'done':''}"></div>
-          </div>
-        </div>`;
-      }).join('')}
-      <div class="focus-section-title" style="margin-top:16px">📋 Na radarze</div>
-      ${data.filter(a=>!LG_PRIORITY_IDS.includes(a.id)).map(a => {
-        const next = lgGetNextStep(a);
-        if (!next) return `<div class="dash-all-done radar-card"><div class="dash-all-done-text">${a.emoji} ${a.name} — ukończone! 🎉</div></div>`;
-        const checked = LG_S[next.gid+'_'+next.idx];
-        return `<div class="dash-card radar-card">
-          <div class="dash-card-left">
-            <div class="dash-card-area">${a.emoji} ${a.name}</div>
-            <div class="dash-card-step">${next.ms.t}</div>
-            <div class="dash-card-meta">${lgFreqBadge(next.ms.f)}<span class="dash-card-goal">${next.goalTitle}</span></div>
-          </div>
-          <div class="dash-card-right" onclick="lgMsDone('${next.gid}',${next.idx})">
-            <div class="dash-check ${checked?'done':''}"></div>
-          </div>
-        </div>`;
-      }).join('')}
-    </div>
-  </div>`;
+  let html = '';
 
   data.forEach(area => {
     const {total,done} = lgCountArea(area);
