@@ -409,45 +409,67 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
 
 
 /* ===== FOCUS TAB (plant + today) ===== */
-.focus-panel { background: #f5f7f3; min-height: calc(100vh - 100px); padding-bottom: 80px; }
+.focus-panel {
+  background: #f5f7f3;
+  min-height: calc(100vh - 100px);
+  padding-bottom: 80px;
+}
 
-.plant-section {
-  background: linear-gradient(180deg, #4a6741 0%, #6a8858 70%, #f0f4ee 100%);
-  padding: 20px 20px 32px;
-  text-align: center;
-  position: relative;
+/* Plant card — white, high contrast */
+.focus-plant-card {
+  background: white;
+  margin: 16px 16px 0;
+  border-radius: 16px;
+  border: 1px solid #e4ebe2;
+  box-shadow: 0 2px 12px rgba(74,103,65,0.08);
+  display: flex;
+  align-items: center;
+  padding: 20px 16px 20px 20px;
+  gap: 16px;
   overflow: hidden;
 }
 
-.plant-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 0.7rem;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: #c8d9a0;
-  margin-bottom: 16px;
+.focus-plant-left {
+  flex: 1;
 }
 
-.plant-wrap {
-  width: 160px;
-  height: 160px;
-  margin: 0 auto 16px;
-  position: relative;
-}
-
-.plant-pct-label {
+.focus-plant-pct {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 2.2rem;
-  color: white;
+  font-size: 3.2rem;
+  color: #4a6741;
   line-height: 1;
-  margin-bottom: 4px;
+  font-weight: 400;
 }
 
-.plant-sub {
+.focus-plant-sub {
   font-size: 0.65rem;
-  letter-spacing: 0.2em;
-  color: #a8bf90;
+  letter-spacing: 0.18em;
+  color: #8aaa78;
   text-transform: uppercase;
+  margin-top: 4px;
+  margin-bottom: 14px;
+}
+
+.focus-plant-bar-wrap {
+  height: 4px;
+  background: #e4ebe2;
+  border-radius: 2px;
+  overflow: hidden;
+  max-width: 160px;
+}
+
+.focus-plant-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4a6741, #8aaa78);
+  border-radius: 2px;
+  transition: width 0.8s ease;
+}
+
+.focus-plant-right {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
 }
 
 /* Focus today section */
@@ -1142,15 +1164,22 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
 
 <!-- FOCUS PANEL -->
 <div class="app-panel focus-panel" id="panel-focus">
-  <div class="plant-section">
-    <div class="plant-title">Twój postęp</div>
-    <div class="plant-wrap">
-      <svg id="plantSvg" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%"></svg>
+
+  <!-- Plant card - white background, full contrast -->
+  <div class="focus-plant-card">
+    <div class="focus-plant-left">
+      <div class="focus-plant-pct" id="focusPct">0%</div>
+      <div class="focus-plant-sub" id="focusSub">kroków ukończonych</div>
+      <div class="focus-plant-bar-wrap">
+        <div class="focus-plant-bar" id="focusPlantBar" style="width:0%"></div>
+      </div>
     </div>
-    <div class="plant-pct-label" id="focusPct">0%</div>
-    <div class="plant-sub" id="focusSub">kroków ukończonych</div>
+    <div class="focus-plant-right">
+      <svg id="plantSvg" viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" width="120" height="140"></svg>
+    </div>
   </div>
 
+  <!-- Priority cards -->
   <div class="focus-today">
     <div class="focus-section-title">🎯 Dzisiejsze priorytety</div>
     <div id="focusPriorityCards"></div>
@@ -2235,83 +2264,74 @@ function drawPlant(pct) {
   const svg = document.getElementById('plantSvg');
   if (!svg) return;
   const p = Math.min(100, Math.max(0, pct));
+  // viewBox: 0 0 120 140, cx=60, base=130
+  const cx = 60, base = 128;
+  let s = '';
 
-  // Stages: 0-10 seed, 10-25 sprout, 25-50 small plant, 50-75 grown, 75-90 budding, 90-100 flowering
-  let svgContent = '';
-
-  // Soil
-  svgContent += `<ellipse cx="80" cy="148" rx="50" ry="8" fill="#6a8858" opacity="0.4"/>`;
+  // Ground
+  s += `<ellipse cx="${cx}" cy="${base}" rx="36" ry="6" fill="#6a8858" opacity="0.25"/>`;
+  s += `<ellipse cx="${cx}" cy="${base}" rx="24" ry="4" fill="#8aaa78" opacity="0.2"/>`;
 
   if (p < 10) {
-    // Seed
-    svgContent += `<ellipse cx="80" cy="142" rx="8" ry="6" fill="#8B6914" opacity="0.7"/>`;
-    svgContent += `<text x="80" y="120" text-anchor="middle" font-size="28" opacity="0.6">🌱</text>`;
+    // Seed in soil
+    s += `<ellipse cx="${cx}" cy="${base-3}" rx="9" ry="6" fill="#8B6914" opacity="0.8"/>`;
+    s += `<ellipse cx="${cx}" cy="${base-5}" rx="5" ry="3" fill="#a07830" opacity="0.6"/>`;
   } else if (p < 25) {
-    // Sprout
-    const h = 20 + (p-10)/15 * 20;
-    svgContent += `<line x1="80" y1="140" x2="80" y2="${140-h}" stroke="#4a6741" stroke-width="3" stroke-linecap="round"/>`;
-    svgContent += `<ellipse cx="80" cy="${140-h}" rx="10" ry="7" fill="#7a9a60" transform="rotate(-15 80 ${140-h})"/>`;
-    svgContent += `<ellipse cx="${80+12}" cy="${140-h+8}" rx="10" ry="7" fill="#8aaa70" transform="rotate(20 ${80+12} ${140-h+8})"/>`;
+    // Tiny sprout
+    const h = 14 + (p-10)/15 * 14;
+    s += `<line x1="${cx}" y1="${base}" x2="${cx}" y2="${base-h}" stroke="#4a6741" stroke-width="2.5" stroke-linecap="round"/>`;
+    s += `<ellipse cx="${cx-6}" cy="${base-h+2}" rx="9" ry="5.5" fill="#7a9a60" transform="rotate(-30 ${cx-6} ${base-h+2})"/>`;
+    s += `<ellipse cx="${cx+7}" cy="${base-h}" rx="9" ry="5.5" fill="#8aaa70" transform="rotate(25 ${cx+7} ${base-h})"/>`;
   } else if (p < 50) {
-    // Small plant with leaves
-    const h = 40 + (p-25)/25 * 30;
-    svgContent += `<line x1="80" y1="140" x2="80" y2="${140-h}" stroke="#4a6741" stroke-width="3.5" stroke-linecap="round"/>`;
-    svgContent += `<ellipse cx="68" cy="${140-h*0.4}" rx="16" ry="10" fill="#6a8858" transform="rotate(-30 68 ${140-h*0.4})"/>`;
-    svgContent += `<ellipse cx="92" cy="${140-h*0.55}" rx="16" ry="10" fill="#7a9a60" transform="rotate(25 92 ${140-h*0.55})"/>`;
-    svgContent += `<ellipse cx="72" cy="${140-h*0.75}" rx="14" ry="9" fill="#8aaa70" transform="rotate(-20 72 ${140-h*0.75})"/>`;
-    svgContent += `<ellipse cx="88" cy="${140-h}" rx="12" ry="8" fill="#9aba80" transform="rotate(15 88 ${140-h})"/>`;
+    const h = 28 + (p-25)/25 * 22;
+    s += `<line x1="${cx}" y1="${base}" x2="${cx}" y2="${base-h}" stroke="#4a6741" stroke-width="3" stroke-linecap="round"/>`;
+    for (let [ox,oy,rx,ry,rot] of [[-14,-h*.35,14,8,-32],[13,-h*.5,14,8,28],[-10,-h*.68,12,7,-22],[10,-h*.85,11,7,18],[-4,-h,13,8,-5]]) {
+      s += `<ellipse cx="${cx+ox}" cy="${base+oy}" rx="${rx}" ry="${ry}" fill="#6a9858" transform="rotate(${rot} ${cx+ox} ${base+oy})" opacity="0.88"/>`;
+    }
   } else if (p < 75) {
-    // Grown plant
-    const h = 70 + (p-50)/25 * 20;
-    svgContent += `<line x1="80" y1="140" x2="80" y2="${140-h}" stroke="#3a5030" stroke-width="4" stroke-linecap="round"/>`;
-    // Multiple branches
-    svgContent += `<line x1="80" y1="${140-h*0.3}" x2="60" y2="${140-h*0.45}" stroke="#4a6741" stroke-width="2.5" stroke-linecap="round"/>`;
-    svgContent += `<line x1="80" y1="${140-h*0.5}" x2="100" y2="${140-h*0.65}" stroke="#4a6741" stroke-width="2.5" stroke-linecap="round"/>`;
-    svgContent += `<line x1="80" y1="${140-h*0.65}" x2="62" y2="${140-h*0.8}" stroke="#4a6741" stroke-width="2" stroke-linecap="round"/>`;
-    // Leaves
-    for (let [cx,cy,rx,ry,rot] of [[55,140-h*0.5,18,11,-35],[105,140-h*0.7,18,11,30],[58,140-h*0.85,15,9,-25],[80,140-h,16,10,0],[95,140-h*0.55,14,9,20]]) {
-      svgContent += `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#6a9858" transform="rotate(${rot} ${cx} ${cy})" opacity="0.9"/>`;
+    const h = 50 + (p-50)/25 * 16;
+    s += `<line x1="${cx}" y1="${base}" x2="${cx}" y2="${base-h}" stroke="#3a5030" stroke-width="3.5" stroke-linecap="round"/>`;
+    s += `<line x1="${cx}" y1="${base-h*.28}" x2="${cx-18}" y2="${base-h*.42}" stroke="#4a6741" stroke-width="2" stroke-linecap="round"/>`;
+    s += `<line x1="${cx}" y1="${base-h*.48}" x2="${cx+18}" y2="${base-h*.62}" stroke="#4a6741" stroke-width="2" stroke-linecap="round"/>`;
+    s += `<line x1="${cx}" y1="${base-h*.65}" x2="${cx-14}" y2="${base-h*.78}" stroke="#4a6741" stroke-width="1.8" stroke-linecap="round"/>`;
+    for (let [ox,oy,rx,ry,rot] of [[-28,-h*.48,16,9,-35],[22,-h*.68,16,9,30],[-22,-h*.83,13,8,-25],[14,-h*.52,12,8,22],[0,-h,14,9,0]]) {
+      s += `<ellipse cx="${cx+ox}" cy="${base+oy}" rx="${rx}" ry="${ry}" fill="#5a9050" transform="rotate(${rot} ${cx+ox} ${base+oy})" opacity="0.88"/>`;
     }
   } else if (p < 90) {
-    // Budding
-    const h = 90 + (p-75)/15 * 10;
-    svgContent += `<line x1="80" y1="140" x2="80" y2="${140-h}" stroke="#3a5030" stroke-width="4" stroke-linecap="round"/>`;
-    svgContent += `<line x1="80" y1="${140-h*0.3}" x2="58" y2="${140-h*0.48}" stroke="#4a6741" stroke-width="2.5" stroke-linecap="round"/>`;
-    svgContent += `<line x1="80" y1="${140-h*0.5}" x2="102" y2="${140-h*0.65}" stroke="#4a6741" stroke-width="2.5" stroke-linecap="round"/>`;
-    svgContent += `<line x1="80" y1="${140-h*0.68}" x2="60" y2="${140-h*0.82}" stroke="#4a6741" stroke-width="2" stroke-linecap="round"/>`;
-    for (let [cx,cy,rx,ry,rot] of [[53,140-h*0.52,18,11,-35],[107,140-h*0.7,18,11,30],[56,140-h*0.87,15,9,-25],[95,140-h*0.55,14,9,20]]) {
-      svgContent += `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#5a9050" transform="rotate(${rot} ${cx} ${cy})" opacity="0.9"/>`;
+    const h = 66 + (p-75)/15 * 8;
+    s += `<line x1="${cx}" y1="${base}" x2="${cx}" y2="${base-h}" stroke="#3a5030" stroke-width="3.5" stroke-linecap="round"/>`;
+    s += `<line x1="${cx}" y1="${base-h*.28}" x2="${cx-20}" y2="${base-h*.44}" stroke="#4a6741" stroke-width="2" stroke-linecap="round"/>`;
+    s += `<line x1="${cx}" y1="${base-h*.48}" x2="${cx+20}" y2="${base-h*.64}" stroke="#4a6741" stroke-width="2" stroke-linecap="round"/>`;
+    for (let [ox,oy,rx,ry,rot] of [[-30,-h*.5,15,9,-35],[24,-h*.7,15,9,30],[-24,-h*.86,13,8,-25],[12,-h*.52,12,8,22]]) {
+      s += `<ellipse cx="${cx+ox}" cy="${base+oy}" rx="${rx}" ry="${ry}" fill="#4a8040" transform="rotate(${rot} ${cx+ox} ${base+oy})" opacity="0.9"/>`;
     }
     // Buds
-    svgContent += `<circle cx="80" cy="${140-h}" r="8" fill="#C8B4DC" opacity="0.8"/>`;
-    svgContent += `<circle cx="65" cy="${140-h*0.88}" r="6" fill="#D4C8E0" opacity="0.7"/>`;
-    svgContent += `<circle cx="95" cy="${140-h*0.92}" r="6" fill="#C8B4DC" opacity="0.7"/>`;
+    s += `<circle cx="${cx}" cy="${base-h}" r="6" fill="#C8B4DC" opacity="0.85"/>`;
+    s += `<circle cx="${cx-14}" cy="${base-h*.9}" r="4.5" fill="#D4C8E0" opacity="0.75"/>`;
+    s += `<circle cx="${cx+15}" cy="${base-h*.93}" r="4.5" fill="#C8B4DC" opacity="0.75"/>`;
   } else {
-    // Full flower - blooming!
-    const h = 100;
-    svgContent += `<line x1="80" y1="140" x2="80" y2="${140-h}" stroke="#3a5030" stroke-width="4" stroke-linecap="round"/>`;
-    svgContent += `<line x1="80" y1="${140-h*0.3}" x2="55" y2="${140-h*0.48}" stroke="#4a6741" stroke-width="2.5" stroke-linecap="round"/>`;
-    svgContent += `<line x1="80" y1="${140-h*0.5}" x2="105" y2="${140-h*0.65}" stroke="#4a6741" stroke-width="2.5" stroke-linecap="round"/>`;
-    for (let [cx,cy,rx,ry,rot] of [[50,140-h*0.52,18,11,-35],[110,140-h*0.7,18,11,30],[55,140-h*0.87,15,9,-25]]) {
-      svgContent += `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#5a9050" transform="rotate(${rot} ${cx} ${cy})" opacity="0.9"/>`;
+    // Full bloom
+    const h = 74;
+    s += `<line x1="${cx}" y1="${base}" x2="${cx}" y2="${base-h}" stroke="#3a5030" stroke-width="3.5" stroke-linecap="round"/>`;
+    s += `<line x1="${cx}" y1="${base-h*.28}" x2="${cx-20}" y2="${base-h*.44}" stroke="#4a6741" stroke-width="2" stroke-linecap="round"/>`;
+    s += `<line x1="${cx}" y1="${base-h*.48}" x2="${cx+20}" y2="${base-h*.64}" stroke="#4a6741" stroke-width="2" stroke-linecap="round"/>`;
+    for (let [ox,oy,rx,ry,rot] of [[-30,-h*.5,15,9,-35],[24,-h*.7,15,9,30],[-24,-h*.86,13,8,-25]]) {
+      s += `<ellipse cx="${cx+ox}" cy="${base+oy}" rx="${rx}" ry="${ry}" fill="#4a8040" transform="rotate(${rot} ${cx+ox} ${base+oy})" opacity="0.9"/>`;
     }
-    // Main flower - petals
-    const fx = 80, fy = 140-h;
-    const petalColor = '#C8B4DC';
-    const petalColor2 = '#D4C8DC';
+    // Main flower
+    const fy = base - h;
     for (let a = 0; a < 360; a += 45) {
       const rad = a * Math.PI / 180;
-      const px = fx + Math.cos(rad) * 14;
-      const py = fy + Math.sin(rad) * 14;
-      svgContent += `<ellipse cx="${px}" cy="${py}" rx="9" ry="6" fill="${a%90===0?petalColor:petalColor2}" transform="rotate(${a} ${px} ${py})" opacity="0.85"/>`;
+      const px = cx + Math.cos(rad) * 10, py = fy + Math.sin(rad) * 10;
+      s += `<ellipse cx="${px}" cy="${py}" rx="7" ry="4.5" fill="${a%90===0?'#C8B4DC':'#D4C8E0'}" transform="rotate(${a} ${px} ${py})" opacity="0.88"/>`;
     }
-    svgContent += `<circle cx="${fx}" cy="${fy}" r="8" fill="#FFD580"/>`;
-    // Side flowers
-    svgContent += `<circle cx="55" cy="${fy+12}" r="5" fill="#C8B4DC" opacity="0.7"/>`;
-    svgContent += `<circle cx="105" cy="${fy+8}" r="5" fill="#D4C8E0" opacity="0.7"/>`;
+    s += `<circle cx="${cx}" cy="${fy}" r="6" fill="#FFD580"/>`;
+    // Side buds turned flowers
+    s += `<circle cx="${cx-14}" cy="${fy+8}" r="4" fill="#C8B4DC" opacity="0.7"/>`;
+    s += `<circle cx="${cx+15}" cy="${fy+5}" r="4" fill="#D4C8E0" opacity="0.7"/>`;
   }
 
-  svg.innerHTML = svgContent;
+  svg.innerHTML = s;
 }
 
 // ===== FOCUS TAB =====
@@ -2321,8 +2341,10 @@ function renderFocus() {
 
   const pctEl = document.getElementById('focusPct');
   const subEl = document.getElementById('focusSub');
+  const barEl = document.getElementById('focusPlantBar');
   if (pctEl) pctEl.textContent = pct + '%';
   if (subEl) subEl.textContent = `${done} / ${total} kroków ukończonych`;
+  if (barEl) barEl.style.width = pct + '%';
 
   drawPlant(pct);
 
