@@ -697,6 +697,40 @@ function init() {
   });
 }
 
+function getCatEffectiveness(state, cat) {
+  const today = new Date();
+  let possible = 0, earned = 0;
+  for(let i=0; i<21; i++) {
+    const d = new Date(today); d.setDate(d.getDate()-i);
+    const key = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+    const dd = state.days?.[key];
+    if(!dd) continue;
+    possible += CAT_RULES[cat].pts;
+    earned += calcCatPts(dd, cat);
+  }
+  return possible > 0 ? earned/possible : null;
+}
+
+function renderStatusDots(state) {
+  ['food','move','alcohol','habits','growth','suppl'].forEach(cat => {
+    const el = document.getElementById(`status-${cat}`);
+    if(!el) return;
+    const eff = getCatEffectiveness(state, cat);
+    if(eff === null) { el.style.display='none'; return; }
+    el.style.display = 'block';
+    if(eff >= 0.80) {
+      el.className = 'cat-status green';
+      el.title = `${Math.round(eff*100)}% — opanowane! punkty by spadły`;
+    } else if(eff >= 0.50) {
+      el.className = 'cat-status orange';
+      el.title = `${Math.round(eff*100)}% — w budowaniu`;
+    } else {
+      el.className = 'cat-status red';
+      el.title = `${Math.round(eff*100)}% — wymaga uwagi, punkty by wzrosły`;
+    }
+  });
+}
+
 function renderAll(state) {
   const vkey = dateKey(viewingDate);
   const dd = state.days?.[vkey]||{};
