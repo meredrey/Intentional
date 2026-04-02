@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
@@ -14,53 +13,53 @@ body { background:#E8E4EF; color:#2A1F35; font-family:'Jost',sans-serif; font-we
 /* HEADER */
 header { padding:44px 0 16px; text-align:center; }
 .logo-line { width:36px; height:1px; background:#9B82B0; margin:0 auto 16px; }
-h1 { font-family:‘Cormorant Garamond’,serif; font-weight:300; font-size:1.9rem; letter-spacing:0.18em; color:#2A1F35; text-transform:uppercase; }
-.greeting { font-family:‘Cormorant Garamond’,serif; font-style:italic; font-size:0.95rem; color:#6B5878; margin-top:5px; }
+h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; letter-spacing:0.18em; color:#2A1F35; text-transform:uppercase; }
+.greeting { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:0.95rem; color:#6B5878; margin-top:5px; }
 
 /* DATE NAV */
 .date-nav {
-display:flex; align-items:center; justify-content:center; gap:16px;
-margin-bottom:20px;
+  display:flex; align-items:center; justify-content:center; gap:16px;
+  margin-bottom:20px;
 }
 .date-nav-btn {
-width:32px; height:32px; border-radius:50%;
-background:white; border:2px solid #D4C8E0;
-color:#6B5878; font-size:1rem; cursor:pointer;
-display:flex; align-items:center; justify-content:center;
-transition:all 0.15s; flex-shrink:0;
+  width:32px; height:32px; border-radius:50%;
+  background:white; border:2px solid #D4C8E0;
+  color:#6B5878; font-size:1rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:all 0.15s; flex-shrink:0;
 }
 .date-nav-btn:hover { border-color:#9B82B0; color:#9B82B0; }
 .date-nav-btn:disabled { opacity:0.3; cursor:default; }
 .date-display {
-font-size:0.68rem; letter-spacing:0.2em; color:#6B5878;
-text-transform:uppercase; cursor:pointer; text-align:center;
-padding:6px 12px; border-radius:20px; transition:background 0.15s;
+  font-size:0.68rem; letter-spacing:0.2em; color:#6B5878;
+  text-transform:uppercase; cursor:pointer; text-align:center;
+  padding:6px 12px; border-radius:20px; transition:background 0.15s;
 }
 .date-display:hover { background:rgba(155,130,176,0.12); }
 .viewing-past { background:#EDE7F5; color:#6B4F82; border-radius:20px; font-size:0.62rem; letter-spacing:0.1em; padding:4px 12px; text-align:center; margin-bottom:8px; }
 
 /* STREAK */
 .streak-card { background:#2A1F35; border-radius:12px; padding:18px 22px; display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
-.streak-num { font-family:‘Cormorant Garamond’,serif; font-size:2.6rem; color:#E8D5F0; line-height:1; }
+.streak-num { font-family:'Cormorant Garamond',serif; font-size:2.6rem; color:#E8D5F0; line-height:1; }
 .streak-lbl { font-size:0.6rem; letter-spacing:0.22em; color:#9B82B0; text-transform:uppercase; margin-top:2px; }
 .streak-dots { display:flex; gap:6px; }
-.sdot { width:26px; height:26px; border-radius:50%; border:1.5px solid rgba(155,130,176,0.35); display:flex; align-items:center; justify-content:center; font-size:0.52rem; color:rgba(155,130,176,0.5); text-transform:uppercase; font-family:‘Jost’,sans-serif; }
+.sdot { width:26px; height:26px; border-radius:50%; border:1.5px solid rgba(155,130,176,0.35); display:flex; align-items:center; justify-content:center; font-size:0.52rem; color:rgba(155,130,176,0.5); text-transform:uppercase; font-family:'Jost',sans-serif; }
 .sdot.done { background:#9B82B0; border-color:#9B82B0; color:white; }
 .sdot.today { border-color:#C8B4DC; color:#C8B4DC; }
 
 /* POINTS */
 .points-card { background:white; border-radius:12px; padding:22px 24px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 12px rgba(42,31,53,0.08); }
-.pts-today-num { font-family:‘Cormorant Garamond’,serif; font-size:3rem; color:#2A1F35; line-height:1; }
+.pts-today-num { font-family:'Cormorant Garamond',serif; font-size:3rem; color:#2A1F35; line-height:1; }
 .pts-today-lbl { font-size:0.62rem; letter-spacing:0.18em; color:#6B5878; text-transform:uppercase; margin-top:3px; }
 .pts-total-lbl { font-size:0.62rem; letter-spacing:0.18em; color:#6B5878; text-transform:uppercase; text-align:right; margin-bottom:3px; }
-.pts-total-num { font-family:‘Cormorant Garamond’,serif; font-size:1.9rem; color:#2A1F35; text-align:right; }
+.pts-total-num { font-family:'Cormorant Garamond',serif; font-size:1.9rem; color:#2A1F35; text-align:right; }
 
 /* REWARD CARD */
 .reward-card { border-radius:12px; overflow:hidden; margin-bottom:28px; box-shadow:0 2px 12px rgba(42,31,53,0.10); }
 .reward-img { width:100%; height:150px; object-fit:cover; display:block; background:#C8B4DC; }
 .reward-body { background:white; padding:16px 20px; }
 .reward-lbl { font-size:0.6rem; letter-spacing:0.26em; color:#6B5878; text-transform:uppercase; margin-bottom:5px; }
-.reward-name { font-family:‘Cormorant Garamond’,serif; font-size:1.2rem; color:#2A1F35; margin-bottom:3px; }
+.reward-name { font-family:'Cormorant Garamond',serif; font-size:1.2rem; color:#2A1F35; margin-bottom:3px; }
 .reward-countdown { font-size:0.75rem; color:#9B82B0; font-weight:500; margin-bottom:12px; }
 .prog-bar { height:3px; background:#E8E4EF; border-radius:2px; overflow:hidden; margin-bottom:5px; }
 .prog-fill { height:100%; background:linear-gradient(90deg,#9B82B0,#8FAAB8); border-radius:2px; transition:width 0.7s ease; }
@@ -96,7 +95,7 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
 .divider { height:1px; background:linear-gradient(90deg,transparent,#C8B4DC,transparent); margin:28px 0; }
 
 /* REWARDS LIST */
-.rewards-title { font-family:‘Cormorant Garamond’,serif; font-size:1.3rem; font-weight:300; color:#2A1F35; text-align:center; letter-spacing:0.1em; margin-bottom:14px; }
+.rewards-title { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:300; color:#2A1F35; text-align:center; letter-spacing:0.1em; margin-bottom:14px; }
 .ritem { display:flex; align-items:center; gap:14px; padding:14px 18px; margin-bottom:6px; background:white; border-radius:10px; border:2px solid #E8E4EF; transition:all 0.2s; box-shadow:0 1px 4px rgba(42,31,53,0.05); }
 .ritem.unlocked { border-color:#8FAAB8; background:#EEF3F6; }
 .ritem.current { border-color:#9B82B0; background:#F5F0FA; }
@@ -111,9 +110,9 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
 .rthresh { font-size:0.7rem; color:#9B82B0; font-weight:500; }
 
 /* BUTTONS */
-.btn-dark { display:block; width:100%; padding:15px; background:#2A1F35; border:none; color:#C8B4DC; font-family:‘Jost’,sans-serif; font-size:0.68rem; letter-spacing:0.22em; text-transform:uppercase; cursor:pointer; margin-top:10px; border-radius:10px; transition:background 0.2s; }
+.btn-dark { display:block; width:100%; padding:15px; background:#2A1F35; border:none; color:#C8B4DC; font-family:'Jost',sans-serif; font-size:0.68rem; letter-spacing:0.22em; text-transform:uppercase; cursor:pointer; margin-top:10px; border-radius:10px; transition:background 0.2s; }
 .btn-dark:hover { background:#3D2E50; }
-.btn-ghost { display:block; width:100%; padding:14px; background:transparent; border:2px solid #D4C8E0; color:#6B5878; font-family:‘Jost’,sans-serif; font-size:0.68rem; letter-spacing:0.22em; text-transform:uppercase; cursor:pointer; margin-top:10px; border-radius:10px; transition:all 0.2s; }
+.btn-ghost { display:block; width:100%; padding:14px; background:transparent; border:2px solid #D4C8E0; color:#6B5878; font-family:'Jost',sans-serif; font-size:0.68rem; letter-spacing:0.22em; text-transform:uppercase; cursor:pointer; margin-top:10px; border-radius:10px; transition:all 0.2s; }
 .btn-ghost:hover { border-color:#9B82B0; color:#9B82B0; }
 
 /* MODAL BASE */
@@ -122,13 +121,13 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
 .modal { background:white; border-radius:20px 20px 0 0; padding:28px 24px 48px; width:100%; max-width:480px; animation:slideUp 0.3s ease; max-height:90vh; overflow-y:auto; }
 @keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
 .modal-handle { width:36px; height:4px; background:#D4C8E0; border-radius:2px; margin:0 auto 22px; }
-.modal-title { font-family:‘Cormorant Garamond’,serif; font-size:1.5rem; color:#2A1F35; margin-bottom:20px; }
+.modal-title { font-family:'Cormorant Garamond',serif; font-size:1.5rem; color:#2A1F35; margin-bottom:20px; }
 
 /* WEEK MODAL */
 .wstat { display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid #EDE7F5; }
 .wstat:last-of-type { border-bottom:none; }
 .wstat-lbl { font-size:0.82rem; color:#6B5878; }
-.wstat-val { font-family:‘Cormorant Garamond’,serif; font-size:1.4rem; color:#2A1F35; }
+.wstat-val { font-family:'Cormorant Garamond',serif; font-size:1.4rem; color:#2A1F35; }
 .chart-wrap { margin-top:22px; }
 .chart-lbl { font-size:0.6rem; letter-spacing:0.22em; text-transform:uppercase; color:#6B5878; margin-bottom:10px; }
 .chart { display:flex; gap:6px; align-items:flex-end; height:70px; }
@@ -138,11 +137,11 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
 
 /* CALENDAR MODAL */
 .cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
-.cal-month { font-family:‘Cormorant Garamond’,serif; font-size:1.2rem; color:#2A1F35; }
+.cal-month { font-family:'Cormorant Garamond',serif; font-size:1.2rem; color:#2A1F35; }
 .cal-nav { width:32px; height:32px; border-radius:50%; background:#F0EAF8; border:none; color:#6B5878; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:16px; }
 .cal-day-name { font-size:0.58rem; text-align:center; color:#6B5878; text-transform:uppercase; padding:4px 0; letter-spacing:0.1em; }
-.cal-day { aspect-ratio:1; border-radius:8px; border:none; background:transparent; font-size:0.78rem; color:#2A1F35; cursor:pointer; display:flex; align-items:center; justify-content:center; position:relative; font-family:‘Jost’,sans-serif; transition:all 0.15s; }
+.cal-day { aspect-ratio:1; border-radius:8px; border:none; background:transparent; font-size:0.78rem; color:#2A1F35; cursor:pointer; display:flex; align-items:center; justify-content:center; position:relative; font-family:'Jost',sans-serif; transition:all 0.15s; }
 .cal-day:hover:not(:disabled) { background:#F0EAF8; }
 .cal-day.has-data { background:#EDE7F5; color:#6B4F82; font-weight:500; }
 .cal-day.perfect { background:#9B82B0; color:white; }
@@ -160,7 +159,7 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
 .hstat-name { font-size:0.85rem; color:#2A1F35; font-weight:400; margin-bottom:6px; }
 .hstat-row { display:flex; gap:16px; }
 .hstat-box { flex:1; background:#F5F0FA; border-radius:8px; padding:10px; text-align:center; }
-.hstat-box-val { font-family:‘Cormorant Garamond’,serif; font-size:1.4rem; color:#2A1F35; }
+.hstat-box-val { font-family:'Cormorant Garamond',serif; font-size:1.4rem; color:#2A1F35; }
 .hstat-box-lbl { font-size:0.6rem; color:#6B5878; text-transform:uppercase; letter-spacing:0.1em; margin-top:2px; }
 
 /* TOAST */
@@ -171,7 +170,6 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
 .cp { position:fixed; border-radius:50%; pointer-events:none; z-index:999; animation:cf 2s ease forwards; }
 @keyframes cf { 0%{transform:translateY(-10px) rotate(0);opacity:1} 100%{transform:translateY(100vh) rotate(540deg);opacity:0} }
 </style>
-
 </head>
 <body>
 <div class="container">
@@ -182,7 +180,6 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
   </header>
 
   <!-- Date navigation -->
-
   <div class="date-nav">
     <button class="date-nav-btn" id="prevDay" onclick="changeDay(-1)">‹</button>
     <span class="date-display" id="dateDisplay" onclick="openCalendar()"></span>
@@ -191,7 +188,6 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
   <div class="viewing-past" id="pastBanner" style="display:none">Przeglądasz poprzedni dzień</div>
 
   <!-- Streak -->
-
   <div class="streak-card">
     <div>
       <div class="streak-num" id="streakNum">0</div>
@@ -201,7 +197,6 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
   </div>
 
   <!-- Points -->
-
   <div class="points-card">
     <div>
       <div class="pts-today-num" id="todayPts">0</div>
@@ -214,7 +209,6 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
   </div>
 
   <!-- Next reward -->
-
   <div class="reward-card">
     <img class="reward-img" id="rewardImg" src="https://picsum.photos/seed/spa11/800/300" alt="" />
     <div class="reward-body">
@@ -227,7 +221,6 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
   </div>
 
   <!-- JEDZENIE -->
-
   <div class="section">
     <div class="section-head">
       <div class="section-icon">🌿</div>
@@ -249,7 +242,6 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
   </div>
 
   <!-- RUCH -->
-
   <div class="section">
     <div class="section-head">
       <div class="section-icon">✦</div>
@@ -281,7 +273,6 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
   </div>
 
   <!-- ALKOHOL -->
-
   <div class="section">
     <div class="section-head">
       <div class="section-icon">◇</div>
@@ -303,7 +294,6 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
   </div>
 
   <!-- NAWYKI -->
-
   <div class="section">
     <div class="section-head">
       <div class="section-icon">❋</div>
@@ -330,7 +320,6 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
   </div>
 
   <!-- SUPLEMENTACJA -->
-
   <div class="section">
     <div class="section-head">
       <div class="section-icon">💊</div>
@@ -356,10 +345,9 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
   <div class="rewards-title">Nagrody</div>
   <div id="rewardsList"></div>
 
-<button class="btn-dark" onclick="openWeek()">Zobacz tydzień</button>
-<button class="btn-dark" style="background:#6B5878;margin-top:8px" onclick="openHabitStats()">Statystyki nawyków</button>
-<button class="btn-ghost" onclick="resetDay()">Resetuj zaznaczenia tego dnia</button>
-
+  <button class="btn-dark" onclick="openWeek()">Zobacz tydzień</button>
+  <button class="btn-dark" style="background:#6B5878;margin-top:8px" onclick="openHabitStats()">Statystyki nawyków</button>
+  <button class="btn-ghost" onclick="resetDay()">Resetuj zaznaczenia tego dnia</button>
   <div style="display:flex;gap:8px;margin-top:10px">
     <button class="btn-ghost" style="flex:1;margin-top:0" onclick="exportData()">⬇ Eksportuj dane</button>
     <button class="btn-ghost" style="flex:1;margin-top:0" onclick="document.getElementById('importInput').click()">⬆ Importuj dane</button>
@@ -368,7 +356,6 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
 </div>
 
 <!-- WEEK MODAL -->
-
 <div class="modal-overlay" id="weekModal" onclick="bgClose(event,'weekModal')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -382,7 +369,6 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
 </div>
 
 <!-- CALENDAR MODAL -->
-
 <div class="modal-overlay" id="calModal" onclick="bgClose(event,'calModal')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -402,7 +388,6 @@ padding:6px 12px; border-radius:20px; transition:background 0.15s;
 </div>
 
 <!-- HABIT STATS MODAL -->
-
 <div class="modal-overlay" id="habitModal" onclick="bgClose(event,'habitModal')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -441,8 +426,44 @@ const REWARDS = [
 let viewingDate = new Date(); // the date being shown
 let calViewDate = new Date(); // month shown in calendar
 
-function gs() { try { return JSON.parse(localStorage.getItem('dc5')||'{}'); } catch { return {}; } }
-function ss(s) { localStorage.setItem('dc5', JSON.stringify(s)); }
+const API = 'https://script.google.com/macros/s/AKfycbxz_8jwR7k_SP9yyXsF-swpfr-iDt9R88-DlUHoSTR2ifi0cnNAmc5For6i4Zz-b2KzHQ/exec';
+const LS_KEY = 'dc5';
+let saveTimer = null;
+
+function gs() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)||'{}'); } catch { return {}; }
+}
+
+function ss(state) {
+  // Instant local save
+  localStorage.setItem(LS_KEY, JSON.stringify(state));
+  // Debounced save to Sheets (1.5s)
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => syncToSheets(state), 1500);
+}
+
+function syncToSheets(state) {
+  const data = encodeURIComponent(JSON.stringify(state));
+  fetch(`${API}?action=write&data=${data}`)
+    .catch(err => console.log('Sheets sync error:', err));
+}
+
+function syncFromSheets() {
+  fetch(`${API}?action=read`)
+    .then(r => r.json())
+    .then(remote => {
+      if (!remote || typeof remote !== 'object') return;
+      const local = gs();
+      // Merge: take higher totalPoints and union of days
+      const merged = {
+        totalPoints: Math.max(remote.totalPoints||0, local.totalPoints||0),
+        days: Object.assign({}, remote.days||{}, local.days||{})
+      };
+      localStorage.setItem(LS_KEY, JSON.stringify(merged));
+      renderAll(merged);
+    })
+    .catch(err => console.log('Sheets read error:', err));
+}
 
 function dateKey(d) { return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
 function todayKey() { return dateKey(new Date()); }
@@ -487,6 +508,14 @@ function init() {
   if(!state.totalPoints) state.totalPoints=0;
   if(!state.days[todayKey()]) state.days[todayKey()]={};
   renderAll(state);
+  // Sync from Sheets in background
+  syncFromSheets();
+  // Auto-sync every 30s
+  setInterval(syncFromSheets, 30000);
+  // Sync when tab becomes visible
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') syncFromSheets();
+  });
 }
 
 function renderAll(state) {
@@ -750,6 +779,5 @@ function importData(event) {
 
 init();
 </script>
-
 </body>
 </html>
