@@ -767,6 +767,7 @@ function importData(event) {
       if(!data.days) throw new Error('Nieprawidłowy format');
       if(!confirm(`Importować dane? Obecne dane zostaną zastąpione.`)) return;
       ss(data);
+      syncToSheets(data);
       renderAll(gs());
       toast('Dane zaimportowane! ✨');
     } catch(err) {
