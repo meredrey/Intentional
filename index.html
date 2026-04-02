@@ -407,6 +407,319 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
 .lg-bs-num { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: #4a6741; line-height: 1; }
 .lg-bs-lbl { font-size: 9px; color: #8aaa78; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
 
+
+/* ===== FOCUS TAB (plant + today) ===== */
+.focus-panel { background: #f5f7f3; min-height: calc(100vh - 100px); padding-bottom: 80px; }
+
+.plant-section {
+  background: linear-gradient(180deg, #4a6741 0%, #6a8858 60%, #f5f7f3 100%);
+  padding: 24px 20px 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.plant-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #c8d9a0;
+  margin-bottom: 16px;
+}
+
+.plant-wrap {
+  width: 160px;
+  height: 160px;
+  margin: 0 auto 16px;
+  position: relative;
+}
+
+.plant-pct-label {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.2rem;
+  color: white;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.plant-sub {
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: #a8bf90;
+  text-transform: uppercase;
+}
+
+/* Focus today section */
+.focus-today {
+  padding: 16px;
+  margin-top: -16px;
+}
+
+.focus-section-title {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #6a8858;
+  margin-bottom: 10px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.focus-section-title::after { content: ''; flex: 1; height: 1px; background: #e4ebe2; }
+
+/* ===== EDIT MODE ===== */
+.edit-fab {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #4a6741;
+  color: white;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(74,103,65,0.35);
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.edit-fab:active { transform: scale(0.95); }
+.edit-fab.edit-active { background: #8B5E52; }
+
+/* Edit modal */
+.edit-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(42,58,40,0.6);
+  z-index: 400;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+.edit-modal-overlay.open { display: flex; }
+.edit-modal {
+  background: white;
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px 48px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+.edit-modal-handle {
+  width: 36px; height: 4px;
+  background: #d0d0d0;
+  border-radius: 2px;
+  margin: 0 auto 20px;
+}
+.edit-modal-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem;
+  color: #2c3828;
+  margin-bottom: 16px;
+}
+
+/* Area selector */
+.edit-area-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: 16px;
+  padding-bottom: 4px;
+}
+.edit-area-tab {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid #e4ebe2;
+  background: white;
+  font-size: 0.75rem;
+  color: #6a8858;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.edit-area-tab.active {
+  background: #4a6741;
+  color: white;
+  border-color: #4a6741;
+}
+
+/* Goal edit items */
+.edit-goal-item {
+  border: 1px solid #e4ebe2;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.edit-goal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: #f9fbf7;
+  cursor: pointer;
+}
+.edit-goal-name {
+  flex: 1;
+  font-size: 0.85rem;
+  color: #2c3828;
+  font-weight: 500;
+}
+.edit-goal-toggle {
+  font-size: 0.75rem;
+  color: #8aaa78;
+  transition: transform 0.2s;
+}
+.edit-goal-item.open .edit-goal-toggle { transform: rotate(180deg); }
+.edit-goal-body { display: none; padding: 12px 14px; }
+.edit-goal-item.open .edit-goal-body { display: block; }
+
+/* Edit inputs */
+.edit-field {
+  margin-bottom: 10px;
+}
+.edit-field label {
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #8aaa78;
+  display: block;
+  margin-bottom: 4px;
+}
+.edit-input {
+  width: 100%;
+  border: 1px solid #e4ebe2;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  font-family: 'DM Sans', sans-serif;
+  color: #2c3828;
+  background: #f9fbf7;
+  outline: none;
+}
+.edit-input:focus { border-color: #8aaa78; background: white; }
+
+/* Milestone edit list */
+.ms-edit-list { margin-bottom: 10px; }
+.ms-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.ms-edit-row input {
+  flex: 1;
+  border: 1px solid #e4ebe2;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 0.82rem;
+  font-family: 'DM Sans', sans-serif;
+  color: #2c3828;
+  background: #f9fbf7;
+  outline: none;
+}
+.ms-edit-row input:focus { border-color: #8aaa78; background: white; }
+.ms-freq-sel {
+  border: 1px solid #e4ebe2;
+  border-radius: 8px;
+  padding: 7px 6px;
+  font-size: 0.75rem;
+  font-family: 'DM Sans', sans-serif;
+  color: #2c3828;
+  background: #f9fbf7;
+  outline: none;
+}
+.ms-delete-btn {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid #e4ebe2;
+  background: white;
+  color: #c0a0a0;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-add-ms {
+  width: 100%;
+  padding: 8px;
+  border: 1px dashed #c8d9a0;
+  border-radius: 8px;
+  background: #f5f7f3;
+  color: #6a8858;
+  font-size: 0.78rem;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.btn-add-goal {
+  width: 100%;
+  padding: 10px;
+  border: 1px dashed #c8d9a0;
+  border-radius: 10px;
+  background: #f5f7f3;
+  color: #6a8858;
+  font-size: 0.82rem;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.btn-save-edit {
+  width: 100%;
+  padding: 13px;
+  background: #4a6741;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.btn-delete-goal {
+  padding: 6px 12px;
+  border: 1px solid #f0d0c8;
+  border-radius: 8px;
+  background: white;
+  color: #c07060;
+  font-size: 0.72rem;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+/* Inline edit button on goal header */
+.goal-edit-btn {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid #e4ebe2;
+  background: white;
+  color: #8aaa78;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.goal-edit-btn:hover { border-color: #8aaa78; color: #4a6741; }
 </style>
 </head>
 <body>
@@ -429,6 +742,10 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
   <button class="app-tab active" onclick="switchTab('coach')" id="tab-coach">
     <span class="tab-icon">✦</span>
     Daily Coach
+  </button>
+  <button class="app-tab" onclick="switchTab('focus')" id="tab-focus">
+    <span class="tab-icon">🌿</span>
+    Focus
   </button>
   <button class="app-tab" onclick="switchTab('goals')" id="tab-goals">
     <span class="tab-icon">🌱</span>
@@ -687,6 +1004,40 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
   <div class="toast" id="toast"></div>
 </div>
 
+<!-- FOCUS PANEL -->
+<div class="app-panel focus-panel" id="panel-focus">
+  <div class="plant-section">
+    <div class="plant-title">Twój postęp</div>
+    <div class="plant-wrap">
+      <svg id="plantSvg" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%"></svg>
+    </div>
+    <div class="plant-pct-label" id="focusPct">0%</div>
+    <div class="plant-sub" id="focusSub">kroków ukończonych</div>
+  </div>
+
+  <div class="focus-today">
+    <div class="focus-section-title">🎯 Dzisiejsze priorytety</div>
+    <div id="focusPriorityCards"></div>
+    <div class="focus-section-title" style="margin-top:16px">📋 Na radarze</div>
+    <div id="focusRadarCards"></div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="edit-modal-overlay" id="editModal" onclick="editBgClose(event)">
+  <div class="edit-modal">
+    <div class="edit-modal-handle"></div>
+    <div class="edit-modal-title">Edytuj cele</div>
+    <div class="edit-area-tabs" id="editAreaTabs"></div>
+    <div id="editGoalsList"></div>
+    <button class="btn-add-goal" onclick="lgAddGoal()">+ Dodaj cel</button>
+    <button class="btn-save-edit" onclick="lgSaveEdit()">Zapisz zmiany</button>
+  </div>
+</div>
+
+<!-- FAB edit button (visible on goals and focus tabs) -->
+<button class="edit-fab" id="editFab" onclick="openEditModal()" style="display:none">✎</button>
+
 <!-- LIFE GOALS PANEL -->
 <div class="app-panel lg-panel" id="panel-goals">
   <div class="lg-header">
@@ -877,12 +1228,12 @@ function ss(state) {
 
 function syncToSheets(state) {
   const data = encodeURIComponent(JSON.stringify(state));
-  fetch(`${API}?action=write&data=${data}`)
+  fetch(`${API}?action=write&sheet=CoachData&data=${data}`)
     .catch(err => console.log('Sheets sync error:', err));
 }
 
 function syncFromSheets() {
-  fetch(`${API}?action=read`)
+  fetch(`${API}?action=read&sheet=CoachData`)
     .then(r => r.json())
     .then(remote => {
       if (!remote || typeof remote !== 'object') return;
@@ -1460,10 +1811,61 @@ const LG_DATA = [
 ];
 
 const LG_SK = 'mata_lg_v4';
+const LG_SHEET = 'LifeGoals';
 let LG_S = (() => { try { return JSON.parse(localStorage.getItem(LG_SK)) || {}; } catch(e) { return {}; } })();
-const lgSave = () => { try { localStorage.setItem(LG_SK, JSON.stringify(LG_S)); } catch(e) {} };
+let lgSaveTimer = null;
+
+const lgSave = () => {
+  try { localStorage.setItem(LG_SK, JSON.stringify(LG_S)); } catch(e) {}
+  clearTimeout(lgSaveTimer);
+  lgSaveTimer = setTimeout(() => lgSyncToSheets(LG_S), 1500);
+};
+
+function lgSyncToSheets(state) {
+  const data = encodeURIComponent(JSON.stringify(state));
+  fetch(`${API}?action=write&sheet=${LG_SHEET}&data=${data}`)
+    .catch(err => console.log('LG Sheets sync error:', err));
+}
+
+function lgSyncFromSheets() {
+  fetch(`${API}?action=read&sheet=${LG_SHEET}`)
+    .then(r => r.json())
+    .then(remote => {
+      if (!remote || typeof remote !== 'object') return;
+      const local = (() => { try { return JSON.parse(localStorage.getItem(LG_SK)) || {}; } catch(e) { return {}; } })();
+      // Merge: prefer remote for completed milestones, local for everything else
+      const merged = { ...local, ...remote };
+      // Keep customGoals from both
+      if (local.customGoals || remote.customGoals) {
+        merged.customGoals = { ...(remote.customGoals || {}), ...(local.customGoals || {}) };
+      }
+      localStorage.setItem(LG_SK, JSON.stringify(merged));
+      LG_S = merged;
+      lgRender();
+      renderFocus();
+    })
+    .catch(err => console.log('LG Sheets read error:', err));
+}
 let lgActivePage = 'dashboard';
 let lgOpenGoals = {};
+let editOpenGoal = null;
+let editActiveArea = null;
+
+// Dynamic goals - stored in LG_S.customGoals, merges with LG_DATA
+function getLGData() {
+  const custom = LG_S.customGoals || {};
+  return LG_DATA.map(area => {
+    const areaCustom = custom[area.id] || {};
+    const baseGoals = area.goals.map(g => ({
+      ...g,
+      title: areaCustom[g.id]?.title || g.title,
+      tag: areaCustom[g.id]?.tag || g.tag,
+      ms: areaCustom[g.id]?.ms || g.ms,
+    }));
+    const extraGoals = (areaCustom.__extra || []);
+    return { ...area, goals: [...baseGoals, ...extraGoals] };
+  });
+}
 
 function lgGetNextStep(area) {
   for (const g of area.goals) {
@@ -1478,11 +1880,11 @@ function lgSaveTracker(tid) {
   const inp = document.getElementById('lginp_' + tid);
   if (!inp || inp.value === '') return;
   LG_S['tracker_' + tid] = parseFloat(inp.value);
-  lgSave(); lgRender();
+  lgSave(); lgRender(); renderFocus();
 }
 
 function lgMsDone(gid, idx) {
-  const k = gid+'_'+idx; LG_S[k] = !LG_S[k]; lgSave(); lgRender();
+  const k = gid+'_'+idx; LG_S[k] = !LG_S[k]; lgSave(); lgRender(); renderFocus();
 }
 
 function lgToggleGoal(id) { lgOpenGoals[id] = !lgOpenGoals[id]; lgRender(); }
@@ -1499,7 +1901,7 @@ function lgCountArea(area) {
 
 function lgCountAll() {
   let total=0, done=0;
-  LG_DATA.forEach(a => { const c=lgCountArea(a); total+=c.total; done+=c.done; });
+  getLGData().forEach(a => { const c=lgCountArea(a); total+=c.total; done+=c.done; });
   return {total,done};
 }
 
@@ -1507,18 +1909,116 @@ function lgFreqBadge(f) {
   return `<span class="freq freq-${f}">${FREQ_LABELS[f]}</span>`;
 }
 
-function lgRenderDashboard() {
-  const pAreas = LG_DATA.filter(a => LG_PRIORITY_IDS.includes(a.id));
-  const rAreas = LG_DATA.filter(a => !LG_PRIORITY_IDS.includes(a.id));
-  function cardHTML(area, isPriority) {
+// ===== PLANT SVG =====
+function drawPlant(pct) {
+  const svg = document.getElementById('plantSvg');
+  if (!svg) return;
+  const p = Math.min(100, Math.max(0, pct));
+
+  // Stages: 0-10 seed, 10-25 sprout, 25-50 small plant, 50-75 grown, 75-90 budding, 90-100 flowering
+  let svgContent = '';
+
+  // Soil
+  svgContent += `<ellipse cx="80" cy="148" rx="50" ry="8" fill="#6a8858" opacity="0.4"/>`;
+
+  if (p < 10) {
+    // Seed
+    svgContent += `<ellipse cx="80" cy="142" rx="8" ry="6" fill="#8B6914" opacity="0.7"/>`;
+    svgContent += `<text x="80" y="120" text-anchor="middle" font-size="28" opacity="0.6">🌱</text>`;
+  } else if (p < 25) {
+    // Sprout
+    const h = 20 + (p-10)/15 * 20;
+    svgContent += `<line x1="80" y1="140" x2="80" y2="${140-h}" stroke="#4a6741" stroke-width="3" stroke-linecap="round"/>`;
+    svgContent += `<ellipse cx="80" cy="${140-h}" rx="10" ry="7" fill="#7a9a60" transform="rotate(-15 80 ${140-h})"/>`;
+    svgContent += `<ellipse cx="${80+12}" cy="${140-h+8}" rx="10" ry="7" fill="#8aaa70" transform="rotate(20 ${80+12} ${140-h+8})"/>`;
+  } else if (p < 50) {
+    // Small plant with leaves
+    const h = 40 + (p-25)/25 * 30;
+    svgContent += `<line x1="80" y1="140" x2="80" y2="${140-h}" stroke="#4a6741" stroke-width="3.5" stroke-linecap="round"/>`;
+    svgContent += `<ellipse cx="68" cy="${140-h*0.4}" rx="16" ry="10" fill="#6a8858" transform="rotate(-30 68 ${140-h*0.4})"/>`;
+    svgContent += `<ellipse cx="92" cy="${140-h*0.55}" rx="16" ry="10" fill="#7a9a60" transform="rotate(25 92 ${140-h*0.55})"/>`;
+    svgContent += `<ellipse cx="72" cy="${140-h*0.75}" rx="14" ry="9" fill="#8aaa70" transform="rotate(-20 72 ${140-h*0.75})"/>`;
+    svgContent += `<ellipse cx="88" cy="${140-h}" rx="12" ry="8" fill="#9aba80" transform="rotate(15 88 ${140-h})"/>`;
+  } else if (p < 75) {
+    // Grown plant
+    const h = 70 + (p-50)/25 * 20;
+    svgContent += `<line x1="80" y1="140" x2="80" y2="${140-h}" stroke="#3a5030" stroke-width="4" stroke-linecap="round"/>`;
+    // Multiple branches
+    svgContent += `<line x1="80" y1="${140-h*0.3}" x2="60" y2="${140-h*0.45}" stroke="#4a6741" stroke-width="2.5" stroke-linecap="round"/>`;
+    svgContent += `<line x1="80" y1="${140-h*0.5}" x2="100" y2="${140-h*0.65}" stroke="#4a6741" stroke-width="2.5" stroke-linecap="round"/>`;
+    svgContent += `<line x1="80" y1="${140-h*0.65}" x2="62" y2="${140-h*0.8}" stroke="#4a6741" stroke-width="2" stroke-linecap="round"/>`;
+    // Leaves
+    for (let [cx,cy,rx,ry,rot] of [[55,140-h*0.5,18,11,-35],[105,140-h*0.7,18,11,30],[58,140-h*0.85,15,9,-25],[80,140-h,16,10,0],[95,140-h*0.55,14,9,20]]) {
+      svgContent += `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#6a9858" transform="rotate(${rot} ${cx} ${cy})" opacity="0.9"/>`;
+    }
+  } else if (p < 90) {
+    // Budding
+    const h = 90 + (p-75)/15 * 10;
+    svgContent += `<line x1="80" y1="140" x2="80" y2="${140-h}" stroke="#3a5030" stroke-width="4" stroke-linecap="round"/>`;
+    svgContent += `<line x1="80" y1="${140-h*0.3}" x2="58" y2="${140-h*0.48}" stroke="#4a6741" stroke-width="2.5" stroke-linecap="round"/>`;
+    svgContent += `<line x1="80" y1="${140-h*0.5}" x2="102" y2="${140-h*0.65}" stroke="#4a6741" stroke-width="2.5" stroke-linecap="round"/>`;
+    svgContent += `<line x1="80" y1="${140-h*0.68}" x2="60" y2="${140-h*0.82}" stroke="#4a6741" stroke-width="2" stroke-linecap="round"/>`;
+    for (let [cx,cy,rx,ry,rot] of [[53,140-h*0.52,18,11,-35],[107,140-h*0.7,18,11,30],[56,140-h*0.87,15,9,-25],[95,140-h*0.55,14,9,20]]) {
+      svgContent += `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#5a9050" transform="rotate(${rot} ${cx} ${cy})" opacity="0.9"/>`;
+    }
+    // Buds
+    svgContent += `<circle cx="80" cy="${140-h}" r="8" fill="#C8B4DC" opacity="0.8"/>`;
+    svgContent += `<circle cx="65" cy="${140-h*0.88}" r="6" fill="#D4C8E0" opacity="0.7"/>`;
+    svgContent += `<circle cx="95" cy="${140-h*0.92}" r="6" fill="#C8B4DC" opacity="0.7"/>`;
+  } else {
+    // Full flower - blooming!
+    const h = 100;
+    svgContent += `<line x1="80" y1="140" x2="80" y2="${140-h}" stroke="#3a5030" stroke-width="4" stroke-linecap="round"/>`;
+    svgContent += `<line x1="80" y1="${140-h*0.3}" x2="55" y2="${140-h*0.48}" stroke="#4a6741" stroke-width="2.5" stroke-linecap="round"/>`;
+    svgContent += `<line x1="80" y1="${140-h*0.5}" x2="105" y2="${140-h*0.65}" stroke="#4a6741" stroke-width="2.5" stroke-linecap="round"/>`;
+    for (let [cx,cy,rx,ry,rot] of [[50,140-h*0.52,18,11,-35],[110,140-h*0.7,18,11,30],[55,140-h*0.87,15,9,-25]]) {
+      svgContent += `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#5a9050" transform="rotate(${rot} ${cx} ${cy})" opacity="0.9"/>`;
+    }
+    // Main flower - petals
+    const fx = 80, fy = 140-h;
+    const petalColor = '#C8B4DC';
+    const petalColor2 = '#D4C8DC';
+    for (let a = 0; a < 360; a += 45) {
+      const rad = a * Math.PI / 180;
+      const px = fx + Math.cos(rad) * 14;
+      const py = fy + Math.sin(rad) * 14;
+      svgContent += `<ellipse cx="${px}" cy="${py}" rx="9" ry="6" fill="${a%90===0?petalColor:petalColor2}" transform="rotate(${a} ${px} ${py})" opacity="0.85"/>`;
+    }
+    svgContent += `<circle cx="${fx}" cy="${fy}" r="8" fill="#FFD580"/>`;
+    // Side flowers
+    svgContent += `<circle cx="55" cy="${fy+12}" r="5" fill="#C8B4DC" opacity="0.7"/>`;
+    svgContent += `<circle cx="105" cy="${fy+8}" r="5" fill="#D4C8E0" opacity="0.7"/>`;
+  }
+
+  svg.innerHTML = svgContent;
+}
+
+// ===== FOCUS TAB =====
+function renderFocus() {
+  const {total, done} = lgCountAll();
+  const pct = total ? Math.round(done/total*100) : 0;
+
+  const pctEl = document.getElementById('focusPct');
+  const subEl = document.getElementById('focusSub');
+  if (pctEl) pctEl.textContent = pct + '%';
+  if (subEl) subEl.textContent = `${done} / ${total} kroków ukończonych`;
+
+  drawPlant(pct);
+
+  // Priority cards (same as dashboard)
+  const data = getLGData();
+  const pAreas = data.filter(a => LG_PRIORITY_IDS.includes(a.id));
+  const rAreas = data.filter(a => !LG_PRIORITY_IDS.includes(a.id));
+
+  function focusCardHTML(area, isPriority) {
     const next = lgGetNextStep(area);
     if (!next) return `<div class="dash-all-done ${isPriority?'priority-card':'radar-card'}">
       <div class="dash-all-done-text">${area.emoji} ${area.name} — wszystkie kroki ukończone! 🎉</div></div>`;
     const checked = LG_S[next.gid+'_'+next.idx];
     return `<div class="dash-card ${isPriority?'priority-card':'radar-card'}">
       <div class="dash-card-left">
-        <div class="dash-card-area">${isPriority?'<span class="priority-dot"></span>':''}</div>
-        <div class="dash-card-step">${area.emoji} ${next.ms.t}</div>
+        <div class="dash-card-area">${area.emoji} ${area.name}</div>
+        <div class="dash-card-step">${next.ms.t}</div>
         <div class="dash-card-meta">${lgFreqBadge(next.ms.f)}<span class="dash-card-goal">${next.goalTitle}</span></div>
       </div>
       <div class="dash-card-right" onclick="lgMsDone('${next.gid}',${next.idx})">
@@ -1526,25 +2026,220 @@ function lgRenderDashboard() {
       </div>
     </div>`;
   }
-  return `<div class="dash">
-    <div class="dash-section-title">🎯 Priorytety teraz</div>
-    ${pAreas.map(a => cardHTML(a,true)).join('')}
-    <div class="dash-section-title" style="margin-top:18px">📋 Na radarze</div>
-    ${rAreas.map(a => cardHTML(a,false)).join('')}
-  </div>`;
+
+  const pEl = document.getElementById('focusPriorityCards');
+  const rEl = document.getElementById('focusRadarCards');
+  if (pEl) pEl.innerHTML = pAreas.map(a => focusCardHTML(a,true)).join('');
+  if (rEl) rEl.innerHTML = rAreas.map(a => focusCardHTML(a,false)).join('');
+}
+
+// ===== EDIT SYSTEM =====
+let editState = {}; // temp state during editing
+
+function openEditModal() {
+  const data = getLGData();
+  editState = JSON.parse(JSON.stringify(
+    data.map(a => ({
+      id: a.id, emoji: a.emoji, name: a.name,
+      goals: a.goals.filter(g => g.type !== 'tracker').map(g => ({
+        id: g.id, title: g.title, tag: g.tag || '',
+        ms: g.ms.map(m => ({t: m.t, f: m.f})),
+        isCustom: g.isCustom || false,
+      }))
+    }))
+  ));
+  editActiveArea = editState[0].id;
+  renderEditModal();
+  document.getElementById('editModal').classList.add('open');
+}
+
+function editBgClose(e) {
+  if (e.target.id === 'editModal') document.getElementById('editModal').classList.remove('open');
+}
+
+function renderEditModal() {
+  // Area tabs
+  const tabsEl = document.getElementById('editAreaTabs');
+  tabsEl.innerHTML = editState.map(a => `
+    <button class="edit-area-tab ${a.id === editActiveArea ? 'active' : ''}"
+      onclick="editSwitchArea('${a.id}')">${a.emoji} ${a.name.split(' ')[0]}</button>
+  `).join('');
+
+  // Goals list for active area
+  const area = editState.find(a => a.id === editActiveArea);
+  const listEl = document.getElementById('editGoalsList');
+  listEl.innerHTML = area.goals.map((g, gi) => `
+    <div class="edit-goal-item ${editOpenGoal === g.id ? 'open' : ''}" id="editgoal-${g.id}">
+      <div class="edit-goal-header" onclick="editToggleGoal('${g.id}')">
+        <span class="edit-goal-name">${g.title}</span>
+        <span class="edit-goal-toggle">▾</span>
+      </div>
+      <div class="edit-goal-body">
+        <div class="edit-field">
+          <label>Nazwa celu</label>
+          <input class="edit-input" value="${g.title}" oninput="editUpdateGoalTitle('${area.id}','${g.id}',this.value)">
+        </div>
+        <div class="edit-field">
+          <label>Tag</label>
+          <input class="edit-input" value="${g.tag}" oninput="editUpdateGoalTag('${area.id}','${g.id}',this.value)">
+        </div>
+        <div class="edit-field">
+          <label>Kroki do celu</label>
+          <div class="ms-edit-list" id="mslist-${g.id}">
+            ${g.ms.map((m, mi) => `
+              <div class="ms-edit-row" id="msrow-${g.id}-${mi}">
+                <input value="${m.t}" oninput="editUpdateMs('${area.id}','${g.id}',${mi},this.value)">
+                <select class="ms-freq-sel" onchange="editUpdateMsFreq('${area.id}','${g.id}',${mi},this.value)">
+                  <option value="jednorazowo" ${m.f==='jednorazowo'?'selected':''}>→ raz</option>
+                  <option value="tygodniowo" ${m.f==='tygodniowo'?'selected':''}>↻ tyg</option>
+                  <option value="codziennie" ${m.f==='codziennie'?'selected':''}>↻ codz</option>
+                </select>
+                <button class="ms-delete-btn" onclick="editDeleteMs('${area.id}','${g.id}',${mi})">×</button>
+              </div>
+            `).join('')}
+          </div>
+          <button class="btn-add-ms" onclick="editAddMs('${area.id}','${g.id}')">+ Dodaj krok</button>
+        </div>
+        ${g.isCustom ? `<button class="btn-delete-goal" onclick="editDeleteGoal('${area.id}','${g.id}')">Usuń cel</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function editSwitchArea(areaId) { editActiveArea = areaId; editOpenGoal = null; renderEditModal(); }
+function editToggleGoal(gid) { editOpenGoal = editOpenGoal === gid ? null : gid; renderEditModal(); }
+
+function editUpdateGoalTitle(areaId, gid, val) {
+  const area = editState.find(a => a.id === areaId);
+  const goal = area.goals.find(g => g.id === gid);
+  if (goal) goal.title = val;
+}
+function editUpdateGoalTag(areaId, gid, val) {
+  const area = editState.find(a => a.id === areaId);
+  const goal = area.goals.find(g => g.id === gid);
+  if (goal) goal.tag = val;
+}
+function editUpdateMs(areaId, gid, idx, val) {
+  const area = editState.find(a => a.id === areaId);
+  const goal = area.goals.find(g => g.id === gid);
+  if (goal && goal.ms[idx]) goal.ms[idx].t = val;
+}
+function editUpdateMsFreq(areaId, gid, idx, val) {
+  const area = editState.find(a => a.id === areaId);
+  const goal = area.goals.find(g => g.id === gid);
+  if (goal && goal.ms[idx]) goal.ms[idx].f = val;
+}
+function editAddMs(areaId, gid) {
+  const area = editState.find(a => a.id === areaId);
+  const goal = area.goals.find(g => g.id === gid);
+  if (goal) { goal.ms.push({t: '', f: 'jednorazowo'}); renderEditModal(); }
+}
+function editDeleteMs(areaId, gid, idx) {
+  const area = editState.find(a => a.id === areaId);
+  const goal = area.goals.find(g => g.id === gid);
+  if (goal) { goal.ms.splice(idx, 1); renderEditModal(); }
+}
+function lgAddGoal() {
+  const area = editState.find(a => a.id === editActiveArea);
+  const newId = 'custom_' + Date.now();
+  area.goals.push({ id: newId, title: 'Nowy cel', tag: '', ms: [], isCustom: true });
+  editOpenGoal = newId;
+  renderEditModal();
+}
+function editDeleteGoal(areaId, gid) {
+  const area = editState.find(a => a.id === areaId);
+  area.goals = area.goals.filter(g => g.id !== gid);
+  editOpenGoal = null;
+  renderEditModal();
+}
+
+function lgSaveEdit() {
+  // Save customizations to LG_S.customGoals
+  if (!LG_S.customGoals) LG_S.customGoals = {};
+  const data = getLGData();
+
+  editState.forEach(editArea => {
+    if (!LG_S.customGoals[editArea.id]) LG_S.customGoals[editArea.id] = {};
+    const origArea = data.find(a => a.id === editArea.id);
+
+    editArea.goals.forEach(editGoal => {
+      if (editGoal.isCustom) {
+        // Extra custom goal
+        if (!LG_S.customGoals[editArea.id].__extra) LG_S.customGoals[editArea.id].__extra = [];
+        const existing = LG_S.customGoals[editArea.id].__extra.find(g => g.id === editGoal.id);
+        if (existing) { existing.title = editGoal.title; existing.tag = editGoal.tag; existing.ms = editGoal.ms; }
+        else LG_S.customGoals[editArea.id].__extra.push({...editGoal, type: undefined});
+      } else {
+        // Override existing goal
+        const orig = origArea?.goals.find(g => g.id === editGoal.id);
+        if (orig) {
+          LG_S.customGoals[editArea.id][editGoal.id] = {
+            title: editGoal.title, tag: editGoal.tag, ms: editGoal.ms
+          };
+        }
+      }
+    });
+
+    // Handle deleted custom goals
+    if (LG_S.customGoals[editArea.id].__extra) {
+      LG_S.customGoals[editArea.id].__extra = LG_S.customGoals[editArea.id].__extra
+        .filter(g => editArea.goals.find(eg => eg.id === g.id));
+    }
+  });
+
+  lgSave();
+  document.getElementById('editModal').classList.remove('open');
+  lgRender();
+  renderFocus();
 }
 
 function lgRender() {
-  const pages = [{id:'dashboard', emoji:'🏠', name:'Dziś'}, ...LG_DATA];
+  const data = getLGData();
+  const pages = [{id:'dashboard', emoji:'🏠', name:'Dziś'}, ...data];
   document.getElementById('lgNav').innerHTML = pages.map((p,i) => {
     const isPriority = p.id !== 'dashboard' && LG_PRIORITY_IDS.includes(p.id);
     const label = p.id === 'dashboard' ? 'Dziś' : p.name.split(' ')[0];
     return `<button class="lg-nav-btn ${isPriority?'priority':''} ${p.id===lgActivePage?'active':''}" onclick="lgSwitchPage('${p.id}')">${p.emoji} ${label}</button>`;
   }).join('');
 
-  let html = `<div class="lg-page ${lgActivePage==='dashboard'?'active':''}" id="lgpage-dashboard">${lgRenderDashboard()}</div>`;
+  let html = `<div class="lg-page ${lgActivePage==='dashboard'?'active':''}" id="lgpage-dashboard">
+    <div class="dash">
+      <div class="focus-section-title">🎯 Priorytety</div>
+      ${data.filter(a=>LG_PRIORITY_IDS.includes(a.id)).map(a => {
+        const next = lgGetNextStep(a);
+        if (!next) return `<div class="dash-all-done priority-card"><div class="dash-all-done-text">${a.emoji} ${a.name} — ukończone! 🎉</div></div>`;
+        const checked = LG_S[next.gid+'_'+next.idx];
+        return `<div class="dash-card priority-card">
+          <div class="dash-card-left">
+            <div class="dash-card-area"><span class="priority-dot"></span>${a.emoji} ${a.name}</div>
+            <div class="dash-card-step">${next.ms.t}</div>
+            <div class="dash-card-meta">${lgFreqBadge(next.ms.f)}<span class="dash-card-goal">${next.goalTitle}</span></div>
+          </div>
+          <div class="dash-card-right" onclick="lgMsDone('${next.gid}',${next.idx})">
+            <div class="dash-check ${checked?'done':''}"></div>
+          </div>
+        </div>`;
+      }).join('')}
+      <div class="focus-section-title" style="margin-top:16px">📋 Na radarze</div>
+      ${data.filter(a=>!LG_PRIORITY_IDS.includes(a.id)).map(a => {
+        const next = lgGetNextStep(a);
+        if (!next) return `<div class="dash-all-done radar-card"><div class="dash-all-done-text">${a.emoji} ${a.name} — ukończone! 🎉</div></div>`;
+        const checked = LG_S[next.gid+'_'+next.idx];
+        return `<div class="dash-card radar-card">
+          <div class="dash-card-left">
+            <div class="dash-card-area">${a.emoji} ${a.name}</div>
+            <div class="dash-card-step">${next.ms.t}</div>
+            <div class="dash-card-meta">${lgFreqBadge(next.ms.f)}<span class="dash-card-goal">${next.goalTitle}</span></div>
+          </div>
+          <div class="dash-card-right" onclick="lgMsDone('${next.gid}',${next.idx})">
+            <div class="dash-check ${checked?'done':''}"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
 
-  LG_DATA.forEach(area => {
+  data.forEach(area => {
     const {total,done} = lgCountArea(area);
     const pct = total ? Math.round(done/total*100) : 0;
     const goalsHTML = area.goals.map(g => {
@@ -1594,6 +2289,7 @@ function lgRender() {
           <div class="goal-badge ${allDone?'done':''}">${allDone?'✓':gdone+'/'+g.ms.length}</div>
           <div class="goal-info"><div class="goal-title-text">${g.title}</div>
           <div class="goal-meta"><span class="goal-tag">${g.tag}</span><span class="goal-count">${gdone} z ${g.ms.length} kroków</span></div></div>
+          <div class="goal-edit-btn" onclick="event.stopPropagation(); editActiveArea='${area.id}'; editOpenGoal='${g.id}'; openEditModal()">✎</div>
           <div class="goal-arrow">▾</div>
         </div>
         <div class="milestones"><div class="milestones-label">Kroki do celu</div>${msHTML}</div>
@@ -1618,14 +2314,35 @@ function lgRender() {
   document.getElementById('lgMainPct').textContent = pct+'%';
   document.getElementById('lgMainCount').textContent = done+' / '+total;
   document.getElementById('lgGlobalBar').style.width = pct+'%';
-  document.getElementById('lgBs2').textContent = LG_DATA.reduce((s,a)=>s+a.goals.length,0);
+  document.getElementById('lgBs2').textContent = data.reduce((s,a)=>s+a.goals.length,0);
   document.getElementById('lgBs3').textContent = done;
   document.getElementById('lgBs4').textContent = total-done;
+}
+
+// ===== TAB SWITCHING (override) =====
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.app-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.app-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+  // Show/hide FAB
+  const fab = document.getElementById('editFab');
+  if (fab) fab.style.display = (tab === 'goals' || tab === 'focus') ? 'flex' : 'none';
+  if (tab === 'focus') renderFocus();
+  window.scrollTo(0, 0);
 }
 
 // Initialize both
 init();
 lgRender();
+renderFocus();
+// Sync Life Goals from Sheets in background
+lgSyncFromSheets();
+setInterval(lgSyncFromSheets, 30000);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') lgSyncFromSheets();
+});
 </script>
 </body>
 </html>
