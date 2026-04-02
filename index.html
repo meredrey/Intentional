@@ -73,6 +73,13 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
 .section-pts { margin-left:auto; font-size:0.67rem; color:#9B82B0; font-weight:500; }
 .habit-list { display:flex; flex-direction:column; gap:8px; }
 
+.cat-note {
+  font-size: 0.68rem;
+  color: #9B82B0;
+  padding: 0 2px 8px;
+  font-style: italic;
+}
+
 /* HABIT ITEMS */
 .habit-item { display:flex; align-items:center; gap:12px; padding:14px 16px; background:white; border-radius:10px; border:2px solid #D4C8E0; cursor:pointer; transition:all 0.18s ease; user-select:none; box-shadow:0 1px 6px rgba(42,31,53,0.06); }
 .habit-item:active { transform:scale(0.98); }
@@ -246,28 +253,29 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
     <div class="section-head">
       <div class="section-icon">✦</div>
       <span class="section-title">Ruch</span>
-      <span class="section-pts" id="cat-move">0 / 3</span>
+      <span class="section-pts" id="cat-move">0 / 4</span>
     </div>
+    <div class="cat-note">Zaznacz cokolwiek z poniższych — liczy się że się ruszyłaś!</div>
     <div class="habit-list">
-      <div class="habit-item" data-id="freeletics" data-pts="2" data-cat="move" onclick="toggle(this)">
+      <div class="habit-item" data-id="freeletics" data-pts="0" data-cat="move" onclick="toggle(this)">
         <div class="cb">✓</div>
         <div class="hname">Freeletics</div>
-        <div class="habit-right"><span class="hpts">2 pkt</span><span class="hstreak" id="str-freeletics"></span></div>
+        <div class="habit-right"><span class="hstreak" id="str-freeletics"></span></div>
       </div>
-      <div class="habit-item" data-id="dance" data-pts="2" data-cat="move" onclick="toggle(this)">
+      <div class="habit-item" data-id="dance" data-pts="0" data-cat="move" onclick="toggle(this)">
         <div class="cb">✓</div>
         <div class="hname">Taniec</div>
-        <div class="habit-right"><span class="hpts">2 pkt</span><span class="hstreak" id="str-dance"></span></div>
+        <div class="habit-right"><span class="hstreak" id="str-dance"></span></div>
       </div>
-      <div class="habit-item" data-id="steps" data-pts="1" data-cat="move" onclick="toggle(this)">
+      <div class="habit-item" data-id="steps" data-pts="0" data-cat="move" onclick="toggle(this)">
         <div class="cb">✓</div>
-        <div class="hname">7 000+ kroków</div>
-        <div class="habit-right"><span class="hpts">1 pkt</span><span class="hstreak" id="str-steps"></span></div>
+        <div class="hname">7 000+ kroków / spacer</div>
+        <div class="habit-right"><span class="hstreak" id="str-steps"></span></div>
       </div>
-      <div class="habit-item" data-id="bike" data-pts="2" data-cat="move" onclick="toggle(this)">
+      <div class="habit-item" data-id="bike" data-pts="0" data-cat="move" onclick="toggle(this)">
         <div class="cb">✓</div>
-        <div class="hname">Rower</div>
-        <div class="habit-right"><span class="hpts">2 pkt</span><span class="hstreak" id="str-bike"></span></div>
+        <div class="hname">Rower / basen</div>
+        <div class="habit-right"><span class="hstreak" id="str-bike"></span></div>
       </div>
     </div>
   </div>
@@ -296,25 +304,37 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
   <!-- NAWYKI -->
   <div class="section">
     <div class="section-head">
-      <div class="section-icon">❋</div>
+      <div class="section-icon">🌙</div>
       <span class="section-title">Nawyki</span>
-      <span class="section-pts" id="cat-habits">0 / 3</span>
+      <span class="section-pts" id="cat-habits">0 / 1</span>
     </div>
     <div class="habit-list">
-      <div class="habit-item" data-id="duolingo" data-pts="1" data-cat="habits" onclick="toggle(this)">
-        <div class="cb">✓</div>
-        <div class="hname">Duolingo</div>
-        <div class="habit-right"><span class="hpts">1 pkt</span><span class="hstreak" id="str-duolingo"></span></div>
-      </div>
-      <div class="habit-item" data-id="piano" data-pts="1" data-cat="habits" onclick="toggle(this)">
-        <div class="cb">✓</div>
-        <div class="hname">Pianino</div>
-        <div class="habit-right"><span class="hpts">1 pkt</span><span class="hstreak" id="str-piano"></span></div>
-      </div>
       <div class="habit-item" data-id="sleep" data-pts="1" data-cat="habits" onclick="toggle(this)">
         <div class="cb">✓</div>
         <div class="hname">Higiena snu — pielęgnacja, książka, bez ekranu</div>
         <div class="habit-right"><span class="hpts">1 pkt</span><span class="hstreak" id="str-sleep"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROZWÓJ -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-icon">📚</div>
+      <span class="section-title">Rozwój</span>
+      <span class="section-pts" id="cat-growth">0 / 1</span>
+    </div>
+    <div class="cat-note">Oba = 1 pkt</div>
+    <div class="habit-list">
+      <div class="habit-item" data-id="duolingo" data-pts="0" data-cat="growth" onclick="toggle(this)">
+        <div class="cb">✓</div>
+        <div class="hname">Duolingo</div>
+        <div class="habit-right"><span class="hstreak" id="str-duolingo"></span></div>
+      </div>
+      <div class="habit-item" data-id="piano" data-pts="0" data-cat="growth" onclick="toggle(this)">
+        <div class="cb">✓</div>
+        <div class="hname">Pianino</div>
+        <div class="habit-right"><span class="hstreak" id="str-piano"></span></div>
       </div>
     </div>
   </div>
@@ -324,18 +344,19 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
     <div class="section-head">
       <div class="section-icon">💊</div>
       <span class="section-title">Suplementacja</span>
-      <span class="section-pts" id="cat-suppl">0 / 2</span>
+      <span class="section-pts" id="cat-suppl">0 / 1</span>
     </div>
+    <div class="cat-note">Oba = 1 pkt</div>
     <div class="habit-list">
-      <div class="habit-item" data-id="suppl1" data-pts="1" data-cat="suppl" onclick="toggle(this)">
+      <div class="habit-item" data-id="suppl1" data-pts="0" data-cat="suppl" onclick="toggle(this)">
         <div class="cb">✓</div>
         <div class="hname">Kolagen + kreatyna</div>
-        <div class="habit-right"><span class="hpts">1 pkt</span><span class="hstreak" id="str-suppl1"></span></div>
+        <div class="habit-right"><span class="hstreak" id="str-suppl1"></span></div>
       </div>
-      <div class="habit-item" data-id="suppl2" data-pts="1" data-cat="suppl" onclick="toggle(this)">
+      <div class="habit-item" data-id="suppl2" data-pts="0" data-cat="suppl" onclick="toggle(this)">
         <div class="cb">✓</div>
         <div class="hname">Wit. D + B12 + Magnez B6</div>
-        <div class="habit-right"><span class="hpts">1 pkt</span><span class="hstreak" id="str-suppl2"></span></div>
+        <div class="habit-right"><span class="hstreak" id="str-suppl2"></span></div>
       </div>
     </div>
   </div>
@@ -406,12 +427,124 @@ const MSGS = ['Brawo! 🌸','Tak trzymaj! ✨','Jesteś niesamowita!','Pięknie!
 
 const HABITS = [
   {id:'calories',pts:2,cat:'food'},{id:'notension',pts:1,cat:'food'},
-  {id:'freeletics',pts:2,cat:'move'},{id:'dance',pts:2,cat:'move'},{id:'steps',pts:1,cat:'move'},{id:'bike',pts:2,cat:'move'},
+  {id:'freeletics',pts:0,cat:'move'},{id:'dance',pts:0,cat:'move'},{id:'steps',pts:0,cat:'move'},{id:'bike',pts:0,cat:'move'},
   {id:'noalc',pts:1,cat:'alcohol'},{id:'alcrule',pts:1,cat:'alcohol'},
-  {id:'duolingo',pts:1,cat:'habits'},{id:'piano',pts:1,cat:'habits'},{id:'sleep',pts:1,cat:'habits'},
-  {id:'suppl1',pts:1,cat:'suppl'},{id:'suppl2',pts:1,cat:'suppl'},
+  {id:'sleep',pts:1,cat:'habits'},
+  {id:'duolingo',pts:0,cat:'growth'},{id:'piano',pts:0,cat:'growth'},
+  {id:'suppl1',pts:0,cat:'suppl'},{id:'suppl2',pts:0,cat:'suppl'},
 ];
 const MAX_PTS = 12;
+
+// Category scoring rules
+const CAT_RULES = {
+  food:    { pts: 3, individual: true },
+  move:    { pts: 4, anyOf: ['freeletics','dance','steps','bike'] },
+  alcohol: { pts: 2, individual: true },
+  habits:  { pts: 1, allOf: ['sleep'] },
+  growth:  { pts: 1, allOf: ['duolingo','piano'] },
+  suppl:   { pts: 1, allOf: ['suppl1','suppl2'] },
+};
+
+// ADAPTIVE SCORING — recalculates every 21 days
+const BASE_CATS = {
+  food: 3, move: 4, alcohol: 2, habits: 1, growth: 1, suppl: 1
+};
+const CAT_MIN = { food: 1, move: 1, alcohol: 1, habits: 1, growth: 1, suppl: 1 };
+const CAT_MAX = { food: 5, move: 5, alcohol: 2, habits: 1, growth: 1, suppl: 2 };
+// alcohol, habits, growth, suppl are capped — main redistribution between food & move
+
+function getAdaptivePts(state) {
+  const today = new Date();
+  const startKey = Object.keys(state.days||{}).sort()[0];
+  if(!startKey) return {...BASE_CATS};
+
+  // Find last 21-day cycle start
+  const startDate = new Date(...startKey.split('-').map((v,i)=>i===1?v-1:v));
+  const daysSinceStart = Math.floor((today - startDate) / 86400000);
+  const cycleNum = Math.floor(daysSinceStart / 21);
+  
+  if(cycleNum === 0) return {...BASE_CATS};
+  
+  // Use stored adaptive pts if available and cycle hasn't changed
+  if(state.adaptivePts && state.adaptiveCycle === cycleNum) {
+    return state.adaptivePts;
+  }
+  
+  // Calculate effectiveness for previous 21-day cycle
+  const cycleStart = new Date(startDate);
+  cycleStart.setDate(cycleStart.getDate() + (cycleNum-1)*21);
+  const cycleEnd = new Date(startDate);
+  cycleEnd.setDate(cycleEnd.getDate() + cycleNum*21);
+  
+  const effectiveness = {};
+  const cats = Object.keys(BASE_CATS);
+  cats.forEach(cat => {
+    let possible = 0, earned = 0;
+    for(let d=new Date(cycleStart); d<cycleEnd; d.setDate(d.getDate()+1)) {
+      const key = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+      const dd = state.days?.[key]||{};
+      possible += CAT_RULES[cat].pts;
+      earned += calcCatPts(dd, cat);
+    }
+    effectiveness[cat] = possible > 0 ? earned/possible : 0;
+  });
+  
+  // Redistribute: built (≥80%) loses 1, struggling (<50%) gains 1
+  const pts = state.adaptivePts ? {...state.adaptivePts} : {...BASE_CATS};
+  let pool = 0;
+  const needMore = [];
+  
+  cats.forEach(cat => {
+    if(effectiveness[cat] >= 0.80 && pts[cat] > CAT_MIN[cat]) {
+      pts[cat] = Math.max(CAT_MIN[cat], pts[cat] - 1);
+      pool++;
+    } else if(effectiveness[cat] < 0.50) {
+      needMore.push(cat);
+    }
+  });
+  
+  // Give pool to struggling cats, prioritize worst performers
+  needMore.sort((a,b) => effectiveness[a] - effectiveness[b]);
+  needMore.forEach(cat => {
+    if(pool > 0 && pts[cat] < CAT_MAX[cat]) {
+      pts[cat] = Math.min(CAT_MAX[cat], pts[cat] + 1);
+      pool--;
+    }
+  });
+  
+  // Ensure total = 12
+  return pts;
+}
+
+function checkAndApplyAdaptation(state) {
+  const today = new Date();
+  const startKey = Object.keys(state.days||{}).sort()[0];
+  if(!startKey) return false;
+  
+  const startDate = new Date(...startKey.split('-').map((v,i)=>i===1?v-1:v));
+  const daysSinceStart = Math.floor((today - startDate) / 86400000);
+  const cycleNum = Math.floor(daysSinceStart / 21);
+  
+  if(cycleNum > 0 && state.adaptiveCycle !== cycleNum) {
+    const newPts = getAdaptivePts(state);
+    state.adaptivePts = newPts;
+    state.adaptiveCycle = cycleNum;
+    
+    // Update CAT_RULES pts
+    Object.keys(newPts).forEach(cat => {
+      if(CAT_RULES[cat]) CAT_RULES[cat].pts = newPts[cat];
+    });
+    return true;
+  }
+  
+  // Apply stored adaptive pts
+  if(state.adaptivePts) {
+    Object.keys(state.adaptivePts).forEach(cat => {
+      if(CAT_RULES[cat]) CAT_RULES[cat].pts = state.adaptivePts[cat];
+    });
+  }
+  return false;
+}
 
 const REWARDS = [
   {id:'r1',name:'Balsam lub świeczka',budget:'50–80 zł',threshold:30,period:'3 dni',img:'data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgODAwIDMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI0VERTdGNSIvPgogIDxjaXJjbGUgY3g9IjY4MCIgY3k9IjYwIiByPSIxMjAiIGZpbGw9IiNENEM4RTAiIG9wYWNpdHk9IjAuNCIvPgogIDxjaXJjbGUgY3g9IjEwMCIgY3k9IjI2MCIgcj0iODAiIGZpbGw9IiNDOEI0REMiIG9wYWNpdHk9IjAuMyIvPgogIDwhLS0gY2FuZGxlIC0tPgogIDxyZWN0IHg9IjM0MCIgeT0iMTQwIiB3aWR0aD0iNDQiIGhlaWdodD0iMTAwIiByeD0iNiIgZmlsbD0iI0Y1RjBGQSIvPgogIDxyZWN0IHg9IjM0MCIgeT0iMTQwIiB3aWR0aD0iNDQiIGhlaWdodD0iMTAwIiByeD0iNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjQzhCNERDIiBzdHJva2Utd2lkdGg9IjIiLz4KICA8cmVjdCB4PSIzNTAiIHk9IjEzMCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjE4IiByeD0iMyIgZmlsbD0iI0U4RDVGMCIvPgogIDxlbGxpcHNlIGN4PSIzNjIiIGN5PSIxMjgiIHJ4PSI1IiByeT0iOCIgZmlsbD0iI0ZGRDU4MCIgb3BhY2l0eT0iMC45Ii8+CiAgPGVsbGlwc2UgY3g9IjM2MiIgY3k9IjEyMiIgcng9IjMiIHJ5PSI1IiBmaWxsPSIjRkZBMDQwIiBvcGFjaXR5PSIwLjciLz4KICA8IS0tIGphciAtLT4KICA8cmVjdCB4PSI0MzAiIHk9IjE2MCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjcwIiByeD0iMTAiIGZpbGw9IiNGMEVBRjgiLz4KICA8cmVjdCB4PSI0MzAiIHk9IjE2MCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjcwIiByeD0iMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0M4QjREQyIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHJlY3QgeD0iNDM1IiB5PSIxNTAiIHdpZHRoPSI1MCIgaGVpZ2h0PSIxNiIgcng9IjQiIGZpbGw9IiNENEM4RTAiLz4KICA8dGV4dCB4PSI0NjAiIHk9IjIwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzlCODJCMCIgZm9udC1zaXplPSIxMSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEiPmJvZHk8L3RleHQ+CiAgPCEtLSBzbWFsbCBmbG93ZXJzIC0tPgogIDxjaXJjbGUgY3g9IjI4MCIgY3k9IjE4MCIgcj0iOCIgZmlsbD0iI0M4QjREQyIgb3BhY2l0eT0iMC42Ii8+CiAgPGNpcmNsZSBjeD0iMjY4IiBjeT0iMTcyIiByPSI2IiBmaWxsPSIjRDRDOEUwIiBvcGFjaXR5PSIwLjUiLz4KICA8Y2lyY2xlIGN4PSIyOTIiIGN5PSIxNzIiIHI9IjYiIGZpbGw9IiNENEM4RTAiIG9wYWNpdHk9IjAuNSIvPgogIDxjaXJjbGUgY3g9IjI4MCIgY3k9IjE2NCIgcj0iNiIgZmlsbD0iI0Q0QzhFMCIgb3BhY2l0eT0iMC41Ii8+CiAgPGxpbmUgeDE9IjI4MCIgeTE9IjE4OCIgeDI9IjI4MCIgeTI9IjIyMCIgc3Ryb2tlPSIjOUI4MkIwIiBzdHJva2Utd2lkdGg9IjIiLz4KICA8IS0tIHRleHQgLS0+CiAgPHRleHQgeD0iNDAwIiB5PSIyNzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2QjRGODIiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtZmFtaWx5PSJHZW9yZ2lhIiBmb250LXN0eWxlPSJpdGFsaWMiPmJhbHNhbSDCtyDFm3dpZWN6a2E8L3RleHQ+Cjwvc3ZnPg=='},
@@ -475,7 +608,36 @@ function dayAgo(d, ago) {
 
 function getDayPts(state, key) {
   const dd = state.days?.[key]||{};
-  return HABITS.reduce((sum,h) => sum + (dd[h.id] ? h.pts : 0), 0);
+  return calcDayPts(dd);
+}
+
+function calcDayPts(dd) {
+  let pts = 0;
+  // Jedzenie: calories=2, notension=1
+  if(dd.calories) pts += 2;
+  if(dd.notension) pts += 1;
+  // Ruch: cokolwiek = 4pkt
+  if(['freeletics','dance','steps','bike'].some(x => dd[x])) pts += 4;
+  // Alkohol: noalc=1, alcrule=1
+  if(dd.noalc) pts += 1;
+  if(dd.alcrule) pts += 1;
+  // Nawyki: sleep=1
+  if(dd.sleep) pts += 1;
+  // Rozwoj: oba = 1pt
+  if(dd.duolingo && dd.piano) pts += 1;
+  // Suplementacja: oba = 2pt
+  if(dd.suppl1 && dd.suppl2) pts += 1;
+  return pts;
+}
+
+function calcCatPts(dd, cat) {
+  if(cat==='food') return (dd.calories?2:0)+(dd.notension?1:0);
+  if(cat==='move') return ['freeletics','dance','steps','bike'].some(x=>dd[x])?4:0;
+  if(cat==='alcohol') return (dd.noalc?1:0)+(dd.alcrule?1:0);
+  if(cat==='habits') return dd.sleep?1:0;
+  if(cat==='growth') return (dd.duolingo&&dd.piano)?1:0;
+  if(cat==='suppl') return (dd.suppl1&&dd.suppl2)?1:0;
+  return 0;
 }
 
 function calcStreak(state) {
@@ -537,16 +699,17 @@ function renderAll(state) {
   });
 
   // Points for this view day
-  const viewPts = HABITS.reduce((sum,h) => sum+(dd[h.id]?h.pts:0), 0);
+  const viewPts = calcDayPts(dd);
   document.getElementById('todayPts').textContent = viewPts;
   document.getElementById('totalPts').textContent = state.totalPoints||0;
 
   // Category pts
-  const cats={food:{max:3},move:{max:3},alcohol:{max:2},habits:{max:3},suppl:{max:2}};
-  Object.keys(cats).forEach(cat=>{
-    let s=0;
-    HABITS.filter(h=>h.cat===cat).forEach(h=>{ if(dd[h.id]) s+=h.pts; });
-    const el=document.getElementById(`cat-${cat}`); if(el) el.textContent=`${s} / ${cats[cat].max}`;
+  // Category points using new rules
+  Object.keys(CAT_RULES).forEach(cat=>{
+    const rule = CAT_RULES[cat];
+    const earned = calcCatPts(dd, cat);
+    const el = document.getElementById(`cat-${cat}`);
+    if(el) el.textContent=`${earned} / ${rule.pts}`;
   });
 
   // Per-habit streaks (always based on today, not viewing date)
@@ -688,9 +851,10 @@ function openHabitStats() {
   const state=gs(), list=document.getElementById('habitStatsList'); list.innerHTML='';
   const names={
     calories:'Kalorie w normie',notension:'Nie zjadłam z napięcia',
-    freeletics:'Freeletics',dance:'Taniec',steps:'7 000+ kroków',bike:'Rower',
+    freeletics:'Freeletics',dance:'Taniec',steps:'7 000+ kroków / spacer',bike:'Rower / basen',
     noalc:'Dzień bez alkoholu',alcrule:'Zasada „od a nie do"',
-    duolingo:'Duolingo',piano:'Pianino',sleep:'Higiena snu',
+    sleep:'Higiena snu',
+    duolingo:'Duolingo',piano:'Pianino',
     suppl1:'Kolagen + kreatyna',suppl2:'Wit. D + B12 + Magnez B6',
   };
   HABITS.forEach(h=>{
@@ -728,6 +892,18 @@ function resetDay() {
 }
 
 function bgClose(e,id){ if(e.target.id===id) document.getElementById(id).classList.remove('open'); }
+
+function showAdaptationToast(state) {
+  const pts = state.adaptivePts || BASE_CATS;
+  const msgs = [];
+  if(pts.move > BASE_CATS.move) msgs.push('Ruch +' + (pts.move - BASE_CATS.move) + ' pkt');
+  if(pts.food > BASE_CATS.food) msgs.push('Jedzenie +' + (pts.food - BASE_CATS.food) + ' pkt');
+  if(pts.suppl < BASE_CATS.suppl) msgs.push('Suplementacja opanowana! 🎉');
+  if(pts.growth < BASE_CATS.growth) msgs.push('Rozwój opanowany! 🎉');
+  if(msgs.length > 0) {
+    setTimeout(() => toast('System się dostosował: ' + msgs.join(', ')), 1000);
+  }
+}
 
 function toast(msg) {
   const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
