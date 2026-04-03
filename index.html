@@ -732,7 +732,7 @@ function showToast(msg){
 let activeTab=localStorage.getItem(TAB_KEY)||'coach';
 function switchTab(tab){
   // 'wheel' is now inside goals, not a top-level tab
-  if(tab==='wheel'){tab='goals';lgActivePage='wheel';}
+  if(tab==='wheel'){tab='goals';}
   activeTab=tab;
   localStorage.setItem(TAB_KEY,tab);
   document.querySelectorAll('.app-tab').forEach(t=>t.classList.remove('active'));
@@ -1482,7 +1482,9 @@ function wDE(){wDragSrcIdx=null;document.querySelectorAll('.wheel-item').forEach
 
 // Mobile drag
 function wTS(e,idx){
-  if(!e.target.classList.contains('wheel-drag-handle'))return;
+  // Check if touch started on handle or its parent
+  const handle=e.target.closest('.wheel-drag-handle');
+  if(!handle)return;
   e.preventDefault();e.stopPropagation();
   wTouchDragIdx=idx;wTouchDragEl=e.currentTarget;
   wTouchDragEl.classList.add('dragging');
@@ -1528,10 +1530,10 @@ function getPriorities(){
     .sort((a,b)=>{
       const ai=order.indexOf(a.id),bi=order.indexOf(b.id);
       const as=scores[a.id]||5,bs=scores[b.id]||5;
-      // Higher rank index (worse position) + lower score = bigger value = comes first
-      const aVal=(n-ai)*0.6+(10-as)*0.4;
-      const bVal=(n-bi)*0.6+(10-bs)*0.4;
-      return bVal-aVal;
+      // Worst areas = bottom of ranking (highest index) + lowest score
+      // Sort descending by index, then ascending by score
+      if(ai!==bi) return bi-ai;  // higher index = worse rank = comes first
+      return as-bs;               // lower score = worse = comes first
     })
     .slice(0,3).map(a=>a.id);
 }
