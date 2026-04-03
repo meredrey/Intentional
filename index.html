@@ -699,7 +699,7 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
 // ============================================================
 // PERSISTENCE
 // ============================================================
-const API = 'https://script.google.com/macros/s/AKfycbxz_8jwR7k_SP9yyXsF-swpfr-iDt9R88-DlUHoSTR2ifi0cnNAmc5For6i4Zz-b2KzHQ/exec';
+const SHEETS_API = 'https://script.google.com/macros/s/AKfycbxz_8jwR7k_SP9yyXsF-swpfr-iDt9R88-DlUHoSTR2ifi0cnNAmc5For6i4Zz-b2KzHQ/exec';
 const DC_KEY = 'dc5';
 const LG_KEY = 'mata_lg_v4';
 const WH_KEY = 'intentional_wheel';
@@ -713,8 +713,8 @@ function lgSet(s){localStorage.setItem(LG_KEY,JSON.stringify(s));clearTimeout(lg
 function whGet(){try{return JSON.parse(localStorage.getItem(WH_KEY)||'{}')}catch{return{}}}
 function whSet(s){localStorage.setItem(WH_KEY,JSON.stringify(s))}
 
-function sheetWrite(sheet,data){fetch(`${API}?action=write&sheet=${sheet}&data=${encodeURIComponent(JSON.stringify(data))}`).catch(e=>console.log('write err',e))}
-function sheetRead(sheet){return fetch(`${API}?action=read&sheet=${sheet}`).then(r=>r.json()).catch(()=>null)}
+function sheetWrite(sheet,data){fetch(`${SHEETS_API}?action=write&sheet=${sheet}&data=${encodeURIComponent(JSON.stringify(data))}`).catch(e=>console.log('write err',e))}
+function sheetRead(sheet){return fetch(`${SHEETS_API}?action=read&sheet=${sheet}`).then(r=>r.json()).catch(()=>null)}
 function syncAll(){
   sheetRead('CoachData').then(r=>{if(r&&typeof r==='object'){localStorage.setItem(DC_KEY,JSON.stringify(r));renderAll(gs());}});
   sheetRead('LifeGoals').then(r=>{if(r&&typeof r==='object'){localStorage.setItem(LG_KEY,JSON.stringify(r));renderLG();renderFocus();}});
@@ -731,12 +731,16 @@ function showToast(msg){
 // ============================================================
 let activeTab=localStorage.getItem(TAB_KEY)||'coach';
 function switchTab(tab){
+  // 'wheel' is now inside goals, not a top-level tab
+  if(tab==='wheel'){tab='goals';lgActivePage='wheel';}
   activeTab=tab;
   localStorage.setItem(TAB_KEY,tab);
   document.querySelectorAll('.app-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('tab-'+tab).classList.add('active');
-  document.getElementById('panel-'+tab).classList.add('active');
+  const tabEl=document.getElementById('tab-'+tab);
+  const panelEl=document.getElementById('panel-'+tab);
+  if(tabEl)tabEl.classList.add('active');
+  if(panelEl)panelEl.classList.add('active');
   const fab=document.getElementById('editFab');
   if(fab)fab.style.display=tab==='goals'?'flex':'none';
   if(tab==='focus')renderFocus();
@@ -887,9 +891,8 @@ const REWARDS = [
 let viewingDate = new Date(); // the date being shown
 let calViewDate = new Date(); // month shown in calendar
 
-const API = 'https://script.google.com/macros/s/AKfycbxz_8jwR7k_SP9yyXsF-swpfr-iDt9R88-DlUHoSTR2ifi0cnNAmc5For6i4Zz-b2KzHQ/exec';
-const LS_KEY = 'dc5';
-let saveTimer = null;
+// API already declared above
+const LS_KEY = DC_KEY; // use wrapper's DC_KEY
 
 function gs() {
   try { return JSON.parse(localStorage.getItem(LS_KEY)||'{}'); } catch { return {}; }
@@ -905,12 +908,12 @@ function ss(state) {
 
 function syncToSheets(state) {
   const data = encodeURIComponent(JSON.stringify(state));
-  fetch(`${API}?action=write&data=${data}`)
+  fetch(`${SHEETS_API}?action=write&data=${data}`)
     .catch(err => console.log('Sheets sync error:', err));
 }
 
 function syncFromSheets() {
-  fetch(`${API}?action=read`)
+  fetch(`${SHEETS_API}?action=read`)
     .then(r => r.json())
     .then(remote => {
       if (!remote || typeof remote !== 'object') return;
@@ -1317,9 +1320,6 @@ function importData(event) {
   event.target.value = '';
 }
 
-init();
-
-
 // Override toast for DC
 function toast(msg){
   const t=document.getElementById('dc-toast')||document.getElementById('toast');
@@ -1725,7 +1725,7 @@ const LG_DATA=[
   ]},
 ];
 
-let lgActivePage='wheel',lgOpenGoals={},lgEditMode=false,lgEditingGoal=null;
+let lgActivePage='rodzina',lgOpenGoals={},lgEditMode=false,lgEditingGoal=null;
 
 function getLGData(){
   const custom=(lgGet().customGoals)||{};
@@ -1846,7 +1846,7 @@ function buildEditPanel(area,g){
 function renderLG(){
   const data=getLGData(),lg=lgGet();
   const nav=document.getElementById('lgAreaNav');
-  const wheelBtn=`<button class="lg-area-btn${lgActivePage==='wheel'?' active':''}" onclick="lgActivePage='wheel';renderLG()">⭕ Koło</button>`;
+  const wheelBtn=`<button class="lg-area-btn${lgActivePage==='wheel'?' active':''}" onclick="lgActivePage='wheel';lgEditMode=false;renderLG()">⭕ Koło</button>`;
   if(nav)nav.innerHTML=wheelBtn+data.map(a=>`<button class="lg-area-btn${a.id===lgActivePage?' active':''}" onclick="lgActivePage='${a.id}';renderLG()">${a.emoji} ${a.name.split(' ')[0]}</button>`).join('');
 
   const FMAP={codziennie:'↻ codziennie',tygodniowo:'↻ co tydzień',jednorazowo:'→ jednorazowo'};
