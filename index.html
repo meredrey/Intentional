@@ -1431,14 +1431,16 @@ function renderWheel(){
   if(!list)return;
   list.innerHTML=wheelState.order.map((id,idx)=>{
     const area=WHEEL_AREAS.find(a=>a.id===id),sc=wScore(id),isOpen=openWheelItem===id;
-    return `<div class="wheel-item${isOpen?' open':''}" id="witem-${id}" draggable="true"
-      ondragstart="wDS(event,${idx})" ondragover="wDO(event,${idx})" ondrop="wDR(event,${idx})" ondragend="wDE()"
-      ontouchstart="wTS(event,${idx})" ontouchmove="wTM(event)" ontouchend="wTE(event,${idx})">
-      <div class="wheel-item-head" onclick="openWheelItem=openWheelItem==='${id}'?null:'${id}';renderWheel()">
-        <span class="wheel-drag-handle" onclick="event.stopPropagation()">⠿</span>
+    const n=wheelState.order.length;
+    return `<div class="wheel-item${isOpen?' open':''}" id="witem-${id}">
+      <div class="wheel-item-head">
+        <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
+          <button onclick="wMoveUp(${idx})" style="border:none;background:none;color:${idx===0?'#e4ebe2':'#8aaa78'};font-size:0.8rem;cursor:pointer;padding:1px;line-height:1" ${idx===0?'disabled':''}>▲</button>
+          <button onclick="wMoveDown(${idx})" style="border:none;background:none;color:${idx===n-1?'#e4ebe2':'#8aaa78'};font-size:0.8rem;cursor:pointer;padding:1px;line-height:1" ${idx===n-1?'disabled':''}>▼</button>
+        </div>
         <span class="wheel-rank-num">${idx+1}</span>
-        <span class="wheel-item-emoji">${area.emoji}</span>
-        <span class="wheel-item-name">${area.name}</span>
+        <span class="wheel-item-emoji" style="cursor:pointer" onclick="openWheelItem=openWheelItem==='${id}'?null:'${id}';renderWheel()">${area.emoji}</span>
+        <span class="wheel-item-name" style="cursor:pointer" onclick="openWheelItem=openWheelItem==='${id}'?null:'${id}';renderWheel()">${area.name}</span>
         <span class="wheel-score-badge" id="wbadge-${id}">${sc}</span>
       </div>
       ${isOpen?`<div class="wheel-item-body">
@@ -1467,6 +1469,22 @@ function renderWheel(){
   drawWheel();
   const upd=document.getElementById('wheelLastUpd');
   if(upd)upd.textContent=wheelState.updated?'Ostatnia aktualizacja: '+wheelState.updated:'';
+}
+
+// Move up/down buttons
+function wMoveUp(idx){
+  if(idx===0)return;
+  const arr=[...wheelState.order];
+  [arr[idx-1],arr[idx]]=[arr[idx],arr[idx-1]];
+  wheelState.order=arr;
+  renderWheel();
+}
+function wMoveDown(idx){
+  if(idx>=wheelState.order.length-1)return;
+  const arr=[...wheelState.order];
+  [arr[idx],arr[idx+1]]=[arr[idx+1],arr[idx]];
+  wheelState.order=arr;
+  renderWheel();
 }
 
 // Desktop drag
