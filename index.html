@@ -908,15 +908,18 @@ function ss(state) {
 
 function syncToSheets(state) {
   const data = encodeURIComponent(JSON.stringify(state));
-  fetch(`${SHEETS_API}?action=write&data=${data}`)
+  fetch(`${SHEETS_API}?action=write&sheet=CoachData&data=${data}`)
     .catch(err => console.log('Sheets sync error:', err));
 }
 
 function syncFromSheets() {
-  fetch(`${SHEETS_API}?action=read`)
+  fetch(`${SHEETS_API}?action=read&sheet=CoachData`)
     .then(r => r.json())
     .then(remote => {
       if (!remote || typeof remote !== 'object') return;
+      // Only merge if remote has real data - don't overwrite local with empty sheet
+      const hasRealData = (remote.totalPoints > 0) || (remote.days && Object.keys(remote.days).length > 0);
+      if (!hasRealData) return;
       const local = gs();
       // Merge: take higher totalPoints and union of days
       const merged = {
