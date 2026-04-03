@@ -1758,7 +1758,7 @@ const LG_DATA=[
   ]},
 ];
 
-let lgActivePage='rodzina',lgOpenGoals={},lgEditMode=false,lgEditingGoal=null;
+let lgActivePage=localStorage.getItem('intentional_lgpage')||'rodzina',lgOpenGoals={},lgEditMode=false,lgEditingGoal=null;
 
 function getLGData(){
   const custom=(lgGet().customGoals)||{};
@@ -1879,8 +1879,8 @@ function buildEditPanel(area,g){
 function renderLG(){
   const data=getLGData(),lg=lgGet();
   const nav=document.getElementById('lgAreaNav');
-  const wheelBtn=`<button class="lg-area-btn${lgActivePage==='wheel'?' active':''}" onclick="lgActivePage='wheel';lgEditMode=false;renderLG()">⭕ Koło</button>`;
-  if(nav)nav.innerHTML=wheelBtn+data.map(a=>`<button class="lg-area-btn${a.id===lgActivePage?' active':''}" onclick="lgActivePage='${a.id}';renderLG()">${a.emoji} ${a.name.split(' ')[0]}</button>`).join('');
+  const wheelBtn=`<button class="lg-area-btn${lgActivePage==='wheel'?' active':''}" onclick="lgActivePage='wheel';localStorage.setItem('intentional_lgpage','wheel');renderLG()">⭕ Koło</button>`;
+  if(nav)nav.innerHTML=wheelBtn+data.map(a=>`<button class="lg-area-btn${a.id===lgActivePage?' active':''}" onclick="lgActivePage='${a.id}';localStorage.setItem('intentional_lgpage','${a.id}');renderLG()">${a.emoji} ${a.name.split(' ')[0]}</button>`).join('');
 
   const FMAP={codziennie:'↻ codziennie',tygodniowo:'↻ co tydzień',jednorazowo:'→ jednorazowo'};
   // Render wheel page if active
