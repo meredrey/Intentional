@@ -1423,10 +1423,8 @@ function drawWheel(){
 }
 
 function renderWheel(){
-  loadWheel();
-  // Reset drag state on re-render
-  wDragSrcIdx=null;wTouchDragIdx=null;wTouchDragEl=null;
-  if(wTouchClone){wTouchClone.remove();wTouchClone=null;}
+  // Only load from storage if wheelState is empty (first load)
+  if(!wheelState.order || wheelState.order.length===0) loadWheel();
   const list=document.getElementById('wheelList');
   if(!list)return;
   list.innerHTML=wheelState.order.map((id,idx)=>{
