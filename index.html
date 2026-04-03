@@ -1359,7 +1359,7 @@ function loadWheel(){
   if(s.updated)wheelState.updated=s.updated;
 }
 
-function saveWheel(){
+function saveWheel(){wheelDirty=false;
   wheelState.updated=new Date().toLocaleDateString('pl-PL');
   whSet(wheelState);
   const lg=lgGet();
@@ -1427,8 +1427,8 @@ function drawWheel(){
 }
 
 function renderWheel(){
-  // Only load from storage if wheelState is empty (first load)
-  if(!wheelState.order || wheelState.order.length===0) loadWheel();
+  // Load from storage unless user has unsaved changes
+  if(!wheelDirty) loadWheel();
   const list=document.getElementById('wheelList');
   if(!list)return;
   list.innerHTML=wheelState.order.map((id,idx)=>{
@@ -1474,11 +1474,14 @@ function renderWheel(){
 }
 
 // Move up/down buttons
+let wheelDirty = false;
+
 function wMoveUp(idx){
   if(idx===0)return;
   const arr=[...wheelState.order];
   [arr[idx-1],arr[idx]]=[arr[idx],arr[idx-1]];
   wheelState.order=arr;
+  wheelDirty=true;
   renderWheel();
 }
 function wMoveDown(idx){
@@ -1486,6 +1489,7 @@ function wMoveDown(idx){
   const arr=[...wheelState.order];
   [arr[idx],arr[idx+1]]=[arr[idx+1],arr[idx]];
   wheelState.order=arr;
+  wheelDirty=true;
   renderWheel();
 }
 
