@@ -257,7 +257,7 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
 .wheel-rank-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .wheel-rank-title{font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:#6a8858}
 .wheel-rank-hint{font-size:0.68rem;color:#a8bf90;font-style:italic}
-.wheel-item{background:white;border-radius:10px;border:1px solid #e4ebe2;margin-bottom:8px;overflow:hidden;transition:box-shadow 0.15s}
+.wheel-item{background:white;border-radius:10px;border:1px solid #e4ebe2;margin-bottom:8px;overflow:hidden;transition:box-shadow 0.15s;touch-action:pan-y}
 .wheel-item.dragging{opacity:0.5;box-shadow:0 8px 24px rgba(74,103,65,0.2);border-color:#8aaa78}
 .wheel-item.drag-over{border-color:#4a6741;border-width:2px}
 .wheel-item-head{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
@@ -1424,6 +1424,9 @@ function drawWheel(){
 
 function renderWheel(){
   loadWheel();
+  // Reset drag state on re-render
+  wDragSrcIdx=null;wTouchDragIdx=null;wTouchDragEl=null;
+  if(wTouchClone){wTouchClone.remove();wTouchClone=null;}
   const list=document.getElementById('wheelList');
   if(!list)return;
   list.innerHTML=wheelState.order.map((id,idx)=>{
@@ -1480,7 +1483,8 @@ function wDE(){wDragSrcIdx=null;document.querySelectorAll('.wheel-item').forEach
 // Mobile drag
 function wTS(e,idx){
   if(!e.target.classList.contains('wheel-drag-handle'))return;
-  e.preventDefault();wTouchDragIdx=idx;wTouchDragEl=e.currentTarget;
+  e.preventDefault();e.stopPropagation();
+  wTouchDragIdx=idx;wTouchDragEl=e.currentTarget;
   wTouchDragEl.classList.add('dragging');
   wTouchClone=wTouchDragEl.cloneNode(true);
   wTouchClone.style.cssText=`position:fixed;left:0;top:0;width:${wTouchDragEl.offsetWidth}px;opacity:0.8;z-index:1000;pointer-events:none;border-radius:10px;background:white;border:2px solid #4a6741`;
@@ -1518,13 +1522,16 @@ function getPriorities(){
   const lg=lgGet();
   const order=lg.wheelOrder||WHEEL_AREAS.map(a=>a.id);
   const scores=lg.wheelScores||{};
-  // Sort by: first by order position (rank), then by score ascending
+  const n=order.length;
+  // Bottom of ranking (highest index) + lowest score = priority areas
   return [...WHEEL_AREAS]
     .sort((a,b)=>{
       const ai=order.indexOf(a.id),bi=order.indexOf(b.id);
       const as=scores[a.id]||5,bs=scores[b.id]||5;
-      // weighted: rank matters more than score
-      return (ai*0.6+as*0.4)-(bi*0.6+bs*0.4);
+      // Higher rank index (worse position) + lower score = bigger value = comes first
+      const aVal=(n-ai)*0.6+(10-as)*0.4;
+      const bVal=(n-bi)*0.6+(10-bs)*0.4;
+      return bVal-aVal;
     })
     .slice(0,3).map(a=>a.id);
 }
