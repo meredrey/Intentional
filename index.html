@@ -1533,6 +1533,8 @@ body{background:#d8d2e8;font-family:-apple-system,BlinkMacSystemFont,'Helvetica 
 </div>
 
 <script>
+console.log('[JS] Script starting...');
+
 const KEY='zachcianki_v1';
 const EMOJIS=['🛍️','☕','🌸','💐','✨','🎀','🧴','💅','👗','👟','🎬','📚','🍦','🍷','🌿','🧘','🎵','🍕','🍣','🍔','🎁','✈️','💊','🧁','💸','🛒','🎨','🌺','🧋','🪴','💍','🫧'];
 const CATS=['🛍️ Zakupy','🍽️ Jedzenie','🚗 Transport','💆 Uroda','🎭 Rozrywka','💊 Zdrowie','🏠 Dom','📦 Inne'];
@@ -3992,7 +3994,7 @@ function deleteExpense(id){
 
 
 
-function renderWeek(){ renderBudget(); }
+function renderWeek(){ console.log('[renderWeek] called → renderBudget'); renderBudget(); }
 function renderMonth(){ renderBudget(); }
 function renderPlans(){ budSetFilter('plans'); }
 function showBudgetTab(tab){
@@ -4689,7 +4691,7 @@ function showPage(name){
   else renderWeek();
 }
 
-renderAll();
+try{ renderAll(); console.log("[JS] renderAll OK"); }catch(e){ console.error("[JS] renderAll ERROR:", e); }
 
 // Restore last page after refresh
 try{
