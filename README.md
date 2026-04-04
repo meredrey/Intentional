@@ -1,1 +1,1 @@
-# Daily-Coach
+# Intentional
