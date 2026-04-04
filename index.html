@@ -3647,7 +3647,9 @@ function budCalcWeeks(){
   });
 }
 
-function dKeyB(d){ return d.toISOString().slice(0,10); }
+function dKeyB(d){ 
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 
 function renderBudget(){
   const st = load();
@@ -3763,19 +3765,29 @@ function budRenderList(){
   }
 
   if(budFilter === 'plans'){
-    listEl.innerHTML = items.map(p => `
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #e8e4f0">
+    const weekCalc = budCalcWeeks();
+    listEl.innerHTML = items.map(p => {
+      // Sprawdź czy tydzień planu ma wystarczające środki
+      const wc = weekCalc.find(w => p.date >= dKeyB(w.start) && p.date <= dKeyB(w.end));
+      const noFunds = wc && (wc.frozen || (wc.available - wc.spent - p.amount < 0));
+      const warning = wc?.frozen
+        ? '⚠️ Brak środków — tydzień zamrożony'
+        : noFunds ? `⚠️ Brak środków (dostępne ${fmt(Math.max(0,wc.available-wc.spent))} zł)` : '';
+      return `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #e8e4f0;${noFunds?'background:#fff8f8':''}">
         <div style="font-size:20px">${p.emoji||'🗓️'}</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:600;color:#18102c">${p.name}</div>
           <div style="font-size:11px;color:#7a6e98">${p.date} · ${fmt(p.amount)} zł</div>
+          ${warning ? `<div style="font-size:10px;font-weight:700;color:#9a4060;margin-top:2px">${warning}</div>` : ''}
         </div>
         <button onclick="budConfirmPlan('${p.id}')"
           style="padding:5px 10px;background:#3d7a60;border:none;border-radius:8px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
           ✓ Zapłacono
         </button>
         <button onclick="deletePlan('${p.id}')" style="background:none;border:none;font-size:16px;color:#b0a4cc;cursor:pointer;padding:0 4px">×</button>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   } else {
     listEl.innerHTML = items.map(e => `
       <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #e8e4f0">
