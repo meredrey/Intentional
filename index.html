@@ -3609,6 +3609,7 @@ function budCalcWeeks(){
   const st = load();
   const expenses = st.expenses||[];
   const planned = st.planned||[];
+  console.log('[budCalcWeeks] weeks:', weeks.length, 'expenses:', expenses.length, 'freeBudget:', freeBudget);
 
   let debt = 0;
   return weeks.map(w => {
@@ -3652,8 +3653,10 @@ function dKeyB(d){
 }
 
 function renderBudget(){
+  console.log('[renderBudget] called');
   const st = load();
   const {cStart, cEnd, freeBudget, curWeek, weekBudget, weeks} = budGetWeekBounds();
+  console.log('[renderBudget] cykl:', cStart.toLocaleDateString('pl-PL'), '–', cEnd.toLocaleDateString('pl-PL'), 'freeBudget:', freeBudget);
   const fmt2 = d => d.toLocaleDateString('pl-PL',{day:'numeric',month:'short'});
   const today = new Date();
 
