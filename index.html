@@ -652,7 +652,6 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
   </div>
 </div>
 
-
   <div class="toast" id="dc-toast"></div>
 </div>
 
@@ -670,8 +669,6 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
   </div>
   <div id="focusContent"></div>
 </div>
-
-
 
 <!-- LIFE GOALS -->
 <div class="panel lg-panel" id="panel-goals">
@@ -711,8 +708,6 @@ let lgOpenGoals = {}, lgEditMode = false, lgEditingGoal = null;
 let wheelDirty = false;
 let dcSaveTimer=null, lgSaveTimer=null;
 
-function dcGet(){try{return JSON.parse(localStorage.getItem(DC_KEY)||'{}')}catch{return{}}}
-function dcSet(s){localStorage.setItem(DC_KEY,JSON.stringify(s));clearTimeout(dcSaveTimer);dcSaveTimer=setTimeout(()=>sheetWrite('CoachData',s),1500)}
 function lgGet(){try{return JSON.parse(localStorage.getItem(LG_KEY)||'{}')}catch{return{}}}
 function lgSet(s){localStorage.setItem(LG_KEY,JSON.stringify(s));clearTimeout(lgSaveTimer);lgSaveTimer=setTimeout(()=>sheetWrite('LifeGoals',s),1500)}
 function whGet(){try{return JSON.parse(localStorage.getItem(WH_KEY)||'{}')}catch{return{}}}
@@ -1279,11 +1274,6 @@ function showAdaptationToast(state) {
   }
 }
 
-function toast(msg) {
-  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2200);
-}
-
 function confetti() {
   const cols=['#9B82B0','#8FAAB8','#C8B4DC','#D4C8E0','#6B5878'];
   for(let i=0;i<50;i++){
@@ -1493,54 +1483,6 @@ function wMoveDown(idx){
   wheelState.order=arr;
   wheelDirty=true;
   renderWheel();
-}
-
-// Desktop drag
-function wDS(e,idx){wDragSrcIdx=idx;e.dataTransfer.effectAllowed='move';e.currentTarget.classList.add('dragging')}
-function wDO(e,idx){e.preventDefault();document.querySelectorAll('.wheel-item').forEach(el=>el.classList.remove('drag-over'));e.currentTarget.classList.add('drag-over')}
-function wDR(e,idx){
-  e.preventDefault();
-  if(wDragSrcIdx===null||wDragSrcIdx===idx)return;
-  const arr=[...wheelState.order];const[m]=arr.splice(wDragSrcIdx,1);arr.splice(idx,0,m);
-  wheelState.order=arr;wDragSrcIdx=null;renderWheel();
-}
-function wDE(){wDragSrcIdx=null;document.querySelectorAll('.wheel-item').forEach(el=>el.classList.remove('dragging','drag-over'))}
-
-// Mobile drag
-function wTS(e,idx){
-  // Check if touch started on handle or its parent
-  const handle=e.target.closest('.wheel-drag-handle');
-  if(!handle)return;
-  e.preventDefault();e.stopPropagation();
-  wTouchDragIdx=idx;wTouchDragEl=e.currentTarget;
-  wTouchDragEl.classList.add('dragging');
-  wTouchClone=wTouchDragEl.cloneNode(true);
-  wTouchClone.style.cssText=`position:fixed;left:0;top:0;width:${wTouchDragEl.offsetWidth}px;opacity:0.8;z-index:1000;pointer-events:none;border-radius:10px;background:white;border:2px solid #4a6741`;
-  document.body.appendChild(wTouchClone);
-}
-function wTM(e){
-  if(wTouchDragIdx===null||!wTouchClone)return;
-  e.preventDefault();
-  const t=e.touches[0];
-  wTouchClone.style.transform=`translate(${t.clientX-80}px,${t.clientY-30}px)`;
-  document.querySelectorAll('.wheel-item').forEach(el=>el.classList.remove('drag-over'));
-  const els=document.elementsFromPoint(t.clientX,t.clientY);
-  const tgt=els.find(el=>el.classList.contains('wheel-item')&&el!==wTouchDragEl);
-  if(tgt)tgt.classList.add('drag-over');
-}
-function wTE(e,idx){
-  if(wTouchDragIdx===null)return;
-  if(wTouchClone){wTouchClone.remove();wTouchClone=null;}
-  if(wTouchDragEl)wTouchDragEl.classList.remove('dragging');
-  const tgt=document.querySelector('.wheel-item.drag-over');
-  if(tgt){
-    const ti=wheelState.order.indexOf(tgt.id.replace('witem-',''));
-    if(ti!==-1&&ti!==wTouchDragIdx){
-      const arr=[...wheelState.order];const[m]=arr.splice(wTouchDragIdx,1);arr.splice(ti,0,m);wheelState.order=arr;
-    }
-    tgt.classList.remove('drag-over');
-  }
-  wTouchDragIdx=null;wTouchDragEl=null;renderWheel();
 }
 
 // ============================================================
@@ -1759,8 +1701,6 @@ const LG_DATA=[
     ]},
   ]},
 ];
-
-
 
 function getLGData(){
   const custom=(lgGet().customGoals)||{};
