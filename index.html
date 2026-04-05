@@ -731,21 +731,22 @@ function showToast(msg){
 // ============================================================
 let activeTab=localStorage.getItem(TAB_KEY)||'coach';
 function switchTab(tab){
-  // 'wheel' is now inside goals, not a top-level tab
-  if(tab==='wheel'){tab='goals';}
-  activeTab=tab;
-  localStorage.setItem(TAB_KEY,tab);
-  document.querySelectorAll('.app-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  const tabEl=document.getElementById('tab-'+tab);
-  const panelEl=document.getElementById('panel-'+tab);
-  if(tabEl)tabEl.classList.add('active');
-  if(panelEl)panelEl.classList.add('active');
-  const fab=document.getElementById('editFab');
-  if(fab)fab.style.display=tab==='goals'?'flex':'none';
-  if(tab==='focus')renderFocus();
-  if(tab==='goals')renderLG();
-  window.scrollTo(0,0);
+  try {
+    if(tab==='wheel'){tab='goals';}
+    activeTab=tab;
+    localStorage.setItem(TAB_KEY,tab);
+    document.querySelectorAll('.app-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    const tabEl=document.getElementById('tab-'+tab);
+    const panelEl=document.getElementById('panel-'+tab);
+    if(tabEl)tabEl.classList.add('active');
+    if(panelEl)panelEl.classList.add('active');
+    const fab=document.getElementById('editFab');
+    if(fab)fab.style.display=tab==='goals'?'flex':'none';
+    if(tab==='focus')renderFocus();
+    if(tab==='goals')renderLG();
+    window.scrollTo(0,0);
+  } catch(e) { console.error('switchTab error:', e); }
 }
 
 // ============================================================
@@ -1933,11 +1934,11 @@ function renderLG(){
 // ============================================================
 // INIT
 // ============================================================
-init();
+try { init(); } catch(e) { console.error('init error:', e); }
 setTimeout(syncAll,1000);
 setInterval(syncAll,30000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')syncAll();});
-switchTab(activeTab);
+try { switchTab(activeTab); } catch(e) { console.error('switchTab start error:', e); switchTab('coach'); }
 </script>
 </body>
 </html>
