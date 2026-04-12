@@ -758,15 +758,13 @@ function syncAll(){
     const hasData=(r.totalPoints>0)||(r.days&&Object.keys(r.days).length>0);
     if(!hasData) return;
     const local=gs();
-    console.log('SYNC: local.adaptivePts before merge:', JSON.stringify(local.adaptivePts));
-    console.log('SYNC: remote.adaptivePts:', JSON.stringify(r.adaptivePts));
+
     const merged={
       totalPoints:Math.max(r.totalPoints||0,local.totalPoints||0),
       days:Object.assign({},r.days||{},local.days||{})
     };
     if(local.adaptivePts) merged.adaptivePts=local.adaptivePts;
     if(local.adaptiveCycle!==undefined) merged.adaptiveCycle=local.adaptiveCycle;
-    console.log('SYNC: merged.adaptivePts:', JSON.stringify(merged.adaptivePts));
     localStorage.setItem(DC_KEY,JSON.stringify(merged));
     renderAll(merged);
   });
@@ -855,7 +853,7 @@ function getAdaptivePts(state) {
   if(cycleNum === 0) return {...BASE_CATS};
 
   // Use stored only if calculated for this cycle AND with current version
-  const ADAPT_VERSION = 3; // bump when logic changes
+  const ADAPT_VERSION = 4; // bump when logic changes
   if(state.adaptivePts && state.adaptiveCycle === cycleNum && 
      state.adaptivePts._changes && state.adaptivePts._v === ADAPT_VERSION) {
     return state.adaptivePts;
@@ -880,7 +878,7 @@ function getAdaptivePts(state) {
       const key = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
       const dd = state.days?.[key]||{};
       possible += curPts[cat];
-      earned += calcCatPts(dd, cat);
+      earned += calcCatPts(dd, cat, pts[cat]);
     }
     effectiveness[cat] = possible > 0 ? earned/possible : 0;
   });
@@ -925,7 +923,7 @@ function checkAndApplyAdaptation(state) {
   const daysSinceStart = Math.floor((today - startDate) / 86400000);
   const cycleNum = Math.floor(daysSinceStart / 21);
 
-  const ADAPT_VERSION = 3;
+  const ADAPT_VERSION = 4;
   // Re-run if: new cycle, OR version mismatch, OR no prior adaptation
   const needsUpdate = cycleNum > 0 && (
     state.adaptiveCycle !== cycleNum ||
@@ -949,7 +947,7 @@ function checkAndApplyAdaptation(state) {
           const key = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
           const dd = state.days?.[key]||{};
           possible += pts[cat];
-          earned += calcCatPts(dd, cat);
+          earned += calcCatPts(dd, cat, pts[cat]);
         }
         eff[cat] = possible > 0 ? earned/possible : 0;
       });
@@ -1083,8 +1081,9 @@ function calcDayPts(dd) {
   return pts;
 }
 
-function calcCatPts(dd, cat) {
-  const max = CAT_RULES[cat] ? CAT_RULES[cat].pts : BASE_CATS[cat];
+function calcCatPts(dd, cat, overrideMax) {
+  // overrideMax lets adaptation pass cycle-specific pts, bypassing CAT_RULES
+  const max = overrideMax !== undefined ? overrideMax : (CAT_RULES[cat] ? CAT_RULES[cat].pts : BASE_CATS[cat]);
   // Food: 2 habits, weighted 2:1 -> scale proportionally
   if(cat==='food') {
     const done = (dd.calories?2:0)+(dd.notension?1:0); // 0,1,2,3 out of 3
@@ -1135,7 +1134,7 @@ function init() {
   if(!state.days[todayKey()]) state.days[todayKey()]={};
   renderAll(state);
   // Reset old adaptation if wrong version - mutate in memory only, ss() called after
-  const CURRENT_ADAPT_V = 3;
+  const CURRENT_ADAPT_V = 4;
   if(state.adaptivePts && state.adaptivePts._v !== CURRENT_ADAPT_V) {
     delete state.adaptivePts;
     delete state.adaptiveCycle;
@@ -1439,7 +1438,7 @@ function openHabitStats() {
         if(!state.days?.[key]) continue;
         const dd = state.days[key];
         possible += curPts[cat];
-        earned += calcCatPts(dd, cat);
+        earned += calcCatPts(dd, cat, pts[cat]);
       }
       const pct = possible > 0 ? Math.round(earned/possible*100) : null;
       cycles.push({ num: c+1, pct, isCurrent: isCurrentCycle });
