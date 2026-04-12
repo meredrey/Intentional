@@ -834,8 +834,10 @@ function getAdaptivePts(state) {
 
   if(cycleNum === 0) return {...BASE_CATS};
 
-  // Use stored if already calculated for this cycle (new system has _changes)
-  if(state.adaptivePts && state.adaptiveCycle === cycleNum && state.adaptivePts._changes) {
+  // Use stored only if calculated for this cycle AND with current version
+  const ADAPT_VERSION = 3; // bump when logic changes
+  if(state.adaptivePts && state.adaptiveCycle === cycleNum && 
+     state.adaptivePts._changes && state.adaptivePts._v === ADAPT_VERSION) {
     return state.adaptivePts;
   }
 
