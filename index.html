@@ -766,7 +766,7 @@ const HABITS = [
   {id:'duolingo',pts:0,cat:'growth'},{id:'piano',pts:0,cat:'growth'},
   {id:'suppl1',pts:0,cat:'suppl'},{id:'suppl2',pts:0,cat:'suppl'},
 ];
-const MAX_PTS = 12;
+const MAX_PTS = 12; // total always = 12
 
 // Category scoring rules
 const CAT_RULES = {
@@ -780,10 +780,10 @@ const CAT_RULES = {
 
 // ADAPTIVE SCORING — recalculates every 21 days
 const BASE_CATS = {
-  food: 3, move: 4, alcohol: 2, habits: 1, growth: 1, suppl: 1
+  food: 2, move: 2, alcohol: 2, habits: 2, growth: 2, suppl: 2
 };
 const CAT_MIN = { food: 1, move: 1, alcohol: 1, habits: 1, growth: 1, suppl: 1 };
-const CAT_MAX = { food: 5, move: 5, alcohol: 2, habits: 1, growth: 1, suppl: 2 };
+const CAT_MAX = { food: 4, move: 4, alcohol: 4, habits: 4, growth: 4, suppl: 4 };
 // alcohol, habits, growth, suppl are capped — main redistribution between food & move
 
 function getAdaptivePts(state) {
@@ -791,63 +791,71 @@ function getAdaptivePts(state) {
   const startKey = Object.keys(state.days||{}).sort()[0];
   if(!startKey) return {...BASE_CATS};
 
-  // Find last 21-day cycle start
   const startDate = new Date(...startKey.split('-').map((v,i)=>i===1?v-1:v));
   const daysSinceStart = Math.floor((today - startDate) / 86400000);
   const cycleNum = Math.floor(daysSinceStart / 21);
-  
+
   if(cycleNum === 0) return {...BASE_CATS};
-  
-  // Use stored adaptive pts if available and cycle hasn't changed
-  if(state.adaptivePts && state.adaptiveCycle === cycleNum) {
+
+  // Use stored if already calculated for this cycle (new system has _changes)
+  if(state.adaptivePts && state.adaptiveCycle === cycleNum && state.adaptivePts._changes) {
     return state.adaptivePts;
   }
-  
+
+  // Current pts (from previous cycle or base)
+  const curPts = (state.adaptivePts && state.adaptivePts._changes)
+    ? (()=>{ const p={...state.adaptivePts}; delete p._changes; return p; })()
+    : {...BASE_CATS};
+
   // Calculate effectiveness for previous 21-day cycle
   const cycleStart = new Date(startDate);
   cycleStart.setDate(cycleStart.getDate() + (cycleNum-1)*21);
   const cycleEnd = new Date(startDate);
   cycleEnd.setDate(cycleEnd.getDate() + cycleNum*21);
-  
-  const effectiveness = {};
+
   const cats = Object.keys(BASE_CATS);
+  const effectiveness = {};
   cats.forEach(cat => {
     let possible = 0, earned = 0;
     for(let d=new Date(cycleStart); d<cycleEnd; d.setDate(d.getDate()+1)) {
       const key = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
       const dd = state.days?.[key]||{};
-      possible += CAT_RULES[cat].pts;
+      possible += curPts[cat];
       earned += calcCatPts(dd, cat);
     }
     effectiveness[cat] = possible > 0 ? earned/possible : 0;
   });
-  
-  // Redistribute: built (≥80%) loses 1, struggling (<50%) gains 1
-  const pts = state.adaptivePts ? {...state.adaptivePts} : {...BASE_CATS};
-  let pool = 0;
-  const needMore = [];
-  
-  cats.forEach(cat => {
-    if(effectiveness[cat] >= 0.80 && pts[cat] > CAT_MIN[cat]) {
-      pts[cat] = Math.max(CAT_MIN[cat], pts[cat] - 1);
-      pool++;
-    } else if(effectiveness[cat] < 0.50) {
-      needMore.push(cat);
-    }
-  });
-  
-  // Give pool to struggling cats, prioritize worst performers
-  needMore.sort((a,b) => effectiveness[a] - effectiveness[b]);
-  needMore.forEach(cat => {
-    if(pool > 0 && pts[cat] < CAT_MAX[cat]) {
-      pts[cat] = Math.min(CAT_MAX[cat], pts[cat] + 1);
-      pool--;
-    }
-  });
-  
-  // Ensure total = 12
+
+  // Givers: >=80%, sorted best first
+  const givers = cats
+    .filter(c => effectiveness[c] >= 0.80 && curPts[c] > CAT_MIN[c])
+    .sort((a,b) => effectiveness[b] - effectiveness[a]);
+
+  // Receivers: <50%, sorted worst first
+  const receivers = cats
+    .filter(c => effectiveness[c] < 0.50 && curPts[c] < CAT_MAX[c])
+    .sort((a,b) => effectiveness[a] - effectiveness[b]);
+
+  // Only transfer as many as pairs allow (no pula overflow)
+  const n = Math.min(givers.length, receivers.length);
+  const pts = {...curPts};
+  const changes = [];
+
+  for(let i=0; i<n; i++) {
+    pts[givers[i]]--;
+    pts[receivers[i]]++;
+    changes.push({
+      from: givers[i],
+      fromEff: Math.round(effectiveness[givers[i]]*100),
+      to: receivers[i],
+      toEff: Math.round(effectiveness[receivers[i]]*100)
+    });
+  }
+
+  pts._changes = changes;
   return pts;
 }
+
 
 function checkAndApplyAdaptation(state) {
   const today = new Date();
@@ -1296,86 +1304,36 @@ function resetDay() {
 function bgClose(e,id){ if(e.target.id===id) document.getElementById(id).classList.remove('open'); }
 
 function showAdaptationToast(state) {
-  const pts = state.adaptivePts || BASE_CATS;
-  const msgs = [];
-  if(pts.move > BASE_CATS.move) msgs.push('Ruch +' + (pts.move - BASE_CATS.move) + ' pkt');
-  if(pts.food > BASE_CATS.food) msgs.push('Jedzenie +' + (pts.food - BASE_CATS.food) + ' pkt');
-  if(pts.suppl < BASE_CATS.suppl) msgs.push('Suplementacja opanowana! 🎉');
-  if(pts.growth < BASE_CATS.growth) msgs.push('Rozwój opanowany! 🎉');
-  if(msgs.length > 0) {
-    setTimeout(() => toast('System się dostosował: ' + msgs.join(', ')), 1000);
-  }
-}
-
-function confetti() {
-  const cols=['#9B82B0','#8FAAB8','#C8B4DC','#D4C8E0','#6B5878'];
-  for(let i=0;i<50;i++){
-    const el=document.createElement('div'); el.className='cp';
-    el.style.cssText=`left:${Math.random()*100}vw;top:-8px;background:${cols[Math.floor(Math.random()*cols.length)]};width:${5+Math.random()*8}px;height:${5+Math.random()*8}px;animation-delay:${Math.random()*0.7}s;animation-duration:${1.5+Math.random()}s;`;
-    document.body.appendChild(el); setTimeout(()=>el.remove(),3000);
-  }
-  toast('Perfekcyjny dzień! 🌸');
-}
-
-function exportData() {
-  const state = gs();
-  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  const d = new Date();
-  a.download = `daily-coach-backup-${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('Dane wyeksportowane! 💾');
-}
-
-function importData(event) {
-  const file = event.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const data = JSON.parse(e.target.result);
-      if(!data.days) throw new Error('Nieprawidłowy format');
-      if(!confirm(`Importować dane? Obecne dane zostaną zastąpione.`)) return;
-      ss(data);
-      renderAll(gs());
-      toast('Dane zaimportowane! ✨');
-      setTimeout(()=>{ try{syncToSheets(data);}catch(e){} }, 500);
-    } catch(err) {
-      alert('Błąd importu — sprawdź czy plik jest poprawny.');
-    }
+  const pts = state.adaptivePts;
+  if(!pts) return;
+  const changes = pts._changes || [];
+  const CAT_NAMES = {
+    food:'Jedzenie', move:'Ruch', alcohol:'Alkohol',
+    habits:'Nawyki', growth:'Rozwój', suppl:'Suplementacja'
   };
-  reader.readAsText(file);
-  event.target.value = '';
+  if(changes.length === 0) {
+    alert('Nowy cykl 21 dni! Brak zmian — zadna kategoria nie byla ani bardzo dobra ani slaba. Tak trzymaj!');
+    return;
+  }
+  const lines = changes.map(c =>
+    `${CAT_NAMES[c.from]} (${c.fromEff}%) → oddaje 1 pkt → ${CAT_NAMES[c.to]} (${c.toEff}%)`
+  ).join(', ');
+
+  // Build pts summary
+  const summary = Object.entries(pts)
+    .filter(([k])=>k!=='_changes')
+    .map(([k,v])=>`${CAT_NAMES[k]}: ${v} pkt`)
+    .join(', ');
+
+  alert(`🔄 Nowy cykl 21 dni — zmiana punktacji!
+
+Transfery:
+${lines}
+
+Nowe punkty:
+${summary}`);
 }
 
-// Override toast for DC
-function toast(msg){
-  const t=document.getElementById('dc-toast')||document.getElementById('toast');
-  if(!t)return;t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2200);
-}
-
-// ============================================================
-// WHEEL OF LIFE
-// ============================================================
-const WHEEL_AREAS=[
-  {id:'rodzina',emoji:'👧',name:'Rodzina & Bliskość',color:'#7a9a60'},
-  {id:'zdrowie',emoji:'💪',name:'Zdrowie & Ciało',color:'#8aaa78'},
-  {id:'kreatywnosc',emoji:'🎨',name:'Kreatywność & Projekty',color:'#9aba90'},
-  {id:'relacja',emoji:'💑',name:'Relacja z partnerem',color:'#6a8858'},
-  {id:'praca',emoji:'💼',name:'Praca & Kariera',color:'#5a7848'},
-  {id:'finanse',emoji:'💰',name:'Finanse',color:'#4a6741'},
-  {id:'rozwoj',emoji:'🌱',name:'Rozwój osobisty',color:'#8aaa70'},
-  {id:'dom',emoji:'🏡',name:'Dom & Przestrzeń',color:'#7a9858'},
-];
-
-let wheelState={order:WHEEL_AREAS.map(a=>a.id),scores:{},plus:{},minus:{},updated:null};
-let openWheelItem=null;
-let wDragSrcIdx=null;
-let wTouchDragIdx=null,wTouchDragEl=null,wTouchClone=null;
 
 function loadWheel(){
   const s=whGet();
