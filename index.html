@@ -386,6 +386,43 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
 /* Toast */
 .toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(12px);background:#2c3828;color:#c8d9a0;padding:10px 20px;border-radius:30px;font-size:0.78rem;opacity:0;transition:all 0.25s;z-index:999;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Category cycle stats */
+.cat-stats-title {
+  font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+  color: #8a7a9a; margin: 20px 0 10px; font-weight: 500;
+}
+.cat-stat-card {
+  background: #f8f6fb; border-radius: 10px;
+  padding: 12px 14px; margin-bottom: 10px;
+}
+.cat-stat-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.cat-stat-name { font-size: 0.9rem; font-weight: 500; color: #2c2040; }
+.cat-stat-pts {
+  font-size: 0.72rem; background: #e8e0f0;
+  color: #6a5a7a; padding: 2px 8px; border-radius: 20px;
+}
+.cat-cycles { display: flex; flex-direction: column; gap: 5px; }
+.cat-cycle-row { display: flex; align-items: center; gap: 8px; }
+.cat-cycle-label {
+  font-size: 0.68rem; color: #8a7a9a;
+  width: 52px; flex-shrink: 0; text-align: right;
+}
+.cat-cycle-bar-wrap {
+  flex: 1; height: 6px; background: #e8e0f0;
+  border-radius: 3px; overflow: hidden;
+}
+.cat-cycle-bar {
+  height: 100%; border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.cat-cycle-pct {
+  font-size: 0.68rem; color: #6a5a7a;
+  width: 32px; text-align: right; flex-shrink: 0;
+}
 </style>
 </head>
 <body>
@@ -1258,15 +1295,20 @@ function openWeek() {
 
 // HABIT STATS MODAL
 function openHabitStats() {
-  const state=gs(), list=document.getElementById('habitStatsList'); list.innerHTML='';
+  const state=gs();
+  const list=document.getElementById('habitStatsList');
+  list.innerHTML='';
+
   const names={
     calories:'Kalorie w normie',notension:'Nie zjadłam z napięcia',
     freeletics:'Freeletics',dance:'Taniec',steps:'7 000+ kroków / spacer',bike:'Rower / basen',
-    noalc:'Dzień bez alkoholu',alcrule:'Zasada „od a nie do"',
+    noalc:'Dzień bez alkoholu',alcrule:'Zasada „od a nie do”',
     sleep:'Higiena snu',
     duolingo:'Duolingo',piano:'Pianino',
     suppl1:'Kolagen + kreatyna',suppl2:'Wit. D + B12 + Magnez B6',
   };
+
+  // --- Habit streaks (existing) ---
   HABITS.forEach(h=>{
     const s=calcHabitStreak(state,h.id), total=calcHabitTotal(state,h.id);
     const div=document.createElement('div'); div.className='hstat-item';
@@ -1278,8 +1320,86 @@ function openHabitStats() {
       </div>`;
     list.appendChild(div);
   });
+
+  // --- Category cycle stats ---
+  const titleEl = document.createElement('div');
+  titleEl.className = 'cat-stats-title';
+  titleEl.textContent = 'Skuteczność kategorii per cykl';
+  list.appendChild(titleEl);
+
+  const CAT_NAMES = {
+    food:'🌿 Jedzenie', move:'✦ Ruch', alcohol:'◇ Alkohol',
+    habits:'🌙 Nawyki', growth:'📚 Rozwój', suppl:'💊 Suplementacja'
+  };
+
+  // Calculate cycle info
+  const startKey = Object.keys(state.days||{}).sort()[0];
+  if(!startKey) { document.getElementById('habitModal').classList.add('open'); return; }
+
+  const startDate = new Date(...startKey.split('-').map((v,i)=>i===1?v-1:v));
+  const today = new Date();
+  const daysSinceStart = Math.floor((today - startDate) / 86400000);
+  const currentCycle = Math.floor(daysSinceStart / 21);
+  const totalCycles = currentCycle + 1; // +1 for current in-progress cycle
+
+  const curPts = state.adaptivePts
+    ? (()=>{ const p={...state.adaptivePts}; delete p._changes; return p; })()
+    : {...BASE_CATS};
+
+  Object.keys(BASE_CATS).forEach(cat => {
+    // Calculate effectiveness for each past cycle + current
+    const cycles = [];
+    for(let c=0; c<=currentCycle; c++) {
+      const cStart = new Date(startDate);
+      cStart.setDate(cStart.getDate() + c*21);
+      const cEnd = new Date(startDate);
+      cEnd.setDate(cEnd.getDate() + (c+1)*21);
+      const isCurrentCycle = c === currentCycle;
+      const endDate = isCurrentCycle ? today : cEnd;
+
+      let possible = 0, earned = 0;
+      for(let d=new Date(cStart); d<=endDate; d.setDate(d.getDate()+1)) {
+        const key = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+        if(!state.days?.[key]) continue;
+        const dd = state.days[key];
+        possible += curPts[cat];
+        earned += calcCatPts(dd, cat);
+      }
+      const pct = possible > 0 ? Math.round(earned/possible*100) : null;
+      cycles.push({ num: c+1, pct, isCurrent: isCurrentCycle });
+    }
+
+    // Color based on effectiveness
+    function barColor(pct) {
+      if(pct === null) return '#d0c8e0';
+      if(pct >= 80) return '#6ab87a';
+      if(pct >= 50) return '#a890d0';
+      return '#d07080';
+    }
+
+    const cyclesHTML = cycles.map(cy => `
+      <div class="cat-cycle-row">
+        <div class="cat-cycle-label">${cy.isCurrent ? 'Teraz' : 'Cykl '+cy.num}</div>
+        <div class="cat-cycle-bar-wrap">
+          <div class="cat-cycle-bar" style="width:${cy.pct||0}%;background:${barColor(cy.pct)}"></div>
+        </div>
+        <div class="cat-cycle-pct">${cy.pct !== null ? cy.pct+'%' : '–'}</div>
+      </div>`).join('');
+
+    const card = document.createElement('div');
+    card.className = 'cat-stat-card';
+    card.innerHTML = `
+      <div class="cat-stat-header">
+        <div class="cat-stat-name">${CAT_NAMES[cat]}</div>
+        <div class="cat-stat-pts">${curPts[cat]} pkt teraz</div>
+      </div>
+      <div class="cat-cycles">${cyclesHTML}</div>`;
+    list.appendChild(card);
+  });
+
   document.getElementById('habitModal').classList.add('open');
 }
+
 
 function renderRewards(state) {
   const total=state.totalPoints||0, c=document.getElementById('rewardsList'); c.innerHTML='';
