@@ -775,6 +775,7 @@ function syncAll(){
   });
 }
 
+function toast(msg){ showToast(msg); }
 function showToast(msg){
   const t=document.getElementById('toast');
   if(!t)return;t.textContent=msg;t.classList.add('show');
