@@ -1109,6 +1109,13 @@ function init() {
   if(!state.totalPoints) state.totalPoints=0;
   if(!state.days[todayKey()]) state.days[todayKey()]={};
   renderAll(state);
+  // Force reset old adaptation data, recalculate from scratch
+  const CURRENT_ADAPT_V = 3;
+  if(!state.adaptivePts || state.adaptivePts._v !== CURRENT_ADAPT_V) {
+    delete state.adaptivePts;
+    delete state.adaptiveCycle;
+    ss(state);
+  }
   // Check 21-day adaptation (safely)
   try {
     const adapted = checkAndApplyAdaptation(state);
