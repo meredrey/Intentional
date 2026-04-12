@@ -753,8 +753,26 @@ function whSet(s){localStorage.setItem(WH_KEY,JSON.stringify(s))}
 function sheetWrite(sheet,data){fetch(`${SHEETS_API}?action=write&sheet=${sheet}&data=${encodeURIComponent(JSON.stringify(data))}`).catch(e=>console.log('write err',e))}
 function sheetRead(sheet){return fetch(`${SHEETS_API}?action=read&sheet=${sheet}`).then(r=>r.json()).catch(()=>null)}
 function syncAll(){
-  sheetRead('CoachData').then(r=>{if(r&&typeof r==='object'){localStorage.setItem(DC_KEY,JSON.stringify(r));renderAll(gs());}});
-  sheetRead('LifeGoals').then(r=>{if(r&&typeof r==='object'){localStorage.setItem(LG_KEY,JSON.stringify(r));renderLG();renderFocus();}});
+  sheetRead('CoachData').then(r=>{
+    if(!r||typeof r!=='object') return;
+    const hasData=(r.totalPoints>0)||(r.days&&Object.keys(r.days).length>0);
+    if(!hasData) return;
+    const local=gs();
+    const merged={
+      totalPoints:Math.max(r.totalPoints||0,local.totalPoints||0),
+      days:Object.assign({},r.days||{},local.days||{})
+    };
+    // Always preserve local adaptation
+    if(local.adaptivePts) merged.adaptivePts=local.adaptivePts;
+    if(local.adaptiveCycle!==undefined) merged.adaptiveCycle=local.adaptiveCycle;
+    localStorage.setItem(DC_KEY,JSON.stringify(merged));
+    renderAll(merged);
+  });
+  sheetRead('LifeGoals').then(r=>{
+    if(!r||typeof r!=='object') return;
+    localStorage.setItem(LG_KEY,JSON.stringify(r));
+    renderLG();renderFocus();
+  });
 }
 
 function showToast(msg){
