@@ -858,7 +858,10 @@ function checkAndApplyAdaptation(state) {
   const daysSinceStart = Math.floor((today - startDate) / 86400000);
   const cycleNum = Math.floor(daysSinceStart / 21);
   
-  if(cycleNum > 0 && state.adaptiveCycle !== cycleNum) {
+  // Re-run if new cycle OR if old system was used (no _changes metadata)
+  const needsUpdate = (cycleNum > 0 && state.adaptiveCycle !== cycleNum) ||
+                      (cycleNum > 0 && state.adaptivePts && !state.adaptivePts._changes);
+  if(needsUpdate) {
     const newPts = getAdaptivePts(state);
     state.adaptivePts = newPts;
     state.adaptiveCycle = cycleNum;
@@ -966,12 +969,23 @@ function calcDayPts(dd) {
 }
 
 function calcCatPts(dd, cat) {
-  if(cat==='food') return (dd.calories?2:0)+(dd.notension?1:0);
-  if(cat==='move') return ['freeletics','dance','steps','bike'].some(x=>dd[x])?4:0;
-  if(cat==='alcohol') return (dd.noalc?1:0)+(dd.alcrule?1:0);
-  if(cat==='habits') return dd.sleep?1:0;
-  if(cat==='growth') return (dd.duolingo&&dd.piano)?1:0;
-  if(cat==='suppl') return (dd.suppl1&&dd.suppl2)?1:0;
+  const max = CAT_RULES[cat] ? CAT_RULES[cat].pts : BASE_CATS[cat];
+  // Food: 2 habits, weighted 2:1 -> scale proportionally
+  if(cat==='food') {
+    const done = (dd.calories?2:0)+(dd.notension?1:0); // 0,1,2,3 out of 3
+    return Math.round(done/3 * max);
+  }
+  // Move: binary - any = full pts
+  if(cat==='move') return ['freeletics','dance','steps','bike'].some(x=>dd[x]) ? max : 0;
+  // Alcohol: 2 habits equal weight
+  if(cat==='alcohol') {
+    const done = (dd.noalc?1:0)+(dd.alcrule?1:0); // 0,1,2 out of 2
+    return Math.round(done/2 * max);
+  }
+  // Binary categories
+  if(cat==='habits') return dd.sleep ? max : 0;
+  if(cat==='growth') return (dd.duolingo&&dd.piano) ? max : 0;
+  if(cat==='suppl') return (dd.suppl1&&dd.suppl2) ? max : 0;
   return 0;
 }
 
@@ -1078,12 +1092,25 @@ function renderAll(state) {
   document.getElementById('totalPts').textContent = state.totalPoints||0;
 
   // Category pts
-  // Category points using new rules
   Object.keys(CAT_RULES).forEach(cat=>{
     const rule = CAT_RULES[cat];
     const earned = calcCatPts(dd, cat);
     const el = document.getElementById(`cat-${cat}`);
     if(el) el.textContent=`${earned} / ${rule.pts}`;
+  });
+
+  // Update individual habit point badges proportionally
+  document.querySelectorAll('.habit-item[data-pts]').forEach(el => {
+    const basePts = parseFloat(el.dataset.pts);
+    const cat = el.dataset.cat;
+    if(!cat || !CAT_RULES[cat]) return;
+    const catMax = CAT_RULES[cat].pts;
+    // Calculate base total for this cat from HTML
+    const catItems = document.querySelectorAll(`.habit-item[data-cat="${cat}"]`);
+    const baseTotal = Array.from(catItems).reduce((s,e)=>s+parseFloat(e.dataset.pts||0),0);
+    const scaledPts = baseTotal > 0 ? Math.round(basePts/baseTotal * catMax) : basePts;
+    const badge = el.querySelector('.hpts');
+    if(badge) badge.textContent = scaledPts > 0 ? `${scaledPts} pkt` : '';
   });
 
   // Per-habit streaks (always based on today, not viewing date)
