@@ -1279,16 +1279,17 @@ function toggle(el) {
   if (!state.days[vkey]) state.days[vkey] = {};
 
   const id = el.dataset.id;
-  const habit = HABITS.find(x => x.id === id);
-  const pts = habit.pts;
   const isChecked = !!state.days[vkey][id];
 
-  if (isChecked) {
-    state.days[vkey][id] = false;
-    state.totalPoints = Math.max(0, (state.totalPoints || 0) - pts);
-  } else {
-    state.days[vkey][id] = true;
-    state.totalPoints = (state.totalPoints || 0) + pts;
+  // Calculate points before and after using calcDayPts (respects adaptive pts)
+  const ptsBefore = calcDayPts(state.days[vkey]);
+  state.days[vkey][id] = !isChecked;
+  const ptsAfter = calcDayPts(state.days[vkey]);
+  const diff = ptsAfter - ptsBefore;
+
+  state.totalPoints = Math.max(0, (state.totalPoints || 0) + diff);
+
+  if (!isChecked) {
     toast(MSGS[Math.floor(Math.random() * MSGS.length)]);
     const allDone = HABITS.every(h => state.days[vkey][h.id]);
     if (allDone) setTimeout(confetti, 300);
