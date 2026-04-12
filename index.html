@@ -904,12 +904,55 @@ function checkAndApplyAdaptation(state) {
   const startDate = new Date(...startKey.split('-').map((v,i)=>i===1?v-1:v));
   const daysSinceStart = Math.floor((today - startDate) / 86400000);
   const cycleNum = Math.floor(daysSinceStart / 21);
-  
-  // Re-run if new cycle OR if old system was used (no _changes metadata)
-  const needsUpdate = (cycleNum > 0 && state.adaptiveCycle !== cycleNum) ||
-                      (cycleNum > 0 && state.adaptivePts && !state.adaptivePts._changes);
+
+  const ADAPT_VERSION = 3;
+  // Re-run if: new cycle, OR version mismatch, OR no prior adaptation
+  const needsUpdate = cycleNum > 0 && (
+    state.adaptiveCycle !== cycleNum ||
+    !state.adaptivePts ||
+    state.adaptivePts._v !== ADAPT_VERSION
+  );
   if(needsUpdate) {
-    const newPts = getAdaptivePts(state);
+    // Always start fresh from BASE_CATS and replay all cycles
+    let pts = {...BASE_CATS};
+    for(let c = 1; c <= cycleNum; c++) {
+      const cStart = new Date(startDate);
+      cStart.setDate(cStart.getDate() + (c-1)*21);
+      const cEnd = new Date(startDate);
+      cEnd.setDate(cEnd.getDate() + c*21);
+
+      const cats = Object.keys(BASE_CATS);
+      const eff = {};
+      cats.forEach(cat => {
+        let possible = 0, earned = 0;
+        for(let d=new Date(cStart); d<cEnd; d.setDate(d.getDate()+1)) {
+          const key = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+          const dd = state.days?.[key]||{};
+          possible += pts[cat];
+          earned += calcCatPts(dd, cat);
+        }
+        eff[cat] = possible > 0 ? earned/possible : 0;
+      });
+
+      // Transfer: best → worst (same logic as getAdaptivePts)
+      const givers = cats.filter(cat => eff[cat] >= 0.80 && pts[cat] > CAT_MIN[cat])
+        .sort((a,b) => eff[b]-eff[a]);
+      const receivers = cats.filter(cat => eff[cat] < 0.50 && pts[cat] < CAT_MAX[cat])
+        .sort((a,b) => eff[a]-eff[b]);
+      const n = Math.min(givers.length, receivers.length);
+      const changes = [];
+      for(let i=0; i<n; i++) {
+        pts[givers[i]]--;
+        pts[receivers[i]]++;
+        changes.push({from:givers[i], fromEff:Math.round(eff[givers[i]]*100),
+                      to:receivers[i], toEff:Math.round(eff[receivers[i]]*100)});
+      }
+      if(c === cycleNum) {
+        pts._changes = changes;
+        pts._v = ADAPT_VERSION;
+      }
+    }
+    const newPts = pts;
     state.adaptivePts = newPts;
     state.adaptiveCycle = cycleNum;
     
