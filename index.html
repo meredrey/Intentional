@@ -758,13 +758,15 @@ function syncAll(){
     const hasData=(r.totalPoints>0)||(r.days&&Object.keys(r.days).length>0);
     if(!hasData) return;
     const local=gs();
+    console.log('SYNC: local.adaptivePts before merge:', JSON.stringify(local.adaptivePts));
+    console.log('SYNC: remote.adaptivePts:', JSON.stringify(r.adaptivePts));
     const merged={
       totalPoints:Math.max(r.totalPoints||0,local.totalPoints||0),
       days:Object.assign({},r.days||{},local.days||{})
     };
-    // Always preserve local adaptation
     if(local.adaptivePts) merged.adaptivePts=local.adaptivePts;
     if(local.adaptiveCycle!==undefined) merged.adaptiveCycle=local.adaptiveCycle;
+    console.log('SYNC: merged.adaptivePts:', JSON.stringify(merged.adaptivePts));
     localStorage.setItem(DC_KEY,JSON.stringify(merged));
     renderAll(merged);
   });
