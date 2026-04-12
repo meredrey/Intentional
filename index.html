@@ -933,6 +933,10 @@ function checkAndApplyAdaptation(state) {
         }
         eff[cat] = possible > 0 ? earned/possible : 0;
       });
+      console.log('Cycle', c, 'pts:', JSON.stringify(pts));
+      console.log('Cycle', c, 'eff:', JSON.stringify(Object.fromEntries(Object.entries(eff).map(([k,v])=>[k,Math.round(v*100)+'%']))));
+      console.log('Cycle', c, 'givers:', cats.filter(cat => eff[cat] >= 0.80 && pts[cat] > CAT_MIN[cat]));
+      console.log('Cycle', c, 'receivers:', cats.filter(cat => eff[cat] < 0.50 && pts[cat] < CAT_MAX[cat]));
 
       // Transfer: best → worst (same logic as getAdaptivePts)
       const givers = cats.filter(cat => eff[cat] >= 0.80 && pts[cat] > CAT_MIN[cat])
@@ -1651,6 +1655,16 @@ function wMoveDown(idx){
 // ============================================================
 // FOCUS
 // ============================================================
+const WHEEL_AREAS=[
+  {id:'rodzina',     emoji:'👧', name:'Rodzina & Bliskość',     color:'#7a9a60'},
+  {id:'zdrowie',     emoji:'💪', name:'Zdrowie & Ciało',        color:'#8aaa78'},
+  {id:'kreatywnosc', emoji:'🎨', name:'Kreatywność & Projekty', color:'#9aba90'},
+  {id:'relacja',     emoji:'💑', name:'Relacja z partnerem',    color:'#6a8858'},
+  {id:'praca',       emoji:'💼', name:'Praca & Kariera',        color:'#5a7848'},
+  {id:'finanse',     emoji:'💰', name:'Finanse',                color:'#4a6741'},
+  {id:'rozwoj',      emoji:'🌱', name:'Rozwój osobisty',        color:'#8aaa70'},
+  {id:'dom',         emoji:'🏡', name:'Dom & Przestrzeń',       color:'#7a9858'},
+];
 function getPriorities(){
   const lg=lgGet();
   const order=lg.wheelOrder||WHEEL_AREAS.map(a=>a.id);
