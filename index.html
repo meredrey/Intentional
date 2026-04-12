@@ -933,10 +933,9 @@ function checkAndApplyAdaptation(state) {
         }
         eff[cat] = possible > 0 ? earned/possible : 0;
       });
-      console.log('Cycle', c, 'pts:', JSON.stringify(pts));
-      console.log('Cycle', c, 'eff:', JSON.stringify(Object.fromEntries(Object.entries(eff).map(([k,v])=>[k,Math.round(v*100)+'%']))));
-      console.log('Cycle', c, 'givers:', cats.filter(cat => eff[cat] >= 0.80 && pts[cat] > CAT_MIN[cat]));
-      console.log('Cycle', c, 'receivers:', cats.filter(cat => eff[cat] < 0.50 && pts[cat] < CAT_MAX[cat]));
+
+
+
 
       // Transfer: best → worst (same logic as getAdaptivePts)
       const givers = cats.filter(cat => eff[cat] >= 0.80 && pts[cat] > CAT_MIN[cat])
@@ -1015,15 +1014,17 @@ function syncFromSheets() {
     .then(r => r.json())
     .then(remote => {
       if (!remote || typeof remote !== 'object') return;
-      // Only merge if remote has real data - don't overwrite local with empty sheet
       const hasRealData = (remote.totalPoints > 0) || (remote.days && Object.keys(remote.days).length > 0);
       if (!hasRealData) return;
       const local = gs();
-      // Merge: take higher totalPoints and union of days
+      // Merge days and totalPoints, but ALWAYS keep local adaptivePts/adaptiveCycle
       const merged = {
         totalPoints: Math.max(remote.totalPoints||0, local.totalPoints||0),
-        days: Object.assign({}, remote.days||{}, local.days||{})
+        days: Object.assign({}, remote.days||{}, local.days||{}),
       };
+      // Preserve local adaptation data - never overwrite from Sheets
+      if(local.adaptivePts) merged.adaptivePts = local.adaptivePts;
+      if(local.adaptiveCycle !== undefined) merged.adaptiveCycle = local.adaptiveCycle;
       localStorage.setItem(LS_KEY, JSON.stringify(merged));
       renderAll(merged);
     })
