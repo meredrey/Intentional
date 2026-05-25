@@ -399,16 +399,18 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
   <div class="viewing-past" id="pastBanner" style="display:none">Przeglądasz poprzedni dzień</div>
 
   <!-- Streak -->
-  <div class="streak-card">
-    <div>
-      <div class="streak-num" id="streakNum">0</div>
-      <div class="streak-lbl">dni z rzędu 🔥</div>
+  <div class="streak-card" style="flex-direction:column;gap:12px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;width:100%">
+      <div>
+        <div class="streak-num" id="streakNum">0</div>
+        <div class="streak-lbl">dni z rzędu 🔥</div>
+      </div>
+      <div style="text-align:right">
+        <div class="streak-num" id="dayNum" style="font-size:2rem">—</div>
+        <div class="streak-lbl">dzień z aplikacją 🌱</div>
+      </div>
     </div>
-    <div style="text-align:right">
-      <div class="streak-num" id="dayNum" style="font-size:2rem">—</div>
-      <div class="streak-lbl">dzień z aplikacją 🌱</div>
-    </div>
-    <div class="streak-dots" id="streakDots"></div>
+    <div class="streak-dots" id="streakDots" style="justify-content:center"></div>
   </div>
 
   <!-- Points -->
@@ -664,7 +666,7 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
 <button class="edit-fab" id="editFab" onclick="toggleEdit()" style="display:none" title="Tryb edycji">✎</button>
 <div class="toast" id="toast"></div>
 <script>
-const SHEETS_API = 'https://script.google.com/macros/s/AKfycbxz_8jwR7k_SP9yyXsF-swpfr-iDt9R88-DlUHoSTR2ifi0cnNAmc5For6i4Zz-b2KzHQ/exec';
+const SHEETS_API = 'https://script.google.com/macros/s/AKfycbzNSnSRo9_sTa5McNUD3tjfMw0q_Z4v8_tnJS2KyngM1BdN89vy160bgpFp0FeOTo3_kw/exec';
 const DC_KEY = 'dc5';
 const LG_KEY = 'mata_lg_v4';
 const WH_KEY = 'intentional_wheel';
@@ -879,7 +881,7 @@ const REWARDS = [
 let viewingDate = new Date(); // the date being shown
 let calViewDate = new Date(); // month shown in calendar
 
-const API = 'https://script.google.com/macros/s/AKfycbxz_8jwR7k_SP9yyXsF-swpfr-iDt9R88-DlUHoSTR2ifi0cnNAmc5For6i4Zz-b2KzHQ/exec';
+const API = 'https://script.google.com/macros/s/AKfycbzNSnSRo9_sTa5McNUD3tjfMw0q_Z4v8_tnJS2KyngM1BdN89vy160bgpFp0FeOTo3_kw/exec';
 const LS_KEY = 'dc5';
 let saveTimer = null;
 
