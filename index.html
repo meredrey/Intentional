@@ -909,13 +909,19 @@ function syncFromSheets() {
     .then(remote => {
       if (!remote || typeof remote !== 'object') return;
       const local = gs();
-      // Merge: take higher totalPoints and union of days
       const merged = {
         totalPoints: Math.max(remote.totalPoints||0, local.totalPoints||0),
         days: Object.assign({}, remote.days||{}, local.days||{})
       };
+      // ALWAYS preserve local adaptation data
+      if(local.adaptivePts) merged.adaptivePts = local.adaptivePts;
+      if(local.adaptiveCycle !== undefined) merged.adaptiveCycle = local.adaptiveCycle;
       localStorage.setItem(LS_KEY, JSON.stringify(merged));
       renderAll(merged);
+      // If local had higher total, push corrected data back to Sheets
+      if(local.totalPoints > (remote.totalPoints||0)) {
+        setTimeout(() => syncToSheets(merged), 1000);
+      }
     })
     .catch(err => console.log('Sheets read error:', err));
 }
