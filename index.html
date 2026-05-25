@@ -693,7 +693,18 @@ function syncAll(){
   });
   sheetRead('LifeGoals').then(r=>{
     if(!r||typeof r!=='object') return;
-    localStorage.setItem(LG_KEY,JSON.stringify(r));
+    // Merge: don't overwrite local customGoals or wheel data with old Sheets data
+    const local = lgGet();
+    const merged = Object.assign({}, r, {
+      customGoals: local.customGoals || r.customGoals,
+      wheelScores: local.wheelScores || r.wheelScores,
+      wheelOrder: local.wheelOrder || r.wheelOrder,
+    });
+    // Keep any local keys that are checked (milestone completions)
+    Object.keys(local).forEach(k => {
+      if(k.includes('_') && local[k] === true) merged[k] = true;
+    });
+    localStorage.setItem(LG_KEY,JSON.stringify(merged));
     renderLG();renderFocus();
   });
 }
