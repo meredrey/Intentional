@@ -404,6 +404,10 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
       <div class="streak-num" id="streakNum">0</div>
       <div class="streak-lbl">dni z rzędu 🔥</div>
     </div>
+    <div style="text-align:right">
+      <div class="streak-num" id="dayNum" style="font-size:2rem">—</div>
+      <div class="streak-lbl">dzień z aplikacją 🌱</div>
+    </div>
     <div class="streak-dots" id="streakDots"></div>
   </div>
 
@@ -1059,6 +1063,16 @@ function renderAll(state) {
 
   // Streak banner (always from today)
   document.getElementById('streakNum').textContent = calcStreak(state);
+  // Day counter
+  const dayNumEl = document.getElementById('dayNum');
+  if(dayNumEl) {
+    const startKey = Object.keys(state.days||{}).sort()[0];
+    if(startKey) {
+      const startDate = new Date(...startKey.split('-').map((v,i)=>i===1?v-1:v));
+      const dayNum = Math.floor((new Date() - startDate) / 86400000) + 1;
+      dayNumEl.textContent = dayNum;
+    }
+  }
   const dotsEl = document.getElementById('streakDots'); dotsEl.innerHTML='';
   for(let i=6;i>=0;i--){
     const dd2=new Date(); dd2.setDate(dd2.getDate()-i);
