@@ -917,22 +917,8 @@ function getDayPts(state, key) {
 }
 
 function calcDayPts(dd) {
-  let pts = 0;
-  // Jedzenie: calories=2, notension=1
-  if(dd.calories) pts += 2;
-  if(dd.notension) pts += 1;
-  // Ruch: cokolwiek = 4pkt
-  if(['freeletics','dance','steps','bike'].some(x => dd[x])) pts += 4;
-  // Alkohol: noalc=1, alcrule=1
-  if(dd.noalc) pts += 1;
-  if(dd.alcrule) pts += 1;
-  // Nawyki: sleep=1
-  if(dd.sleep) pts += 1;
-  // Rozwoj: oba = 1pt
-  if(dd.duolingo && dd.piano) pts += 1;
-  // Suplementacja: oba = 2pt
-  if(dd.suppl1 && dd.suppl2) pts += 1;
-  return pts;
+  // Uses CAT_RULES which is updated by adaptation
+  return Object.keys(CAT_RULES).reduce((sum, cat) => sum + calcCatPts(dd, cat), 0);
 }
 
 function calcCatPts(dd, cat) {
