@@ -759,12 +759,12 @@ const MAX_PTS = 12;
 
 // Category scoring rules
 const CAT_RULES = {
-  food:    { pts: 3, individual: true },
-  move:    { pts: 4, anyOf: ['freeletics','dance','steps','bike'] },
+  food:    { pts: 2, individual: true },
+  move:    { pts: 2, anyOf: ['freeletics','dance','steps','bike'] },
   alcohol: { pts: 2, individual: true },
-  habits:  { pts: 1, allOf: ['sleep'] },
-  growth:  { pts: 1, allOf: ['duolingo','piano'] },
-  suppl:   { pts: 1, allOf: ['suppl1','suppl2'] },
+  habits:  { pts: 2, allOf: ['sleep'] },
+  growth:  { pts: 2, allOf: ['duolingo','piano'] },
+  suppl:   { pts: 2, allOf: ['suppl1','suppl2'] },
 };
 
 // ADAPTIVE SCORING — recalculates every 21 days
@@ -1176,16 +1176,17 @@ function toggle(el) {
   if (!state.days[vkey]) state.days[vkey] = {};
 
   const id = el.dataset.id;
-  const habit = HABITS.find(x => x.id === id);
-  const pts = habit.pts;
   const isChecked = !!state.days[vkey][id];
 
-  if (isChecked) {
-    state.days[vkey][id] = false;
-    state.totalPoints = Math.max(0, (state.totalPoints || 0) - pts);
-  } else {
-    state.days[vkey][id] = true;
-    state.totalPoints = (state.totalPoints || 0) + pts;
+  // Calculate diff using calcDayPts (respects adaptive CAT_RULES)
+  const ptsBefore = calcDayPts(state.days[vkey]);
+  state.days[vkey][id] = !isChecked;
+  const ptsAfter = calcDayPts(state.days[vkey]);
+  const diff = ptsAfter - ptsBefore;
+
+  state.totalPoints = Math.max(0, (state.totalPoints || 0) + diff);
+
+  if (!isChecked) {
     toast(MSGS[Math.floor(Math.random() * MSGS.length)]);
     const allDone = HABITS.every(h => state.days[vkey][h.id]);
     if (allDone) setTimeout(confetti, 300);
@@ -1194,6 +1195,7 @@ function toggle(el) {
   ss(state);
   renderAll(state);
 }
+
 
 function changeDay(dir) {
   const next = new Date(viewingDate);
