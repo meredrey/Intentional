@@ -683,7 +683,7 @@ function lgGet(){try{return JSON.parse(localStorage.getItem(LG_KEY)||'{}')}catch
 function lgSet(s){localStorage.setItem(LG_KEY,JSON.stringify(s));clearTimeout(lgSaveTimer);lgSaveTimer=setTimeout(()=>sheetWrite('LifeGoals',s),1500)}
 function whGet(){try{return JSON.parse(localStorage.getItem(WH_KEY)||'{}')}catch{return{}}}
 function whSet(s){localStorage.setItem(WH_KEY,JSON.stringify(s))}
-function sheetWrite(sheet,data){fetch(SHEETS_API,{method:'POST',body:JSON.stringify({action:'write',sheet:sheet,data:JSON.stringify(data)})}).catch(e=>console.log('write err',e))}
+function sheetWrite(sheet,data){fetch(SHEETS_API,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'write',sheet:sheet,data:JSON.stringify(data)})}).catch(e=>console.log('write err',e))}
 function sheetRead(sheet){return fetch(`${SHEETS_API}?action=read&sheet=${sheet}`).then(r=>r.json()).catch(()=>null)}
 function syncAll(){
   sheetRead('CoachData').then(r=>{
@@ -898,8 +898,10 @@ function ss(state) {
 }
 
 function syncToSheets(state) {
+  // Use no-cors POST to avoid CORS preflight issues
   fetch(SHEETS_API, {
     method: 'POST',
+    mode: 'no-cors',
     body: JSON.stringify({action:'write', sheet:'CoachData', data: JSON.stringify(state)})
   }).catch(err => console.log('Sheets sync error:', err));
 }
