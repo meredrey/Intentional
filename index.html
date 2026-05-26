@@ -1642,6 +1642,8 @@ function coachAddItem(btn) {
 }
 
 function coachSaveProject(activate) {
+  // If editing existing project, save as edit
+  if (coachDraft._editingId) { projSaveEdit(); return; }
   const projects = projectsGet();
   const rewards = projCalcRewards(coachDraft);
   coachDraft.rewards = rewards;
@@ -1924,6 +1926,48 @@ function projOpenStats() {
   });
 
   document.getElementById('habitModal').classList.add('open');
+}
+
+
+function projEdit(projId) {
+  const projects = projectsGet();
+  const proj = projects.find(p => p.id === projId);
+  if (!proj) return;
+  
+  // Load project into draft for editing
+  coachDraft = JSON.parse(JSON.stringify(proj)); // deep copy
+  coachDraft._editingId = projId; // mark as edit, not new
+  coachCreateStep = 1;
+  coachView = 'create';
+  renderCoach();
+}
+
+function projSaveEdit() {
+  const projects = projectsGet();
+  const idx = projects.findIndex(p => p.id === coachDraft._editingId);
+  if (idx === -1) return;
+  
+  // Preserve days, status, startDate, totalPoints from original
+  const original = projects[idx];
+  coachDraft.days = original.days;
+  coachDraft.status = original.status;
+  coachDraft.startDate = original.startDate;
+  coachDraft.totalPoints = original.totalPoints;
+  coachDraft.adaptiveCycle = original.adaptiveCycle;
+  coachDraft.reflections = original.reflections;
+  
+  // Recalculate rewards with updated settings
+  coachDraft.rewards = projCalcRewards(coachDraft);
+  
+  delete coachDraft._editingId;
+  projects[idx] = coachDraft;
+  projectsSet(projects);
+  
+  coachView = 'projects';
+  coachDraft = null;
+  coachCreateStep = 1;
+  renderCoach();
+  showToast('Projekt zaktualizowany! ✓');
 }
 
 function renderCoach() {
@@ -2243,8 +2287,10 @@ function renderCreateWizard() {
         <div class="rewards-title" style="margin-top:20px">Plan nagród</div>
         ${rewardsHTML}
         <div class="create-actions" style="flex-direction:column;gap:8px">
-          <button onclick="coachSaveProject(true)" class="proj-btn-primary">🚀 Aktywuj teraz</button>
-          <button onclick="coachSaveProject(false)" class="btn-ghost">📋 Zapisz jako draft</button>
+          ${coachDraft._editingId ?
+            '<button onclick="coachSaveProject(false)" class="proj-btn-primary">✓ Zapisz zmiany</button>' :
+            '<button onclick="coachSaveProject(true)" class="proj-btn-primary">🚀 Aktywuj teraz</button><button onclick="coachSaveProject(false)" class="btn-ghost" style="margin-top:0">📋 Zapisz jako draft</button>'
+          }
           <button onclick="coachCreateBack()" class="btn-ghost">← Wróć</button>
         </div>
       </div>`;
@@ -2278,6 +2324,7 @@ function renderProjectsList() {
       if (proj.status === 'active') actions.push(`<button onclick="projSetStatus('${proj.id}','on-hold')" class="proj-action-btn">Pause</button>`);
       if (proj.status !== 'closed') actions.push(`<button onclick="projSetStatus('${proj.id}','closed')" class="proj-action-btn danger">Zamknij</button>`);
       if (proj.status === 'closed') actions.push(`<button onclick="projSetStatus('${proj.id}','active')" class="proj-action-btn">Reaktywuj</button>`);
+      actions.push(`<button onclick="projEdit('${proj.id}')" class="proj-action-btn">✎ Edytuj</button>`);
 
       return `<div class="proj-list-item">
         <div class="proj-list-header">
