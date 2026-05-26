@@ -365,6 +365,79 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
 .cat-cycle-bar{height:100%;border-radius:3px;transition:width 0.4s ease}
 .cat-cycle-pct{font-size:0.68rem;color:#6a5a7a;width:32px;text-align:right;flex-shrink:0}
 
+
+/* PROJECT COACH CSS */
+.proj-dashboard{background:#E8E4EF;min-height:100%;padding-bottom:80px}
+.proj-header-bar{display:flex;justify-content:space-between;align-items:center;padding:16px 16px 8px;background:#2A1F35}
+.proj-project-name{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:#E8D5F0;letter-spacing:0.08em}
+.proj-icon-btn{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.1);border:none;color:#C8B4DC;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.proj-sections{padding:0 16px}
+.proj-section{margin-bottom:20px}
+.proj-section-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:0 2px}
+.proj-section-icon{font-size:1.1rem}
+.proj-section-title{font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:#2A1F35;font-weight:500;flex:1}
+.proj-section-pts{font-size:0.7rem;color:#9B82B0;font-weight:600;background:#EDE7F5;padding:2px 8px;border-radius:20px}
+.proj-section-pts.done{background:#9B82B0;color:white}
+.proj-logic-badge{font-size:0.58rem;color:#B09AC0;letter-spacing:0.05em}
+.proj-habit-list{display:flex;flex-direction:column;gap:6px}
+.proj-habit{display:flex;align-items:center;gap:12px;padding:12px 14px;background:white;border-radius:10px;border:2px solid #D4C8E0;cursor:pointer;transition:all 0.18s;user-select:none}
+.proj-habit.checked{background:#F0EAF8;border-color:#9B82B0}
+.proj-habit.past-locked{cursor:default;opacity:0.7}
+.proj-cb{width:24px;height:24px;border-radius:50%;border:2px solid #9B82B0;background:white;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:0;color:white;transition:all 0.18s}
+.proj-habit.checked .proj-cb{background:#9B82B0;border-color:#9B82B0;font-size:0.7rem}
+.proj-hname{font-size:0.85rem;color:#2A1F35;flex:1}
+.proj-habit.checked .proj-hname{color:#9B82B0;text-decoration:line-through}
+.proj-reward-card{margin:0 16px 16px;background:white;border-radius:12px;padding:16px 18px;box-shadow:0 2px 12px rgba(42,31,53,0.08)}
+.proj-reward-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.proj-reward-label{font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:#6B5878;margin-bottom:4px}
+.proj-reward-name{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:#2A1F35}
+.proj-reward-sub{font-size:0.68rem;color:#9B82B0;margin-top:2px}
+.proj-reward-remain{font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:#6B4F82}
+.proj-prog-bar{height:4px;background:#EDE7F5;border-radius:2px;overflow:hidden}
+.proj-prog-fill{height:100%;background:linear-gradient(90deg,#9B82B0,#8FAAB8);border-radius:2px;transition:width 0.7s ease}
+.proj-btn-primary{padding:14px 24px;background:#2A1F35;border:none;color:#C8B4DC;font-family:'Jost',sans-serif;font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;border-radius:10px;transition:all 0.2s}
+.proj-btn-primary:hover{background:#3D2E50}
+.proj-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:40px;text-align:center;background:#E8E4EF}
+.proj-empty-icon{font-size:3rem;margin-bottom:16px}
+.proj-empty-title{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:#2A1F35;margin-bottom:8px}
+.proj-empty-sub{font-size:0.85rem;color:#6B5878;line-height:1.5}
+
+/* CREATE WIZARD */
+.proj-create{background:#E8E4EF;min-height:100%;padding:20px 16px 80px}
+.create-steps{display:flex;gap:4px;margin-bottom:20px;overflow-x:auto}
+.create-step{font-size:0.6rem;letter-spacing:0.1em;padding:4px 10px;border-radius:20px;background:#D4C8E0;color:#6B5878;white-space:nowrap}
+.create-step.active{background:#2A1F35;color:#C8B4DC}
+.create-step.done{background:#9B82B0;color:white}
+.create-title{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:#2A1F35;margin-bottom:20px}
+.create-field{margin-bottom:16px}
+.create-label{font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:#6B5878;display:block;margin-bottom:6px}
+.create-input{width:100%;border:1.5px solid #D4C8E0;border-radius:10px;padding:11px 14px;font-size:0.88rem;font-family:'DM Sans',sans-serif;color:#2A1F35;background:white;outline:none;transition:border-color 0.2s;box-sizing:border-box}
+.create-input:focus{border-color:#9B82B0}
+.create-select{border:1.5px solid #D4C8E0;border-radius:8px;padding:8px 10px;font-size:0.78rem;font-family:'DM Sans',sans-serif;color:#2A1F35;background:white;outline:none}
+.create-hint{font-size:0.72rem;color:#9B82B0;margin-top:4px;font-style:italic}
+.create-actions{display:flex;justify-content:space-between;gap:8px;margin-top:24px}
+.create-cat{background:white;border-radius:12px;padding:14px;margin-bottom:12px;border:1.5px solid #D4C8E0}
+.create-cat-header{display:flex;gap:8px;margin-bottom:10px;align-items:center}
+.cat-items-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.cat-item-input{padding:8px 12px}
+.create-add-btn{background:none;border:1px dashed #C8B4DC;border-radius:8px;padding:6px 12px;font-size:0.72rem;color:#9B82B0;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%}
+.create-add-cat-btn{width:100%;padding:12px;border:1.5px dashed #9B82B0;border-radius:10px;background:transparent;color:#6B5878;font-size:0.8rem;font-family:'DM Sans',sans-serif;cursor:pointer;margin-bottom:16px}
+.create-summary{background:white;border-radius:12px;padding:16px;margin-bottom:8px}
+.summary-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #EDE7F5;font-size:0.85rem;color:#6B5878}
+.summary-row:last-child{border-bottom:none}
+.summary-row strong{color:#2A1F35}
+
+/* PROJECTS LIST */
+.proj-list-item{background:white;border-radius:12px;padding:16px;margin-bottom:10px;border:1.5px solid #EDE7F5}
+.proj-list-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.proj-list-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:#2A1F35}
+.proj-list-meta{font-size:0.72rem;color:#9B82B0;margin-top:2px}
+.proj-status-badge{font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:20px;font-weight:500}
+.proj-list-stats{display:flex;gap:12px;font-size:0.75rem;color:#6B5878;margin-bottom:10px}
+.proj-list-actions{display:flex;gap:8px;flex-wrap:wrap}
+.proj-action-btn{padding:6px 14px;border:1.5px solid #D4C8E0;border-radius:8px;background:white;color:#6B5878;font-size:0.7rem;font-family:'DM Sans',sans-serif;cursor:pointer}
+.proj-action-btn.danger{border-color:#f0d0c8;color:#c07060}
+
 </style>
 </head>
 <body>
@@ -383,256 +456,10 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
   <button class="app-tab" onclick="switchTab('goals')" id="tab-goals"><span class="ti">🌱</span>Cele</button>
 </div>
 <div class="panel dc-panel" id="panel-coach">
-<div class="container">
-  <header>
-    <div class="logo-line"></div>
-    <h1>Daily Coach</h1>
-    <p class="greeting" id="greeting"></p>
-  </header>
-
-  <!-- Date navigation -->
-  <div class="date-nav">
-    <button class="date-nav-btn" id="prevDay" onclick="changeDay(-1)">‹</button>
-    <span class="date-display" id="dateDisplay" onclick="openCalendar()"></span>
-    <button class="date-nav-btn" id="nextDay" onclick="changeDay(1)">›</button>
-  </div>
-  <div class="viewing-past" id="pastBanner" style="display:none">Przeglądasz poprzedni dzień</div>
-
-  <!-- Streak -->
-  <div class="streak-card" style="flex-direction:column;gap:12px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;width:100%">
-      <div>
-        <div class="streak-num" id="streakNum">0</div>
-        <div class="streak-lbl">dni z rzędu 🔥</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:2.6rem;color:#E8D5F0;line-height:1" id="dayNum">—</div>
-        <div class="streak-lbl">dzień z aplikacją 🌱</div>
-      </div>
-    </div>
-    <div class="streak-dots" id="streakDots" style="justify-content:center"></div>
-  </div>
-
-  <!-- Points -->
-  <div class="points-card">
-    <div>
-      <div class="pts-today-num" id="todayPts">0</div>
-      <div class="pts-today-lbl">Dziś / 12 pkt</div>
-    </div>
-    <div>
-      <div class="pts-total-lbl">Łącznie</div>
-      <div class="pts-total-num" id="totalPts">0</div>
-    </div>
-  </div>
-
-  <!-- Next reward -->
-  <div class="reward-card">
-    <img class="reward-img" id="rewardImg" src="https://picsum.photos/seed/spa11/800/300" alt="" />
-    <div class="reward-body">
-      <div class="reward-lbl">Następna nagroda</div>
-      <div class="reward-name" id="rewardName">—</div>
-      <div class="reward-countdown" id="rewardCountdown"></div>
-      <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
-      <div class="prog-labels"><span id="progCur">0 pkt</span><span id="progTgt">30 pkt</span></div>
-    </div>
-  </div>
-
-  <!-- JEDZENIE -->
-  <div class="section">
-    <div class="section-head">
-      <div class="section-icon">🌿</div>
-      <span class="section-title">Jedzenie</span>
-      <span class="section-pts" id="cat-food">0 / 3</span>
-      <div class="cat-status" id="status-food" title=""></div>
-    </div>
-    <div class="habit-list">
-      <div class="habit-item" data-id="calories" data-pts="2" data-cat="food" onclick="toggle(this)">
-        <div class="cb">✓</div>
-        <div class="hname">Kalorie w normie</div>
-        <div class="habit-right"><span class="hpts">2 pkt</span><span class="hstreak" id="str-calories"></span></div>
-      </div>
-      <div class="habit-item" data-id="notension" data-pts="1" data-cat="food" onclick="toggle(this)">
-        <div class="cb">✓</div>
-        <div class="hname">Nie zjadłam z napięcia</div>
-        <div class="habit-right"><span class="hpts">1 pkt</span><span class="hstreak" id="str-notension"></span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- RUCH -->
-  <div class="section">
-    <div class="section-head">
-      <div class="section-icon">✦</div>
-      <span class="section-title">Ruch</span>
-      <span class="section-pts" id="cat-move">0 / 4</span>
-      <div class="cat-status" id="status-move" title=""></div>
-    </div>
-    <div class="cat-note">Zaznacz cokolwiek z poniższych — liczy się że się ruszyłaś!</div>
-    <div class="habit-list">
-      <div class="habit-item" data-id="freeletics" data-pts="0" data-cat="move" onclick="toggle(this)">
-        <div class="cb">✓</div>
-        <div class="hname">Freeletics</div>
-        <div class="habit-right"><span class="hstreak" id="str-freeletics"></span></div>
-      </div>
-      <div class="habit-item" data-id="dance" data-pts="0" data-cat="move" onclick="toggle(this)">
-        <div class="cb">✓</div>
-        <div class="hname">Taniec</div>
-        <div class="habit-right"><span class="hstreak" id="str-dance"></span></div>
-      </div>
-      <div class="habit-item" data-id="steps" data-pts="0" data-cat="move" onclick="toggle(this)">
-        <div class="cb">✓</div>
-        <div class="hname">7 000+ kroków / spacer</div>
-        <div class="habit-right"><span class="hstreak" id="str-steps"></span></div>
-      </div>
-      <div class="habit-item" data-id="bike" data-pts="0" data-cat="move" onclick="toggle(this)">
-        <div class="cb">✓</div>
-        <div class="hname">Rower / basen</div>
-        <div class="habit-right"><span class="hstreak" id="str-bike"></span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ALKOHOL -->
-  <div class="section">
-    <div class="section-head">
-      <div class="section-icon">◇</div>
-      <span class="section-title">Alkohol</span>
-      <span class="section-pts" id="cat-alcohol">0 / 2</span>
-      <div class="cat-status" id="status-alcohol" title=""></div>
-    </div>
-    <div class="habit-list">
-      <div class="habit-item" data-id="noalc" data-pts="1" data-cat="alcohol" onclick="toggle(this)">
-        <div class="cb">✓</div>
-        <div class="hname">Dzień bez alkoholu</div>
-        <div class="habit-right"><span class="hpts">1 pkt</span><span class="hstreak" id="str-noalc"></span></div>
-      </div>
-      <div class="habit-item" data-id="alcrule" data-pts="1" data-cat="alcohol" onclick="toggle(this)">
-        <div class="cb">✓</div>
-        <div class="hname">Zasada „od a nie do" zachowana</div>
-        <div class="habit-right"><span class="hpts">1 pkt</span><span class="hstreak" id="str-alcrule"></span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- NAWYKI -->
-  <div class="section">
-    <div class="section-head">
-      <div class="section-icon">🌙</div>
-      <span class="section-title">Nawyki</span>
-      <span class="section-pts" id="cat-habits">0 / 1</span>
-      <div class="cat-status" id="status-habits" title=""></div>
-    </div>
-    <div class="habit-list">
-      <div class="habit-item" data-id="sleep" data-pts="1" data-cat="habits" onclick="toggle(this)">
-        <div class="cb">✓</div>
-        <div class="hname">Higiena snu — pielęgnacja, książka, bez ekranu</div>
-        <div class="habit-right"><span class="hpts">1 pkt</span><span class="hstreak" id="str-sleep"></span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ROZWÓJ -->
-  <div class="section">
-    <div class="section-head">
-      <div class="section-icon">📚</div>
-      <span class="section-title">Rozwój</span>
-      <span class="section-pts" id="cat-growth">0 / 1</span>
-      <div class="cat-status" id="status-growth" title=""></div>
-    </div>
-    <div class="cat-note">Oba = 1 pkt</div>
-    <div class="habit-list">
-      <div class="habit-item" data-id="duolingo" data-pts="0" data-cat="growth" onclick="toggle(this)">
-        <div class="cb">✓</div>
-        <div class="hname">Duolingo</div>
-        <div class="habit-right"><span class="hstreak" id="str-duolingo"></span></div>
-      </div>
-      <div class="habit-item" data-id="piano" data-pts="0" data-cat="growth" onclick="toggle(this)">
-        <div class="cb">✓</div>
-        <div class="hname">Pianino</div>
-        <div class="habit-right"><span class="hstreak" id="str-piano"></span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SUPLEMENTACJA -->
-  <div class="section">
-    <div class="section-head">
-      <div class="section-icon">💊</div>
-      <span class="section-title">Suplementacja</span>
-      <span class="section-pts" id="cat-suppl">0 / 1</span>
-      <div class="cat-status" id="status-suppl" title=""></div>
-    </div>
-    <div class="cat-note">Oba = 1 pkt</div>
-    <div class="habit-list">
-      <div class="habit-item" data-id="suppl1" data-pts="0" data-cat="suppl" onclick="toggle(this)">
-        <div class="cb">✓</div>
-        <div class="hname">Kolagen + kreatyna</div>
-        <div class="habit-right"><span class="hstreak" id="str-suppl1"></span></div>
-      </div>
-      <div class="habit-item" data-id="suppl2" data-pts="0" data-cat="suppl" onclick="toggle(this)">
-        <div class="cb">✓</div>
-        <div class="hname">Wit. D + B12 + Magnez B6</div>
-        <div class="habit-right"><span class="hstreak" id="str-suppl2"></span></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="divider"></div>
-
-  <div class="rewards-title">Nagrody</div>
-  <div id="rewardsList"></div>
-
-  <button class="btn-dark" onclick="openWeek()">Zobacz tydzień</button>
-  <button class="btn-dark" style="background:#6B5878;margin-top:8px" onclick="openHabitStats()">Statystyki nawyków</button>
-  <button class="btn-ghost" onclick="resetDay()">Resetuj zaznaczenia tego dnia</button>
-  <div style="display:flex;gap:8px;margin-top:10px">
-    <button class="btn-ghost" style="flex:1;margin-top:0" onclick="exportData()">⬇ Eksportuj dane</button>
-    <button class="btn-ghost" style="flex:1;margin-top:0" onclick="document.getElementById('importInput').click()">⬆ Importuj dane</button>
-  </div>
-  <input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(event)">
+<!-- rendered by renderCoach() -->
 </div>
+<div id="reflectionModal" style="display:none"></div>
 
-<!-- WEEK MODAL -->
-<div class="modal-overlay" id="weekModal" onclick="bgClose(event,'weekModal')">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">Twój tydzień</div>
-    <div id="wStats"></div>
-    <div class="chart-wrap">
-      <div class="chart-lbl">Punkty dziennie</div>
-      <div class="chart" id="wChart"></div>
-    </div>
-  </div>
-</div>
-
-<!-- CALENDAR MODAL -->
-<div class="modal-overlay" id="calModal" onclick="bgClose(event,'calModal')">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">Wybierz dzień</div>
-    <div class="cal-header">
-      <button class="cal-nav" onclick="calPrevMonth()">‹</button>
-      <span class="cal-month" id="calMonthLabel"></span>
-      <button class="cal-nav" onclick="calNextMonth()">›</button>
-    </div>
-    <div class="cal-grid" id="calGrid"></div>
-    <div class="cal-legend">
-      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#9B82B0"></div><span>Perfekcyjny dzień</span></div>
-      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#EDE7F5"></div><span>Częściowo</span></div>
-      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#E8E4EF"></div><span>Brak danych</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- HABIT STATS MODAL -->
-<div class="modal-overlay" id="habitModal" onclick="bgClose(event,'habitModal')">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">Statystyki nawyków</div>
-    <div id="habitStatsList"></div>
-  </div>
-</div>
-</div>
 <div class="panel focus-panel" id="panel-focus">
   <div class="focus-plant-card">
     <div class="focus-plant-left">
@@ -688,14 +515,31 @@ function sheetRead(sheet){return fetch(`${SHEETS_API}?action=read&sheet=${sheet}
 function syncAll(){
   sheetRead('CoachData').then(r=>{
     if(!r||typeof r!=='object') return;
+    // New project system
+    if(r.projects && Array.isArray(r.projects)) {
+      const localProjects = projectsGet();
+      // Merge: prefer local if has more data, use remote if local empty
+      if(localProjects.length === 0) {
+        localStorage.setItem(PROJ_KEY, JSON.stringify(r.projects));
+        renderCoach();
+      } else {
+        // Merge days from remote into local active project
+        const remoteActive = r.projects.find(p => p.status === 'active');
+        const localActive = localProjects.find(p => p.status === 'active');
+        if(remoteActive && localActive && remoteActive.id === localActive.id) {
+          localActive.days = Object.assign({}, remoteActive.days||{}, localActive.days||{});
+          const remotePts = projCalcTotal(remoteActive);
+          const localPts = projCalcTotal(localActive);
+          if(remotePts > localPts) localActive.totalPoints = remotePts;
+          localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
+          renderCoach();
+        }
+      }
+      return;
+    }
+    // Legacy CoachData format
     const hasData=(r.totalPoints>0)||(r.days&&Object.keys(r.days).length>0);
     if(!hasData) return;
-    const local=gs();
-    const merged={totalPoints:Math.max(r.totalPoints||0,local.totalPoints||0),days:Object.assign({},r.days||{},local.days||{})};
-    if(local.adaptivePts) merged.adaptivePts=local.adaptivePts;
-    if(local.adaptiveCycle!==undefined) merged.adaptiveCycle=local.adaptiveCycle;
-    localStorage.setItem(DC_KEY,JSON.stringify(merged));
-    renderAll(merged);
   });
   sheetRead('LifeGoals').then(r=>{
     if(!r||typeof r!=='object') return;
@@ -734,6 +578,7 @@ function switchTab(tab){
     if(panelEl)panelEl.classList.add('active');
     const fab=document.getElementById('editFab');
     if(fab)fab.style.display=tab==='goals'?'flex':'none';
+    if(tab==='coach')renderCoach();
     if(tab==='focus')renderFocus();
     if(tab==='goals')renderLG();
     window.scrollTo(0,0);
@@ -981,7 +826,7 @@ function calcHabitTotal(state, habitId) {
 
 function init() {
   const now = new Date(), h = now.getHours();
-  document.getElementById('greeting').textContent = h<12?'Dzień dobry, Mata 🌸':h<18?'Miłego popołudnia, Mata':'Dobry wieczór, Mata 🌙';
+  const greetEl = document.getElementById('greeting'); if(greetEl) greetEl.textContent = h<12?'Dzień dobry, Mata 🌸':h<18?'Miłego popołudnia, Mata':'Dobry wieczór, Mata 🌙';
   const state = gs();
   if(!state.days) state.days={};
   if(!state.totalPoints) state.totalPoints=0;
@@ -1045,7 +890,9 @@ function init() {
     }
   } catch(e) { console.log('Recalc error:', e); }
 
-  renderAll(state);
+  try { renderAll(state); } catch(e) {}
+  // Render coach panel
+  renderCoach();
   // Sync from Sheets in background
   syncFromSheets();
   setInterval(syncFromSheets, 30000);
@@ -1495,8 +1342,976 @@ function renderLG(){
   setEl('lgDoneCount',doneAll);setEl('lgLeftCount',totalAll-doneAll);
 }
 
+// ============================================================
+// PROJECT COACH — Storage & Data Model
+// ============================================================
+const PROJ_KEY = 'intentional_projects';
+const PROJ_ACTIVE_KEY = 'intentional_active_project';
+
+function projectsGet() {
+  try { return JSON.parse(localStorage.getItem(PROJ_KEY) || '[]'); } catch { return []; }
+}
+function projectsSet(projects) {
+  localStorage.setItem(PROJ_KEY, JSON.stringify(projects));
+  sheetWrite('CoachData', {projects: projects});
+}
+function activeProjectGet() {
+  const projects = projectsGet();
+  const activeId = localStorage.getItem(PROJ_ACTIVE_KEY);
+  return projects.find(p => p.id === activeId && p.status === 'active') || 
+         projects.find(p => p.status === 'active') || null;
+}
+
+// ============================================================
+// PROJECT COACH — State
+// ============================================================
+let coachView = 'dashboard'; // 'dashboard' | 'create' | 'projects' | 'reflection'
+let coachCreateStep = 1; // 1-4
+let coachDraft = null; // draft project being created
+let coachViewingDate = new Date();
+
+// ============================================================
+// PROJECT COACH — Date helpers
+// ============================================================
+function projDateKey(d) { return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
+function projTodayKey() { return projDateKey(new Date()); }
+function projDayAgo(d, ago) { const r = new Date(d); r.setDate(r.getDate()-ago); return r; }
+
+// ============================================================
+// PROJECT COACH — Points calculation
+// ============================================================
+function projCalcCatPts(dd, cat) {
+  const items = cat.items || [];
+  if (!items.length) return 0;
+  const checked = items.filter(item => dd[cat.id + '_' + item.id]);
+  if (cat.logic === 'all') {
+    return checked.length === items.length ? cat.pts : 0;
+  } else { // 'any'
+    return checked.length > 0 ? cat.pts : 0;
+  }
+}
+
+function projCalcDayPts(dd, project) {
+  if (!project) return 0;
+  return project.categories.reduce((sum, cat) => sum + projCalcCatPts(dd, cat), 0);
+}
+
+function projMaxDayPts(project) {
+  return project.categories.reduce((sum, cat) => sum + cat.pts, 0);
+}
+
+function projCalcTotal(project) {
+  if (!project) return 0;
+  let total = 0;
+  Object.keys(project.days || {}).forEach(key => {
+    total += projCalcDayPts(project.days[key], project);
+  });
+  return total;
+}
+
+// ============================================================
+// PROJECT COACH — Adaptive scoring (21-day cycles)
+// ============================================================
+function projCheckAdaptation(project) {
+  if (!project || !project.startDate) return false;
+  const start = new Date(project.startDate);
+  const today = new Date();
+  const daysSinceStart = Math.floor((today - start) / 86400000);
+  const cycleNum = Math.floor(daysSinceStart / 21);
+  if (cycleNum === 0 || cycleNum === (project.adaptiveCycle || 0)) return false;
+
+  // Calculate effectiveness per category for last cycle
+  const cStart = new Date(start); cStart.setDate(cStart.getDate() + (cycleNum-1)*21);
+  const cEnd = new Date(start); cEnd.setDate(cEnd.getDate() + cycleNum*21);
+  
+  const eff = {};
+  project.categories.forEach(cat => {
+    let possible = 0, earned = 0;
+    for (let d = new Date(cStart); d < cEnd; d.setDate(d.getDate()+1)) {
+      const key = projDateKey(d);
+      const dd = project.days?.[key] || {};
+      possible += cat.pts;
+      earned += projCalcCatPts(dd, cat);
+    }
+    eff[cat.id] = possible > 0 ? earned / possible : 0;
+  });
+
+  // Find worst and best
+  const sorted = [...project.categories].sort((a,b) => eff[a.id] - eff[b.id]);
+  const worst = sorted[0];
+  const best = sorted[sorted.length-1];
+
+  const changes = [];
+  if (eff[worst.id] < 0.5 && worst.pts < 4) {
+    worst.pts = Math.min(4, worst.pts + 1);
+    changes.push({cat: worst.id, dir: 'up', eff: Math.round(eff[worst.id]*100)});
+  }
+  if (eff[best.id] >= 0.8 && best.pts > 1 && best.id !== worst.id) {
+    best.pts = Math.max(1, best.pts - 1);
+    changes.push({cat: best.id, dir: 'down', eff: Math.round(eff[best.id]*100)});
+  }
+
+  if (changes.length) {
+    project.adaptiveCycle = cycleNum;
+    project.pendingReflection = {
+      cycle: cycleNum,
+      changes,
+      eff,
+      date: projTodayKey()
+    };
+    return true;
+  }
+  project.adaptiveCycle = cycleNum;
+  return false;
+}
+
+// ============================================================
+// PROJECT COACH — Rewards calculation
+// ============================================================
+function projCalcRewards(project) {
+  const maxPts = projMaxDayPts(project);
+  const duration = project.duration || 30;
+  const budget = project.budget || 0;
+  
+  const TIERS = [
+    {pct: 0.01, budgetPct: 0.01},
+    {pct: 0.03, budgetPct: 0.02},
+    {pct: 0.07, budgetPct: 0.03},
+    {pct: 0.14, budgetPct: 0.04},
+    {pct: 0.30, budgetPct: 0.10},
+    {pct: 0.50, budgetPct: 0.15},
+    {pct: 0.75, budgetPct: 0.25},
+    {pct: 1.00, budgetPct: 0.40},
+  ];
+
+  return TIERS.map((tier, i) => ({
+    id: `r${i+1}`,
+    threshold: Math.round(tier.pct * duration * maxPts),
+    payout: Math.round(tier.budgetPct * budget),
+    pct: Math.round(tier.pct * 100),
+    budgetPct: Math.round(tier.budgetPct * 100),
+  }));
+}
+
+// ============================================================
+// PROJECT COACH — Migration from old system
+// ============================================================
+function migrateOldProject() {
+  const projects = projectsGet();
+  if (projects.length > 0) return; // already migrated
+  
+  const oldState = (() => { try { return JSON.parse(localStorage.getItem('dc5')||'{}'); } catch { return {}; } })();
+  if (!oldState.days || Object.keys(oldState.days).length === 0) return;
+
+  const startKey = Object.keys(oldState.days).sort()[0];
+  
+  const mataProject = {
+    id: 'proj_mata_original',
+    name: 'Mój System Zdrowia',
+    status: 'active',
+    startDate: startKey.split('-').length === 3 ? 
+      new Date(parseInt(startKey.split('-')[0]), parseInt(startKey.split('-')[1])-1, parseInt(startKey.split('-')[2])).toISOString() :
+      new Date(2026,2,15).toISOString(),
+    duration: 180,
+    budget: 2000,
+    categories: [
+      { id: 'food', name: 'Jedzenie', emoji: '🌿', pts: 3, logic: 'any',
+        items: [{id:'calories', name:'Kalorie w normie'}, {id:'notension', name:'Nie zjadłam z napięcia'}] },
+      { id: 'move', name: 'Ruch', emoji: '✦', pts: 2, logic: 'any',
+        items: [{id:'freeletics', name:'Freeletics'}, {id:'dance', name:'Taniec'}, {id:'steps', name:'7000+ kroków'}, {id:'bike', name:'Rower / basen'}] },
+      { id: 'alcohol', name: 'Alkohol', emoji: '◇', pts: 1, logic: 'all',
+        items: [{id:'noalc', name:'Dzień bez alkoholu'}, {id:'alcrule', name:'Zasada od a nie do'}] },
+      { id: 'habits', name: 'Nawyki', emoji: '🌙', pts: 3, logic: 'all',
+        items: [{id:'sleep', name:'Higiena snu'}] },
+      { id: 'growth', name: 'Rozwój', emoji: '📚', pts: 1, logic: 'all',
+        items: [{id:'duolingo', name:'Duolingo'}, {id:'piano', name:'Pianino'}] },
+      { id: 'suppl', name: 'Suplementacja', emoji: '💊', pts: 2, logic: 'all',
+        items: [{id:'suppl1', name:'Kolagen + kreatyna'}, {id:'suppl2', name:'Wit. D + B12 + Magnez'}] },
+    ],
+    days: oldState.days || {},
+    adaptiveCycle: oldState.adaptiveCycle || 3,
+    totalPoints: oldState.totalPoints || 371,
+    createdAt: new Date(2026,2,15).toISOString(),
+  };
+
+  // Apply stored adaptive pts
+  if (oldState.adaptivePts) {
+    const ap = oldState.adaptivePts;
+    mataProject.categories.forEach(cat => {
+      if (ap[cat.id] !== undefined) cat.pts = ap[cat.id];
+    });
+  }
+
+  projects.push(mataProject);
+  localStorage.setItem(PROJ_ACTIVE_KEY, mataProject.id);
+  projectsSet(projects);
+}
+
+// ============================================================
+// PROJECT COACH — Create Project Wizard
+// ============================================================
+function coachStartCreate() {
+  coachDraft = {
+    id: 'proj_' + Date.now(),
+    name: '',
+    status: 'draft',
+    duration: 30,
+    budget: 500,
+    categories: [],
+    days: {},
+    createdAt: new Date().toISOString(),
+  };
+  coachCreateStep = 1;
+  coachView = 'create';
+  renderCoach();
+}
+
+function coachCreateNext() {
+  if (coachCreateStep === 1) {
+    const name = document.getElementById('proj-name')?.value?.trim();
+    const duration = parseInt(document.getElementById('proj-duration')?.value);
+    const budget = parseFloat(document.getElementById('proj-budget')?.value);
+    if (!name) { showToast('Podaj nazwę projektu'); return; }
+    if (!duration || duration < 1) { showToast('Podaj czas trwania'); return; }
+    coachDraft.name = name;
+    coachDraft.duration = duration;
+    coachDraft.budget = budget || 0;
+    coachCreateStep = 2;
+  } else if (coachCreateStep === 2) {
+    // Save categories from form
+    const cats = [];
+    document.querySelectorAll('.create-cat').forEach(el => {
+      const name = el.querySelector('.cat-name-input')?.value?.trim();
+      const emoji = el.querySelector('.cat-emoji-input')?.value?.trim() || '⭐';
+      const logic = el.querySelector('.cat-logic-select')?.value || 'any';
+      const items = [];
+      el.querySelectorAll('.cat-item-input').forEach(inp => {
+        const v = inp.value.trim();
+        if (v) items.push({id: 'item_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), name: v});
+      });
+      if (name) cats.push({id: 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2,5), name, emoji, logic, pts: 2, items});
+    });
+    if (cats.length === 0) { showToast('Dodaj przynajmniej jedną kategorię'); return; }
+    if (cats.length > 5) { showToast('Maksymalnie 5 kategorii'); return; }
+    coachDraft.categories = cats;
+    coachCreateStep = 3;
+  } else if (coachCreateStep === 3) {
+    coachCreateStep = 4;
+  }
+  renderCoach();
+}
+
+function coachCreateBack() {
+  if (coachCreateStep > 1) { coachCreateStep--; renderCoach(); }
+  else { coachView = 'dashboard'; renderCoach(); }
+}
+
+function coachAddCategory() {
+  const container = document.getElementById('cats-container');
+  if (!container) return;
+  const count = container.querySelectorAll('.create-cat').length;
+  if (count >= 5) { showToast('Maksymalnie 5 kategorii'); return; }
+  const div = document.createElement('div');
+  div.className = 'create-cat';
+  div.innerHTML = coachCatTemplate(count + 1);
+  container.appendChild(div);
+}
+
+function coachCatTemplate(num) {
+  return `<div class="create-cat-header">
+    <input class="cat-emoji-input create-input" value="⭐" style="width:48px;text-align:center">
+    <input class="cat-name-input create-input" placeholder="Nazwa kategorii ${num}" style="flex:1">
+    <select class="cat-logic-select create-select">
+      <option value="any">przynajmniej jedno</option>
+      <option value="all">wszystkie wymagane</option>
+    </select>
+  </div>
+  <div class="cat-items-list">
+    <input class="cat-item-input create-input" placeholder="Cel szczegółowy 1">
+    <input class="cat-item-input create-input" placeholder="Cel szczegółowy 2">
+  </div>
+  <button onclick="coachAddItem(this)" class="create-add-btn">+ dodaj cel</button>`;
+}
+
+function coachAddItem(btn) {
+  const list = btn.previousElementSibling;
+  const inp = document.createElement('input');
+  inp.className = 'cat-item-input create-input';
+  inp.placeholder = 'Cel szczegółowy';
+  list.appendChild(inp);
+}
+
+function coachSaveProject(activate) {
+  const projects = projectsGet();
+  const rewards = projCalcRewards(coachDraft);
+  coachDraft.rewards = rewards;
+  coachDraft.startDate = activate ? new Date().toISOString() : null;
+  
+  if (activate) {
+    // Check if there's an active project
+    const currentActive = projects.find(p => p.status === 'active');
+    if (currentActive) {
+      if (!confirm(`Projekt "${currentActive.name}" jest aktywny. Przełączyć na On-Hold?`)) return;
+      currentActive.status = 'on-hold';
+    }
+    coachDraft.status = 'active';
+    localStorage.setItem(PROJ_ACTIVE_KEY, coachDraft.id);
+  } else {
+    coachDraft.status = 'draft';
+  }
+  
+  projects.push(coachDraft);
+  projectsSet(projects);
+  coachView = 'dashboard';
+  coachDraft = null;
+  coachCreateStep = 1;
+  renderCoach();
+  showToast(activate ? '🚀 Projekt aktywowany!' : '📋 Zapisano jako draft');
+}
+
+// ============================================================
+// PROJECT COACH — Toggle habit
+// ============================================================
+function projToggle(el) {
+  const projects = projectsGet();
+  const project = projects.find(p => p.id === localStorage.getItem(PROJ_ACTIVE_KEY));
+  if (!project) return;
+
+  const vkey = projDateKey(coachViewingDate);
+  if (!project.days) project.days = {};
+  if (!project.days[vkey]) project.days[vkey] = {};
+
+  const key = el.dataset.key;
+  const isChecked = !!project.days[vkey][key];
+  
+  const ptsBefore = projCalcDayPts(project.days[vkey], project);
+  project.days[vkey][key] = !isChecked;
+  const ptsAfter = projCalcDayPts(project.days[vkey], project);
+  
+  project.totalPoints = Math.max(0, (project.totalPoints || 0) + (ptsAfter - ptsBefore));
+
+  // Check adaptation
+  const adapted = projCheckAdaptation(project);
+
+  projectsSet(projects);
+  
+  if (!isChecked) toast(MSGS[Math.floor(Math.random() * MSGS.length)]);
+  
+  renderCoach();
+  
+  if (adapted && project.pendingReflection) {
+    setTimeout(() => showReflectionPrompt(project), 800);
+  }
+}
+
+// ============================================================
+// PROJECT COACH — Reflection
+// ============================================================
+function showReflectionPrompt(project) {
+  const r = project.pendingReflection;
+  if (!r) return;
+  const catNames = {};
+  project.categories.forEach(c => catNames[c.id] = c.name);
+  
+  const changesHTML = r.changes.map(ch => {
+    const icon = ch.dir === 'up' ? '⬆️' : '⬇️';
+    const desc = ch.dir === 'up' ? 'dostaje +1 pkt (była słaba: ' + ch.eff + '%)' : 'traci 1 pkt (była świetna: ' + ch.eff + '%)';
+    return `<div class="reflection-change">${icon} <strong>${catNames[ch.cat]}</strong> — ${desc}</div>`;
+  }).join('');
+
+  const worstCat = r.changes.find(c => c.dir === 'up');
+  
+  document.getElementById('reflectionModal').innerHTML = `
+    <div class="modal-overlay open" onclick="closeReflection(event)">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <div class="modal-title">🔄 Koniec cyklu ${r.cycle} — czas na refleksję</div>
+        <div style="margin-bottom:16px;font-size:0.85rem;color:#6B5878;line-height:1.6">
+          Minęło 21 dni. System dostosował punktację:
+        </div>
+        ${changesHTML}
+        ${worstCat ? `
+        <div style="margin:20px 0 8px;font-size:0.85rem;font-weight:500;color:#2A1F35">
+          Co sprawiało trudność z kategorią <strong>${catNames[worstCat.cat]}</strong>?
+        </div>
+        <textarea id="reflectionText" style="width:100%;border:1px solid #D4C8E0;border-radius:10px;padding:12px;font-family:'DM Sans',sans-serif;font-size:0.85rem;min-height:80px;outline:none;resize:none" placeholder="Napisz co poszło nie tak, co możesz zmienić..."></textarea>
+        ` : ''}
+        <div style="margin-top:8px;font-size:0.75rem;color:#9B82B0;font-style:italic">
+          Refleksja zostanie zapisana w historii projektu.
+        </div>
+        <button onclick="saveReflection()" class="btn-dark" style="margin-top:16px">Zapisz i kontynuuj</button>
+      </div>
+    </div>`;
+  document.getElementById('reflectionModal').style.display = 'block';
+}
+
+function saveReflection() {
+  const text = document.getElementById('reflectionText')?.value || '';
+  const projects = projectsGet();
+  const project = projects.find(p => p.id === localStorage.getItem(PROJ_ACTIVE_KEY));
+  if (project && project.pendingReflection) {
+    if (!project.reflections) project.reflections = [];
+    project.reflections.push({...project.pendingReflection, text, savedAt: new Date().toISOString()});
+    delete project.pendingReflection;
+    projectsSet(projects);
+  }
+  document.getElementById('reflectionModal').style.display = 'none';
+  document.getElementById('reflectionModal').innerHTML = '';
+  renderCoach();
+}
+
+function closeReflection(e) {
+  if (e.target === e.currentTarget) {
+    document.getElementById('reflectionModal').style.display = 'none';
+  }
+}
+
+// ============================================================
+// PROJECT COACH — Project management
+// ============================================================
+function projSetStatus(projId, newStatus) {
+  const projects = projectsGet();
+  const proj = projects.find(p => p.id === projId);
+  if (!proj) return;
+
+  if (newStatus === 'active') {
+    const currentActive = projects.find(p => p.status === 'active' && p.id !== projId);
+    if (currentActive) {
+      if (!confirm(`Projekt "${currentActive.name}" jest aktywny. Przełączyć na On-Hold?`)) return;
+      currentActive.status = 'on-hold';
+    }
+    proj.status = 'active';
+    if (!proj.startDate) proj.startDate = new Date().toISOString();
+    localStorage.setItem(PROJ_ACTIVE_KEY, projId);
+  } else {
+    proj.status = newStatus;
+    if (newStatus === 'closed') proj.closedAt = new Date().toISOString();
+  }
+
+  projectsSet(projects);
+  renderCoach();
+  showToast(`Status zmieniony na ${newStatus}`);
+}
+
+// ============================================================
+// PROJECT COACH — Main render
+// ============================================================
+
+function projExport() {
+  const projects = projectsGet();
+  const data = JSON.stringify(projects, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  a.href = url;
+  a.download = `intentional-backup-${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Dane wyeksportowane! 💾');
+}
+
+function projImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      // Handle both array of projects and single project
+      const projects = Array.isArray(data) ? data : [data];
+      if (!projects[0].categories) throw new Error('Nieprawidłowy format');
+      if (!confirm('Importować dane? Obecne dane zostaną zastąpione.')) return;
+      localStorage.setItem(PROJ_KEY, JSON.stringify(projects));
+      if (projects.find(p => p.status === 'active')) {
+        localStorage.setItem(PROJ_ACTIVE_KEY, projects.find(p => p.status === 'active').id);
+      }
+      sheetWrite('CoachData', {projects});
+      renderCoach();
+      toast('Dane zaimportowane! ✨');
+    } catch(err) {
+      alert('Błąd importu — sprawdź czy plik jest poprawny.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function projOpenStats() {
+  const projects = projectsGet();
+  const project = activeProjectGet();
+  if (!project) return;
+
+  const list = document.getElementById('habitStatsList');
+  if (!list) return;
+  list.innerHTML = '';
+
+  const CAT_NAMES = {};
+  project.categories.forEach(c => CAT_NAMES[c.id] = c.emoji + ' ' + c.name);
+
+  // Per-habit streaks
+  project.categories.forEach(cat => {
+    cat.items.forEach(item => {
+      const habitKey = cat.id + '_' + item.id;
+      let streak = 0, total = 0;
+      const today = new Date();
+      // Total
+      Object.values(project.days||{}).forEach(dd => { if(dd[habitKey]) total++; });
+      // Streak
+      for(let i=0;i<=365;i++) {
+        const key = projDateKey(projDayAgo(today, i));
+        if(project.days?.[key]?.[habitKey]) { streak++; }
+        else if(i > 0) break;
+      }
+      const div = document.createElement('div');
+      div.className = 'hstat-item';
+      div.innerHTML = `<div class="hstat-name">${cat.emoji} ${item.name}</div>
+        <div class="hstat-row">
+          <div class="hstat-box"><div class="hstat-box-val">${streak}${streak>0?'🔥':''}</div><div class="hstat-box-lbl">Dni z rzędu</div></div>
+          <div class="hstat-box"><div class="hstat-box-val">${total}</div><div class="hstat-box-lbl">Łącznie dni</div></div>
+        </div>`;
+      list.appendChild(div);
+    });
+  });
+
+  // Category effectiveness
+  const titleEl = document.createElement('div');
+  titleEl.className = 'cat-stats-title';
+  titleEl.textContent = 'Skuteczność kategorii';
+  list.appendChild(titleEl);
+
+  const start = new Date(project.startDate);
+  const today = new Date();
+  const totalDays = Math.floor((today - start) / 86400000);
+  const totalCycles = Math.floor(totalDays / 21);
+
+  project.categories.forEach(cat => {
+    const cycles = [];
+    for(let c=0; c<=totalCycles; c++) {
+      const cStart = new Date(start); cStart.setDate(cStart.getDate()+c*21);
+      const cEnd = new Date(start); cEnd.setDate(cEnd.getDate()+(c+1)*21);
+      const isNow = c === totalCycles;
+      const endDate = isNow ? today : cEnd;
+      let possible=0, earned=0;
+      for(let d=new Date(cStart);d<=endDate;d.setDate(d.getDate()+1)) {
+        const key = projDateKey(d);
+        if(!project.days?.[key]) continue;
+        possible += cat.pts;
+        earned += projCalcCatPts(project.days[key], cat);
+      }
+      const pct = possible > 0 ? Math.round(earned/possible*100) : null;
+      cycles.push({num:c+1, pct, isCurrent:isNow});
+    }
+    function barColor(pct) {
+      if(pct===null) return '#d0c8e0';
+      if(pct>=80) return '#6ab87a';
+      if(pct>=50) return '#a890d0';
+      return '#d07080';
+    }
+    const cyclesHTML = cycles.map(cy=>`
+      <div class="cat-cycle-row">
+        <div class="cat-cycle-label">${cy.isCurrent?'Teraz':'Cykl '+cy.num}</div>
+        <div class="cat-cycle-bar-wrap"><div class="cat-cycle-bar" style="width:${cy.pct||0}%;background:${barColor(cy.pct)}"></div></div>
+        <div class="cat-cycle-pct">${cy.pct!==null?cy.pct+'%':'–'}</div>
+      </div>`).join('');
+    const card = document.createElement('div');
+    card.className = 'cat-stat-card';
+    card.innerHTML = `<div class="cat-stat-header">
+      <div class="cat-stat-name">${cat.emoji} ${cat.name}</div>
+      <div class="cat-stat-pts">${cat.pts} pkt teraz</div>
+    </div><div class="cat-cycles">${cyclesHTML}</div>`;
+    list.appendChild(card);
+  });
+
+  document.getElementById('habitModal').classList.add('open');
+}
+
+function renderCoach() {
+  const panel = document.getElementById('panel-coach');
+  if (!panel) return;
+
+  migrateOldProject();
+  const project = activeProjectGet();
+  
+  if (coachView === 'create') {
+    panel.innerHTML = renderCreateWizard();
+    return;
+  }
+  if (coachView === 'projects') {
+    panel.innerHTML = renderProjectsList();
+    return;
+  }
+  
+  // Dashboard view
+  panel.innerHTML = renderDashboard(project);
+}
+
+// ============================================================
+// PROJECT COACH — Dashboard render
+// ============================================================
+function renderDashboard(project) {
+  if (!project) {
+    return `<div class="proj-empty">
+      <div class="proj-empty-icon">🌱</div>
+      <div class="proj-empty-title">Brak aktywnego projektu</div>
+      <div class="proj-empty-sub">Stwórz nowy projekt aby zacząć śledzić swoje nawyki</div>
+      <button onclick="coachStartCreate()" class="proj-btn-primary" style="margin-top:20px">+ Nowy projekt</button>
+    </div>`;
+  }
+
+  const vkey = projDateKey(coachViewingDate);
+  const isToday = vkey === projTodayKey();
+  const dd = project.days?.[vkey] || {};
+  const dayPts = projCalcDayPts(dd, project);
+  const maxPts = projMaxDayPts(project);
+  const totalPts = projCalcTotal(project);
+
+  // Day number
+  const startDate = new Date(project.startDate);
+  const dayNum = Math.floor((new Date() - startDate) / 86400000) + 1;
+
+  // Streak
+  let streak = 0;
+  for (let i = 0; i <= 365; i++) {
+    const key = projDateKey(projDayAgo(new Date(), i));
+    if (projCalcDayPts(project.days?.[key] || {}, project) > 0) streak++;
+    else if (i > 0) break;
+  }
+
+  // Next reward
+  const rewards = project.rewards || projCalcRewards(project);
+  const nextReward = rewards.find(r => totalPts < r.threshold);
+  const lastReward = [...rewards].reverse().find(r => totalPts >= r.threshold);
+
+  // Rewards progress bar
+  const maxThreshold = rewards[rewards.length-1].threshold;
+  const progPct = Math.min(100, (totalPts / maxThreshold) * 100);
+
+  // Categories HTML
+  const catsHTML = project.categories.map(cat => {
+    const catPts = projCalcCatPts(dd, cat);
+    const isDone = catPts > 0;
+    const itemsHTML = cat.items.map(item => {
+      const key = cat.id + '_' + item.id;
+      const checked = !!dd[key];
+      return `<div class="proj-habit ${checked ? 'checked' : ''} ${!isToday ? 'past-locked' : ''}" 
+        data-key="${key}" onclick="${isToday ? 'projToggle(this)' : ''}">
+        <div class="proj-cb">${checked ? '✓' : ''}</div>
+        <div class="proj-hname">${item.name}</div>
+      </div>`;
+    }).join('');
+
+    return `<div class="proj-section">
+      <div class="proj-section-head">
+        <span class="proj-section-icon">${cat.emoji}</span>
+        <span class="proj-section-title">${cat.name}</span>
+        <span class="proj-section-pts ${isDone ? 'done' : ''}">${catPts}/${cat.pts} pkt</span>
+        <span class="proj-logic-badge">${cat.logic === 'all' ? 'wszystkie' : 'dowolne'}</span>
+      </div>
+      <div class="proj-habit-list">${itemsHTML}</div>
+    </div>`;
+  }).join('');
+
+  // Date nav
+  const DAYS_PL = ['Nd','Pn','Wt','Śr','Cz','Pt','Sb'];
+  const MONTHS_PL = ['stycznia','lutego','marca','kwietnia','maja','czerwca','lipca','sierpnia','września','października','listopada','grudnia'];
+  const d = coachViewingDate;
+  const dateStr = `${DAYS_PL[d.getDay()]}, ${d.getDate()} ${MONTHS_PL[d.getMonth()]} ${d.getFullYear()}`;
+
+  // Streak dots
+  const dotsHTML = Array.from({length:7},(_,i)=>{
+    const dd2 = projDayAgo(new Date(), 6-i);
+    const p = projCalcDayPts(project.days?.[projDateKey(dd2)]||{}, project);
+    const isT = projDateKey(dd2) === projTodayKey();
+    return `<div class="sdot${p>0?' done':''}${isT?' today':''}">${DAYS_PL[dd2.getDay()]}</div>`;
+  }).join('');
+
+  // Reward section
+  const rewardHTML = nextReward ? `
+    <div class="proj-reward-card">
+      <div class="proj-reward-top">
+        <div>
+          <div class="proj-reward-label">Następna nagroda</div>
+          <div class="proj-reward-name">${nextReward.payout} zł</div>
+          <div class="proj-reward-sub">przy ${nextReward.threshold} pkt (${nextReward.pct}% czasu)</div>
+        </div>
+        <div style="text-align:right">
+          <div class="proj-reward-remain">${nextReward.threshold - totalPts} pkt</div>
+          <div class="proj-reward-label">do nagrody</div>
+        </div>
+      </div>
+      <div class="proj-prog-bar">
+        <div class="proj-prog-fill" style="width:${Math.max(2, (totalPts/(nextReward.threshold||1))*100)}%"></div>
+      </div>
+    </div>` : `<div class="proj-reward-card" style="text-align:center;padding:20px">
+      <div style="font-size:1.5rem">🏆</div>
+      <div class="proj-reward-name">Wszystkie nagrody odblokowane!</div>
+    </div>`;
+
+  return `
+    <div class="proj-dashboard">
+      <!-- Header bar -->
+      <div class="proj-header-bar">
+        <div class="proj-project-name">${project.name}</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="coachView='projects';renderCoach()" class="proj-icon-btn" title="Projekty">☰</button>
+          <button onclick="coachStartCreate()" class="proj-icon-btn" title="Nowy projekt">+</button>
+        </div>
+      </div>
+
+      <!-- Date nav -->
+      <div class="date-nav" style="margin:12px 0 4px">
+        <button class="date-nav-btn" onclick="coachViewingDate=projDayAgo(coachViewingDate,1);renderCoach()">‹</button>
+        <span class="date-display">${dateStr}</span>
+        <button class="date-nav-btn" onclick="coachViewingDate=projDayAgo(coachViewingDate,-1);renderCoach()" ${isToday?'disabled':''}>›</button>
+      </div>
+      ${!isToday ? '<div class="viewing-past">Przeglądasz poprzedni dzień</div>' : ''}
+
+      <!-- Stats card -->
+      <div class="streak-card" style="flex-direction:column;gap:12px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;width:100%">
+          <div>
+            <div class="streak-num" id="streakNum">${streak}</div>
+            <div class="streak-lbl">dni z rzędu 🔥</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:2.6rem;color:#E8D5F0;line-height:1">${dayNum}</div>
+            <div class="streak-lbl">dzień z aplikacją 🌱</div>
+          </div>
+          <div style="text-align:right">
+            <div class="streak-num">${totalPts}</div>
+            <div class="streak-lbl">punktów łącznie</div>
+          </div>
+        </div>
+        <div class="streak-dots" style="justify-content:center">${dotsHTML}</div>
+      </div>
+
+      <!-- Today points -->
+      <div class="points-card">
+        <div>
+          <div class="pts-today-num">${dayPts}</div>
+          <div class="pts-today-lbl">Dziś / ${maxPts} pkt</div>
+        </div>
+        <div>
+          <div class="pts-total-lbl">Łącznie</div>
+          <div class="pts-total-num">${totalPts}</div>
+        </div>
+      </div>
+
+      <!-- Reward -->
+      ${rewardHTML}
+
+      <!-- Categories -->
+      <div class="proj-sections">
+        ${catsHTML}
+      </div>
+
+      <!-- Rewards list -->
+      <div class="divider"></div>
+      <div class="rewards-title">Nagrody projektu</div>
+      <div style="padding:0 0 4px">
+        ${(project.rewards || projCalcRewards(project)).map(r => {
+          const unlocked = totalPts >= r.threshold;
+          const current = !unlocked && (project.rewards||projCalcRewards(project)).find(x=>totalPts<x.threshold)?.threshold===r.threshold;
+          return `<div class="ritem ${unlocked?'unlocked':''} ${current?'current':''}">
+            <div class="rdot"></div>
+            <div class="rinfo">
+              <div class="rname">${unlocked?'✓ ':''}<strong>${r.payout} zł</strong></div>
+              <div class="rbudget">${r.budgetPct}% budżetu · ${r.pct}% czasu projektu</div>
+            </div>
+            <div class="rthresh">${r.threshold} pkt</div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <!-- Actions -->
+      <div class="divider"></div>
+      <div style="padding:0 16px 80px;display:flex;flex-direction:column;gap:8px">
+        <button class="btn-dark" style="background:#6B5878" onclick="projOpenStats()">Statystyki nawyków</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn-ghost" style="flex:1;margin-top:0" onclick="projExport()">⬇ Eksportuj dane</button>
+          <button class="btn-ghost" style="flex:1;margin-top:0" onclick="document.getElementById('projImportInput').click()">⬆ Importuj dane</button>
+        </div>
+        <input type="file" id="projImportInput" accept=".json" style="display:none" onchange="projImport(event)">
+      </div>
+    </div>`;
+}
+
+// ============================================================
+// PROJECT COACH — Create Wizard render
+// ============================================================
+function renderCreateWizard() {
+  const steps = ['Podstawy','Kategorie','Podsumowanie','Gotowe'];
+  const stepsHTML = steps.map((s,i) => 
+    `<div class="create-step ${coachCreateStep===i+1?'active':coachCreateStep>i+1?'done':''}">${i+1}. ${s}</div>`
+  ).join('');
+
+  if (coachCreateStep === 1) return `
+    <div class="proj-create">
+      <div class="create-steps">${stepsHTML}</div>
+      <h2 class="create-title">Nowy projekt</h2>
+      <div class="create-field">
+        <label class="create-label">Nazwa projektu</label>
+        <input id="proj-name" class="create-input" placeholder="np. Zdrowy maj" value="${coachDraft.name}">
+      </div>
+      <div class="create-field">
+        <label class="create-label">Czas trwania (dni)</label>
+        <input id="proj-duration" class="create-input" type="number" min="1" max="365" value="${coachDraft.duration}">
+        <div class="create-hint">Służy do wyliczenia progów nagród</div>
+      </div>
+      <div class="create-field">
+        <label class="create-label">Budżet na nagrody (zł)</label>
+        <input id="proj-budget" class="create-input" type="number" min="0" value="${coachDraft.budget}">
+      </div>
+      <div class="create-actions">
+        <button onclick="coachCreateBack()" class="btn-ghost">Anuluj</button>
+        <button onclick="coachCreateNext()" class="proj-btn-primary">Dalej →</button>
+      </div>
+    </div>`;
+
+  if (coachCreateStep === 2) {
+    const existingCats = coachDraft.categories.length > 0 ? 
+      coachDraft.categories.map((cat,i) => `
+        <div class="create-cat">
+          <div class="create-cat-header">
+            <input class="cat-emoji-input create-input" value="${cat.emoji}" style="width:48px;text-align:center">
+            <input class="cat-name-input create-input" value="${cat.name}" style="flex:1">
+            <select class="cat-logic-select create-select">
+              <option value="any" ${cat.logic==='any'?'selected':''}>przynajmniej jedno</option>
+              <option value="all" ${cat.logic==='all'?'selected':''}>wszystkie wymagane</option>
+            </select>
+          </div>
+          <div class="cat-items-list">
+            ${cat.items.map(item=>`<input class="cat-item-input create-input" value="${item.name}" placeholder="Cel szczegółowy">`).join('')}
+            <input class="cat-item-input create-input" placeholder="Cel szczegółowy (opcjonalnie)">
+          </div>
+          <button onclick="coachAddItem(this)" class="create-add-btn">+ dodaj cel</button>
+        </div>`).join('') :
+      `<div class="create-cat">
+        <div class="create-cat-header">
+          <input class="cat-emoji-input create-input" value="⭐" style="width:48px;text-align:center">
+          <input class="cat-name-input create-input" placeholder="Nazwa kategorii 1" style="flex:1">
+          <select class="cat-logic-select create-select">
+            <option value="any">przynajmniej jedno</option>
+            <option value="all">wszystkie wymagane</option>
+          </select>
+        </div>
+        <div class="cat-items-list">
+          <input class="cat-item-input create-input" placeholder="Cel szczegółowy 1">
+          <input class="cat-item-input create-input" placeholder="Cel szczegółowy 2">
+        </div>
+        <button onclick="coachAddItem(this)" class="create-add-btn">+ dodaj cel</button>
+      </div>`;
+
+    return `
+      <div class="proj-create">
+        <div class="create-steps">${stepsHTML}</div>
+        <h2 class="create-title">Kategorie celów</h2>
+        <div class="create-hint" style="margin-bottom:16px">Maks. 5 kategorii. Każda zaczyna z 2 pkt — system dostosuje co 21 dni.</div>
+        <div id="cats-container">${existingCats}</div>
+        <button onclick="coachAddCategory()" class="create-add-cat-btn">+ Dodaj kategorię</button>
+        <div class="create-actions">
+          <button onclick="coachCreateBack()" class="btn-ghost">← Wróć</button>
+          <button onclick="coachCreateNext()" class="proj-btn-primary">Dalej →</button>
+        </div>
+      </div>`;
+  }
+
+  if (coachCreateStep === 3) {
+    const maxPts = coachDraft.categories.length * 2;
+    const rewards = projCalcRewards(coachDraft);
+    const rewardsHTML = rewards.map(r => `
+      <div class="ritem">
+        <div class="rdot"></div>
+        <div class="rinfo">
+          <div class="rname"><strong>${r.payout} zł</strong></div>
+          <div class="rbudget">${r.pct}% czasu → ${r.threshold} pkt</div>
+        </div>
+        <div class="rthresh">${r.threshold} pkt</div>
+      </div>`).join('');
+
+    return `
+      <div class="proj-create">
+        <div class="create-steps">${stepsHTML}</div>
+        <h2 class="create-title">Podsumowanie</h2>
+        <div class="create-summary">
+          <div class="summary-row"><span>Nazwa</span><strong>${coachDraft.name}</strong></div>
+          <div class="summary-row"><span>Czas</span><strong>${coachDraft.duration} dni</strong></div>
+          <div class="summary-row"><span>Budżet</span><strong>${coachDraft.budget} zł</strong></div>
+          <div class="summary-row"><span>Kategorie</span><strong>${coachDraft.categories.length} × 2 pkt = ${maxPts} pkt/dzień max</strong></div>
+        </div>
+        <div class="rewards-title" style="margin-top:20px">Plan nagród</div>
+        ${rewardsHTML}
+        <div class="create-actions" style="flex-direction:column;gap:8px">
+          <button onclick="coachSaveProject(true)" class="proj-btn-primary">🚀 Aktywuj teraz</button>
+          <button onclick="coachSaveProject(false)" class="btn-ghost">📋 Zapisz jako draft</button>
+          <button onclick="coachCreateBack()" class="btn-ghost">← Wróć</button>
+        </div>
+      </div>`;
+  }
+}
+
+// ============================================================
+// PROJECT COACH — Projects list render  
+// ============================================================
+function renderProjectsList() {
+  const projects = projectsGet();
+  const now = new Date();
+  
+  // Filter out closed projects older than 7 days
+  const visible = projects.filter(p => {
+    if (p.status !== 'closed') return true;
+    const closed = new Date(p.closedAt || 0);
+    return (now - closed) < 7 * 86400000;
+  });
+
+  const statusLabel = {active:'Aktywny',draft:'Draft','on-hold':'On Hold',closed:'Zamknięty'};
+  const statusColor = {active:'#4a6741',draft:'#9B82B0','on-hold':'#8FAAB8',closed:'#ccc'};
+
+  const projHTML = visible.length === 0 ? 
+    '<div style="text-align:center;padding:40px;color:#9B82B0">Brak projektów</div>' :
+    visible.map(proj => {
+      const total = projCalcTotal(proj);
+      const maxPts = projMaxDayPts(proj);
+      const actions = [];
+      if (proj.status !== 'active') actions.push(`<button onclick="projSetStatus('${proj.id}','active')" class="proj-action-btn">Aktywuj</button>`);
+      if (proj.status === 'active') actions.push(`<button onclick="projSetStatus('${proj.id}','on-hold')" class="proj-action-btn">Pause</button>`);
+      if (proj.status !== 'closed') actions.push(`<button onclick="projSetStatus('${proj.id}','closed')" class="proj-action-btn danger">Zamknij</button>`);
+      if (proj.status === 'closed') actions.push(`<button onclick="projSetStatus('${proj.id}','active')" class="proj-action-btn">Reaktywuj</button>`);
+
+      return `<div class="proj-list-item">
+        <div class="proj-list-header">
+          <div>
+            <div class="proj-list-name">${proj.name}</div>
+            <div class="proj-list-meta">${proj.categories.length} kategorii · ${maxPts} pkt/dzień · ${proj.duration} dni</div>
+          </div>
+          <div class="proj-status-badge" style="background:${statusColor[proj.status]}20;color:${statusColor[proj.status]}">${statusLabel[proj.status]}</div>
+        </div>
+        <div class="proj-list-stats">
+          <span>${total} pkt zdobytych</span>
+          ${proj.budget ? `<span>${proj.budget} zł budżet</span>` : ''}
+        </div>
+        <div class="proj-list-actions">${actions.join('')}</div>
+      </div>`;
+    }).join('');
+
+  return `
+    <div class="proj-dashboard">
+      <div class="proj-header-bar">
+        <div class="proj-project-name">Moje projekty</div>
+        <button onclick="coachView='dashboard';renderCoach()" class="proj-icon-btn">✕</button>
+      </div>
+      <div style="padding:16px">
+        ${projHTML}
+        <button onclick="coachStartCreate()" class="proj-btn-primary" style="width:100%;margin-top:16px">+ Nowy projekt</button>
+      </div>
+    </div>`;
+}
+
+
 // INIT
 
+migrateOldProject();
 try { init(); } catch(e) { console.error('init error:', e); }
 setTimeout(syncAll,1000);
 setInterval(syncAll,30000);
