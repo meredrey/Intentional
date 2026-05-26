@@ -493,7 +493,7 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
 <button class="edit-fab" id="editFab" onclick="toggleEdit()" style="display:none" title="Tryb edycji">✎</button>
 <div class="toast" id="toast"></div>
 <script>
-const SHEETS_API = 'https://script.google.com/macros/s/AKfycbyRDinLrJaq-C6yZk3MLDiQOuDFKa7Hu8HnJZQkwNS3qi300q50USiCYd3I_ZP5iErRUQ/exec';
+const SHEETS_API = 'https://script.google.com/macros/s/AKfycbziGFy6e4XT7h27RGbwOP_ha74SgGdjzVZZHBOAifqwaGNWjWVIWUR-OmDjysYOMV0i7g/exec';
 const DC_KEY = 'dc5';
 const LG_KEY = 'mata_lg_v4';
 const WH_KEY = 'intentional_wheel';
@@ -521,6 +521,9 @@ function syncAll(){
       // Merge: prefer local if has more data, use remote if local empty
       if(localProjects.length === 0) {
         localStorage.setItem(PROJ_KEY, JSON.stringify(r.projects));
+        // Also set active project key
+        const activeProj = r.projects.find(p => p.status === 'active');
+        if(activeProj) localStorage.setItem(PROJ_ACTIVE_KEY, activeProj.id);
         renderCoach();
       } else {
         // Merge days from remote into local active project
@@ -726,7 +729,7 @@ const REWARDS = [
 let viewingDate = new Date(); // the date being shown
 let calViewDate = new Date(); // month shown in calendar
 
-const API = 'https://script.google.com/macros/s/AKfycbyRDinLrJaq-C6yZk3MLDiQOuDFKa7Hu8HnJZQkwNS3qi300q50USiCYd3I_ZP5iErRUQ/exec';
+const API = 'https://script.google.com/macros/s/AKfycbziGFy6e4XT7h27RGbwOP_ha74SgGdjzVZZHBOAifqwaGNWjWVIWUR-OmDjysYOMV0i7g/exec';
 const LS_KEY = 'dc5';
 let saveTimer = null;
 
@@ -752,8 +755,8 @@ function syncToSheets(state) {
 }
 
 function syncFromSheets() {
-  fetch(`${SHEETS_API}?action=read&sheet=CoachData`)
-    .then(r => r.json())
+  fetch(`${SHEETS_API}?action=read&sheet=CoachData`, {mode: 'cors'})
+    .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
     .then(remote => {
       if (!remote || typeof remote !== 'object') return;
       const local = gs();
@@ -936,6 +939,8 @@ function renderStatusDots(state) {
 }
 
 function renderAll(state) {
+  // Old DC panel no longer active - renderCoach handles everything
+  if(!document.getElementById('dateDisplay')) return;
   const vkey = dateKey(viewingDate);
   const dd = state.days?.[vkey]||{};
   const isPast = !isToday();
@@ -1970,6 +1975,25 @@ function projSaveEdit() {
   showToast('Projekt zaktualizowany! ✓');
 }
 
+
+function syncAndReload() {
+  showToast('Synchronizowanie...');
+  sheetRead('CoachData').then(r => {
+    if (!r || typeof r !== 'object') { showToast('Brak danych w Sheets'); return; }
+    if (r.projects && Array.isArray(r.projects)) {
+      localStorage.setItem(PROJ_KEY, JSON.stringify(r.projects));
+      const activeProj = r.projects.find(p => p.status === 'active');
+      if (activeProj) localStorage.setItem(PROJ_ACTIVE_KEY, activeProj.id);
+      renderCoach();
+      showToast('Dane zsynchronizowane! ✓');
+    } else {
+      showToast('Stary format — migrowanie...');
+      migrateOldProject();
+      renderCoach();
+    }
+  }).catch(() => showToast('Błąd połączenia z Sheets'));
+}
+
 function renderCoach() {
   const panel = document.getElementById('panel-coach');
   if (!panel) return;
@@ -1995,11 +2019,19 @@ function renderCoach() {
 // ============================================================
 function renderDashboard(project) {
   if (!project) {
+    const allProjects = projectsGet();
+    // If we have projects but none active, show them
+    const hasProjects = allProjects.length > 0;
     return `<div class="proj-empty">
       <div class="proj-empty-icon">🌱</div>
-      <div class="proj-empty-title">Brak aktywnego projektu</div>
-      <div class="proj-empty-sub">Stwórz nowy projekt aby zacząć śledzić swoje nawyki</div>
-      <button onclick="coachStartCreate()" class="proj-btn-primary" style="margin-top:20px">+ Nowy projekt</button>
+      <div class="proj-empty-title">${hasProjects ? 'Brak aktywnego projektu' : 'Brak projektów'}</div>
+      <div class="proj-empty-sub">${hasProjects ? 
+        'Masz ' + allProjects.length + ' projekt(y) — aktywuj jeden lub stwórz nowy.' : 
+        'Synchronizowanie danych... lub stwórz nowy projekt.'}</div>
+      ${hasProjects ? 
+        `<button onclick="coachView='projects';renderCoach()" class="proj-btn-primary" style="margin-top:16px">☰ Pokaż projekty</button>` : 
+        `<button onclick="syncAndReload()" class="proj-btn-primary" style="margin-top:16px">↻ Synchronizuj dane</button>`}
+      <button onclick="coachStartCreate()" class="btn-ghost" style="margin-top:8px">+ Nowy projekt</button>
     </div>`;
   }
 
