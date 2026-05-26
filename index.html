@@ -666,7 +666,7 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
 <button class="edit-fab" id="editFab" onclick="toggleEdit()" style="display:none" title="Tryb edycji">✎</button>
 <div class="toast" id="toast"></div>
 <script>
-const SHEETS_API = 'https://script.google.com/macros/s/AKfycbzNSnSRo9_sTa5McNUD3tjfMw0q_Z4v8_tnJS2KyngM1BdN89vy160bgpFp0FeOTo3_kw/exec';
+const SHEETS_API = 'https://script.google.com/macros/s/AKfycbyRDinLrJaq-C6yZk3MLDiQOuDFKa7Hu8HnJZQkwNS3qi300q50USiCYd3I_ZP5iErRUQ/exec';
 const DC_KEY = 'dc5';
 const LG_KEY = 'mata_lg_v4';
 const WH_KEY = 'intentional_wheel';
@@ -683,7 +683,7 @@ function lgGet(){try{return JSON.parse(localStorage.getItem(LG_KEY)||'{}')}catch
 function lgSet(s){localStorage.setItem(LG_KEY,JSON.stringify(s));clearTimeout(lgSaveTimer);lgSaveTimer=setTimeout(()=>sheetWrite('LifeGoals',s),1500)}
 function whGet(){try{return JSON.parse(localStorage.getItem(WH_KEY)||'{}')}catch{return{}}}
 function whSet(s){localStorage.setItem(WH_KEY,JSON.stringify(s))}
-function sheetWrite(sheet,data){fetch(`${SHEETS_API}?action=write&sheet=${sheet}&data=${encodeURIComponent(JSON.stringify(data))}`).catch(e=>console.log('write err',e))}
+function sheetWrite(sheet,data){fetch(SHEETS_API,{method:'POST',body:JSON.stringify({action:'write',sheet:sheet,data:JSON.stringify(data)})}).catch(e=>console.log('write err',e))}
 function sheetRead(sheet){return fetch(`${SHEETS_API}?action=read&sheet=${sheet}`).then(r=>r.json()).catch(()=>null)}
 function syncAll(){
   sheetRead('CoachData').then(r=>{
@@ -881,7 +881,7 @@ const REWARDS = [
 let viewingDate = new Date(); // the date being shown
 let calViewDate = new Date(); // month shown in calendar
 
-const API = 'https://script.google.com/macros/s/AKfycbzNSnSRo9_sTa5McNUD3tjfMw0q_Z4v8_tnJS2KyngM1BdN89vy160bgpFp0FeOTo3_kw/exec';
+const API = 'https://script.google.com/macros/s/AKfycbyRDinLrJaq-C6yZk3MLDiQOuDFKa7Hu8HnJZQkwNS3qi300q50USiCYd3I_ZP5iErRUQ/exec';
 const LS_KEY = 'dc5';
 let saveTimer = null;
 
@@ -898,9 +898,10 @@ function ss(state) {
 }
 
 function syncToSheets(state) {
-  const data = encodeURIComponent(JSON.stringify(state));
-  fetch(`${SHEETS_API}?action=write&sheet=CoachData&data=${data}`)
-    .catch(err => console.log('Sheets sync error:', err));
+  fetch(SHEETS_API, {
+    method: 'POST',
+    body: JSON.stringify({action:'write', sheet:'CoachData', data: JSON.stringify(state)})
+  }).catch(err => console.log('Sheets sync error:', err));
 }
 
 function syncFromSheets() {
