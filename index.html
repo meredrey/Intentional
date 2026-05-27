@@ -512,11 +512,12 @@ function whGet(){try{return JSON.parse(localStorage.getItem(WH_KEY)||'{}')}catch
 function whSet(s){localStorage.setItem(WH_KEY,JSON.stringify(s))}
 function sheetWrite(sheet,data){
   const encoded = encodeURIComponent(JSON.stringify(data));
-  fetch(`${SHEETS_API}?action=write&sheet=${sheet}&data=${encoded}`)
+  fetch(`${SHEETS_API}?action=write&sheet=${sheet}&data=${encoded}`,{redirect:'follow'})
     .then(r=>r.json())
+    .then(r=>console.log('write ok:', JSON.stringify(r)))
     .catch(e=>console.log('write err',e));
 }
-function sheetRead(sheet){return fetch(`${SHEETS_API}?action=read&sheet=${sheet}`).then(r=>r.json()).catch(()=>null)}
+function sheetRead(sheet){return fetch(`${SHEETS_API}?action=read&sheet=${sheet}`,{redirect:'follow'}).then(r=>r.json()).catch(()=>null)}
 function syncAll(){
   sheetRead('CoachData').then(r=>{
     if(!r||typeof r!=='object') return;
@@ -755,8 +756,8 @@ function syncToSheets(state) {
 }
 
 function syncFromSheets() {
-  fetch(`${SHEETS_API}?action=read&sheet=CoachData`, {mode: 'cors'})
-    .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+  fetch(`${SHEETS_API}?action=read&sheet=CoachData`, {redirect:'follow'})
+    .then(r => r.json())
     .then(remote => {
       if (!remote || typeof remote !== 'object') return;
       const local = gs();
@@ -1306,9 +1307,9 @@ function syncProjectsToSheets(projects) {
     })
   };
   const encoded = encodeURIComponent(JSON.stringify(toSave));
-  fetch(`${SHEETS_API}?action=write&sheet=CoachData&data=${encoded}`)
+  fetch(`${SHEETS_API}?action=write&sheet=CoachData&data=${encoded}`,{redirect:'follow'})
     .then(r => r.json())
-    .then(r => { if(!r.success) console.log('Sheets write failed:', r.error); })
+    .then(r => { console.log('Sheets write:', JSON.stringify(r)); })
     .catch(e => console.log('Sheets write err:', e));
 }
 function activeProjectGet() {
