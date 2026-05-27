@@ -847,6 +847,14 @@ function calcHabitTotal(state, habitId) {
 function init() {
   // Render coach panel (new project system)
   renderCoach();
+  // Force push local data to Sheets on startup
+  setTimeout(() => {
+    const projects = projectsGet();
+    if (projects.length > 0) {
+      console.log('Force syncing', projects.length, 'projects to Sheets...');
+      syncProjectsToSheets(projects);
+    }
+  }, 1000);
   // Sync from Sheets in background
   syncFromSheets();
   setInterval(syncFromSheets, 30000);
