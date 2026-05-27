@@ -525,41 +525,35 @@ function syncAll(){
     if(r.projects && Array.isArray(r.projects)) {
       const localProjects = projectsGet();
       const remoteActiveId = r.activeId;
+      const remoteDays = r.activeDays || {};
       
-      // Fetch days separately
-      sheetRead('CoachDays').then(daysData => {
-        const remoteDays = (daysData && daysData.projectId) ? daysData.days || {} : {};
-        
-        if(localProjects.length === 0) {
-          // No local data - load everything from remote
+      if(localProjects.length === 0) {
+        // No local data - load everything from remote
+        const merged = r.projects.map(p => {
+          if(p.id === remoteActiveId) return {...p, days: remoteDays};
+          return p;
+        });
+        localStorage.setItem(PROJ_KEY, JSON.stringify(merged));
+        if(remoteActiveId) localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
+        renderCoach();
+      } else {
+        // Merge remote days into local active project
+        const localActive = localProjects.find(p => p.status === 'active');
+        if(localActive && localActive.id === remoteActiveId) {
+          localActive.days = Object.assign({}, remoteDays, localActive.days||{});
+          localActive.totalPoints = projCalcTotal(localActive);
+          localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
+          renderCoach();
+        } else if(!localActive && remoteActiveId) {
           const merged = r.projects.map(p => {
             if(p.id === remoteActiveId) return {...p, days: remoteDays};
             return p;
           });
           localStorage.setItem(PROJ_KEY, JSON.stringify(merged));
-          if(remoteActiveId) localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
+          localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
           renderCoach();
-        } else {
-          // Merge remote days into local
-          const localActive = localProjects.find(p => p.status === 'active');
-          if(localActive && localActive.id === remoteActiveId) {
-            // Union of days, prefer local for same day
-            localActive.days = Object.assign({}, remoteDays, localActive.days||{});
-            localActive.totalPoints = projCalcTotal(localActive);
-            localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
-            renderCoach();
-          } else if(!localActive && remoteActiveId) {
-            // No local active project - load from remote
-            const merged = r.projects.map(p => {
-              if(p.id === remoteActiveId) return {...p, days: remoteDays};
-              return p;
-            });
-            localStorage.setItem(PROJ_KEY, JSON.stringify(merged));
-            localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
-            renderCoach();
-          }
         }
-      }).catch(()=>{});
+      }
       return;
     }
     // Legacy CoachData format
@@ -772,7 +766,7 @@ function syncToSheets(state) {
 }
 
 function syncFromSheets() {
-  fetch(`${SHEETS_API}?action=read&sheet=CoachData`, {redirect:'follow'})
+  fetch(`${SHEETS_API}?action=read&sheet=CoachDays`, {redirect:'follow'})
     .then(r => r.json())
     .then(remote => {
       if (!remote || typeof remote !== 'object') return;
@@ -1324,25 +1318,44 @@ function projectsSet(projects) {
 function syncProjectsToSheets(projects) {
   const active = projects.find(p => p.status === 'active');
   
-  // Save metadata (no days) to CoachData
-  const meta = {
+  // Save everything to CoachDays (larger capacity, single write)
+  const toSave = {
     projects: projects.map(p => ({...p, days: {}})),
-    activeId: active ? active.id : null
+    activeId: active ? active.id : null,
+    activeDays: active ? active.days : {}
   };
-  const metaEncoded = encodeURIComponent(JSON.stringify(meta));
-  fetch(`${SHEETS_API}?action=write&sheet=CoachData&data=${metaEncoded}`,{redirect:'follow'})
-    .then(r=>r.json())
-    .then(r=>console.log('meta write:', r.success ? 'ok' : r.error))
-    .catch(e=>console.log('meta write err:', e));
-
-  // Save active project days to CoachDays
-  if (active && active.days) {
-    const daysData = {projectId: active.id, days: active.days};
-    const daysEncoded = encodeURIComponent(JSON.stringify(daysData));
+  const encoded = encodeURIComponent(JSON.stringify(toSave));
+  
+  if (encoded.length < 7000) {
+    // Fits in GET
+    fetch(`${SHEETS_API}?action=write&sheet=CoachDays&data=${encoded}`,{redirect:'follow'})
+      .then(r=>r.json())
+      .then(r=>console.log('sync write:', r.success ? 'ok' : r.error))
+      .catch(e=>console.log('sync write err:', e));
+  } else {
+    // Too large even for single sheet - save only active project days
+    const daysOnly = {
+      projectId: active ? active.id : null,
+      days: active ? active.days : {}
+    };
+    const daysEncoded = encodeURIComponent(JSON.stringify(daysOnly));
     fetch(`${SHEETS_API}?action=write&sheet=CoachDays&data=${daysEncoded}`,{redirect:'follow'})
       .then(r=>r.json())
       .then(r=>console.log('days write:', r.success ? 'ok' : r.error))
       .catch(e=>console.log('days write err:', e));
+    
+    // Save minimal meta to CoachData
+    const minMeta = {
+      activeId: active ? active.id : null,
+      projects: projects.map(p => ({id:p.id, name:p.name, status:p.status, 
+        duration:p.duration, budget:p.budget, adaptiveCycle:p.adaptiveCycle,
+        categories:p.categories, rewards:p.rewards, startDate:p.startDate}))
+    };
+    const metaEncoded = encodeURIComponent(JSON.stringify(minMeta));
+    fetch(`${SHEETS_API}?action=write&sheet=CoachData&data=${metaEncoded}`,{redirect:'follow'})
+      .then(r=>r.json())
+      .then(r=>console.log('meta write:', r.success ? 'ok' : r.error))
+      .catch(e=>console.log('meta write err:', e));
   }
 }
 function activeProjectGet() {
