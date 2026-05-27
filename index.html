@@ -493,7 +493,7 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
 <button class="edit-fab" id="editFab" onclick="toggleEdit()" style="display:none" title="Tryb edycji">✎</button>
 <div class="toast" id="toast"></div>
 <script>
-const SHEETS_API = 'https://script.google.com/macros/s/AKfycbziGFy6e4XT7h27RGbwOP_ha74SgGdjzVZZHBOAifqwaGNWjWVIWUR-OmDjysYOMV0i7g/exec';
+const SHEETS_API = 'https://script.google.com/macros/s/AKfycby0IGZW6XfJjpqFCEnvZI2HsPIJ-SFvkZ3sYoaWxncnCJDspYcYESDiZsw8v_dLF0cqDQ/exec';
 const DC_KEY = 'dc5';
 const LG_KEY = 'mata_lg_v4';
 const WH_KEY = 'intentional_wheel';
@@ -512,15 +512,9 @@ function whGet(){try{return JSON.parse(localStorage.getItem(WH_KEY)||'{}')}catch
 function whSet(s){localStorage.setItem(WH_KEY,JSON.stringify(s))}
 function sheetWrite(sheet,data){
   const encoded = encodeURIComponent(JSON.stringify(data));
-  // Use GET if data is small enough, otherwise POST with no-cors
-  if(encoded.length < 4000) {
-    fetch(`${SHEETS_API}?action=write&sheet=${sheet}&data=${encoded}`)
-      .catch(e=>console.log('write err',e));
-  } else {
-    fetch(SHEETS_API,{method:'POST',mode:'no-cors',
-      body:JSON.stringify({action:'write',sheet:sheet,data:JSON.stringify(data)})
-    }).catch(e=>console.log('write err',e));
-  }
+  fetch(`${SHEETS_API}?action=write&sheet=${sheet}&data=${encoded}`)
+    .then(r=>r.json())
+    .catch(e=>console.log('write err',e));
 }
 function sheetRead(sheet){return fetch(`${SHEETS_API}?action=read&sheet=${sheet}`).then(r=>r.json()).catch(()=>null)}
 function syncAll(){
@@ -740,7 +734,7 @@ const REWARDS = [
 let viewingDate = new Date(); // the date being shown
 let calViewDate = new Date(); // month shown in calendar
 
-const API = 'https://script.google.com/macros/s/AKfycbziGFy6e4XT7h27RGbwOP_ha74SgGdjzVZZHBOAifqwaGNWjWVIWUR-OmDjysYOMV0i7g/exec';
+const API = 'https://script.google.com/macros/s/AKfycby0IGZW6XfJjpqFCEnvZI2HsPIJ-SFvkZ3sYoaWxncnCJDspYcYESDiZsw8v_dLF0cqDQ/exec';
 const LS_KEY = 'dc5';
 let saveTimer = null;
 
@@ -757,12 +751,7 @@ function ss(state) {
 }
 
 function syncToSheets(state) {
-  // Use no-cors POST to avoid CORS preflight issues
-  fetch(SHEETS_API, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: JSON.stringify({action:'write', sheet:'CoachData', data: JSON.stringify(state)})
-  }).catch(err => console.log('Sheets sync error:', err));
+  sheetWrite('CoachData', state);
 }
 
 function syncFromSheets() {
@@ -1304,24 +1293,23 @@ function projectsGet() {
 }
 function projectsSet(projects) {
   localStorage.setItem(PROJ_KEY, JSON.stringify(projects));
-  // Write to Sheets - use CoachData with projects wrapper
-  const data = JSON.stringify({projects: projects});
-  const encoded = encodeURIComponent(data);
-  if(encoded.length < 6000) {
-    // Small enough for GET
-    fetch(`${SHEETS_API}?action=write&sheet=CoachData&data=${encoded}`)
-      .catch(e=>console.log('projects write err',e));
-  } else {
-    // Too large - write only active project
-    const active = projects.find(p=>p.status==='active');
-    if(active) {
-      const activeData = JSON.stringify({projects: projects.map(p=>
-        p.id===active.id ? p : {...p, days:{}} // strip days from inactive
-      )});
-      fetch(`${SHEETS_API}?action=write&sheet=CoachData&data=${encodeURIComponent(activeData)}`)
-        .catch(e=>console.log('projects write err',e));
-    }
-  }
+  syncProjectsToSheets(projects);
+}
+
+function syncProjectsToSheets(projects) {
+  // Always write - strip inactive project days to keep URL short
+  const active = projects.find(p => p.status === 'active');
+  const toSave = {
+    projects: projects.map(p => {
+      if (p.id === (active && active.id)) return p; // full active project
+      return {...p, days: {}}; // metadata only for others
+    })
+  };
+  const encoded = encodeURIComponent(JSON.stringify(toSave));
+  fetch(`${SHEETS_API}?action=write&sheet=CoachData&data=${encoded}`)
+    .then(r => r.json())
+    .then(r => { if(!r.success) console.log('Sheets write failed:', r.error); })
+    .catch(e => console.log('Sheets write err:', e));
 }
 function activeProjectGet() {
   const projects = projectsGet();
