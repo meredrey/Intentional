@@ -1306,24 +1306,14 @@ function syncProjectsToSheets(projects) {
   };
   const json = JSON.stringify(toSave);
   console.log('Saving to CoachDays, size:', json.length, 'chars');
-  // Use POST to avoid URL length limits
+  // Use no-cors POST - bypasses CORS preflight
+  const payload = JSON.stringify({action:'write', sheet:'CoachDays', data: json});
   fetch(SHEETS_API, {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({action: 'write', sheet: 'CoachDays', data: json})
-  })
-    .then(r=>r.json())
-    .then(r=>console.log('CoachDays write:', r.success ? 'OK ✓' : ('FAILED: ' + r.error)))
-    .catch(e=>{
-      console.log('POST failed, trying GET with compression...');
-      // Fallback: strip days to reduce size
-      const small = {...toSave, activeDays: {}};
-      const encoded = encodeURIComponent(JSON.stringify(small));
-      fetch(`${SHEETS_API}?action=write&sheet=CoachDays&data=${encoded}`,{redirect:'follow'})
-        .then(r=>r.json())
-        .then(r=>console.log('CoachDays GET write:', r.success ? 'OK (no days)' : r.error))
-        .catch(e2=>console.log('CoachDays write failed:', e2));
-    });
+    mode: 'no-cors',
+    body: payload
+  }).then(()=>console.log('CoachDays synced ✓'))
+    .catch(e=>console.log('sync error:', e));
 }
 
 
