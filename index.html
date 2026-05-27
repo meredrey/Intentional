@@ -524,26 +524,42 @@ function syncAll(){
     // New project system
     if(r.projects && Array.isArray(r.projects)) {
       const localProjects = projectsGet();
-      // Merge: prefer local if has more data, use remote if local empty
-      if(localProjects.length === 0) {
-        localStorage.setItem(PROJ_KEY, JSON.stringify(r.projects));
-        // Also set active project key
-        const activeProj = r.projects.find(p => p.status === 'active');
-        if(activeProj) localStorage.setItem(PROJ_ACTIVE_KEY, activeProj.id);
-        renderCoach();
-      } else {
-        // Merge days from remote into local active project
-        const remoteActive = r.projects.find(p => p.status === 'active');
-        const localActive = localProjects.find(p => p.status === 'active');
-        if(remoteActive && localActive && remoteActive.id === localActive.id) {
-          localActive.days = Object.assign({}, remoteActive.days||{}, localActive.days||{});
-          const remotePts = projCalcTotal(remoteActive);
-          const localPts = projCalcTotal(localActive);
-          if(remotePts > localPts) localActive.totalPoints = remotePts;
-          localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
+      const remoteActiveId = r.activeId;
+      
+      // Fetch days separately
+      sheetRead('CoachDays').then(daysData => {
+        const remoteDays = (daysData && daysData.projectId) ? daysData.days || {} : {};
+        
+        if(localProjects.length === 0) {
+          // No local data - load everything from remote
+          const merged = r.projects.map(p => {
+            if(p.id === remoteActiveId) return {...p, days: remoteDays};
+            return p;
+          });
+          localStorage.setItem(PROJ_KEY, JSON.stringify(merged));
+          if(remoteActiveId) localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
           renderCoach();
+        } else {
+          // Merge remote days into local
+          const localActive = localProjects.find(p => p.status === 'active');
+          if(localActive && localActive.id === remoteActiveId) {
+            // Union of days, prefer local for same day
+            localActive.days = Object.assign({}, remoteDays, localActive.days||{});
+            localActive.totalPoints = projCalcTotal(localActive);
+            localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
+            renderCoach();
+          } else if(!localActive && remoteActiveId) {
+            // No local active project - load from remote
+            const merged = r.projects.map(p => {
+              if(p.id === remoteActiveId) return {...p, days: remoteDays};
+              return p;
+            });
+            localStorage.setItem(PROJ_KEY, JSON.stringify(merged));
+            localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
+            renderCoach();
+          }
         }
-      }
+      }).catch(()=>{});
       return;
     }
     // Legacy CoachData format
@@ -1298,19 +1314,28 @@ function projectsSet(projects) {
 }
 
 function syncProjectsToSheets(projects) {
-  // Always write - strip inactive project days to keep URL short
   const active = projects.find(p => p.status === 'active');
-  const toSave = {
-    projects: projects.map(p => {
-      if (p.id === (active && active.id)) return p; // full active project
-      return {...p, days: {}}; // metadata only for others
-    })
+  
+  // Save metadata (no days) to CoachData
+  const meta = {
+    projects: projects.map(p => ({...p, days: {}})),
+    activeId: active ? active.id : null
   };
-  const encoded = encodeURIComponent(JSON.stringify(toSave));
-  fetch(`${SHEETS_API}?action=write&sheet=CoachData&data=${encoded}`,{redirect:'follow'})
-    .then(r => r.json())
-    .then(r => { console.log('Sheets write:', JSON.stringify(r)); })
-    .catch(e => console.log('Sheets write err:', e));
+  const metaEncoded = encodeURIComponent(JSON.stringify(meta));
+  fetch(`${SHEETS_API}?action=write&sheet=CoachData&data=${metaEncoded}`,{redirect:'follow'})
+    .then(r=>r.json())
+    .then(r=>console.log('meta write:', r.success ? 'ok' : r.error))
+    .catch(e=>console.log('meta write err:', e));
+
+  // Save active project days to CoachDays
+  if (active && active.days) {
+    const daysData = {projectId: active.id, days: active.days};
+    const daysEncoded = encodeURIComponent(JSON.stringify(daysData));
+    fetch(`${SHEETS_API}?action=write&sheet=CoachDays&data=${daysEncoded}`,{redirect:'follow'})
+      .then(r=>r.json())
+      .then(r=>console.log('days write:', r.success ? 'ok' : r.error))
+      .catch(e=>console.log('days write err:', e));
+  }
 }
 function activeProjectGet() {
   const projects = projectsGet();
