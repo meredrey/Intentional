@@ -510,7 +510,18 @@ function lgGet(){try{return JSON.parse(localStorage.getItem(LG_KEY)||'{}')}catch
 function lgSet(s){localStorage.setItem(LG_KEY,JSON.stringify(s));clearTimeout(lgSaveTimer);lgSaveTimer=setTimeout(()=>sheetWrite('LifeGoals',s),1500)}
 function whGet(){try{return JSON.parse(localStorage.getItem(WH_KEY)||'{}')}catch{return{}}}
 function whSet(s){localStorage.setItem(WH_KEY,JSON.stringify(s))}
-function sheetWrite(sheet,data){fetch(SHEETS_API,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'write',sheet:sheet,data:JSON.stringify(data)})}).catch(e=>console.log('write err',e))}
+function sheetWrite(sheet,data){
+  const encoded = encodeURIComponent(JSON.stringify(data));
+  // Use GET if data is small enough, otherwise POST with no-cors
+  if(encoded.length < 4000) {
+    fetch(`${SHEETS_API}?action=write&sheet=${sheet}&data=${encoded}`)
+      .catch(e=>console.log('write err',e));
+  } else {
+    fetch(SHEETS_API,{method:'POST',mode:'no-cors',
+      body:JSON.stringify({action:'write',sheet:sheet,data:JSON.stringify(data)})
+    }).catch(e=>console.log('write err',e));
+  }
+}
 function sheetRead(sheet){return fetch(`${SHEETS_API}?action=read&sheet=${sheet}`).then(r=>r.json()).catch(()=>null)}
 function syncAll(){
   sheetRead('CoachData').then(r=>{
@@ -1293,7 +1304,24 @@ function projectsGet() {
 }
 function projectsSet(projects) {
   localStorage.setItem(PROJ_KEY, JSON.stringify(projects));
-  sheetWrite('CoachData', {projects: projects});
+  // Write to Sheets - use CoachData with projects wrapper
+  const data = JSON.stringify({projects: projects});
+  const encoded = encodeURIComponent(data);
+  if(encoded.length < 6000) {
+    // Small enough for GET
+    fetch(`${SHEETS_API}?action=write&sheet=CoachData&data=${encoded}`)
+      .catch(e=>console.log('projects write err',e));
+  } else {
+    // Too large - write only active project
+    const active = projects.find(p=>p.status==='active');
+    if(active) {
+      const activeData = JSON.stringify({projects: projects.map(p=>
+        p.id===active.id ? p : {...p, days:{}} // strip days from inactive
+      )});
+      fetch(`${SHEETS_API}?action=write&sheet=CoachData&data=${encodeURIComponent(activeData)}`)
+        .catch(e=>console.log('projects write err',e));
+    }
+  }
 }
 function activeProjectGet() {
   const projects = projectsGet();
@@ -1630,7 +1658,12 @@ function projToggle(el) {
   project.days[vkey][key] = !isChecked;
   const ptsAfter = projCalcDayPts(project.days[vkey], project);
   
-  project.totalPoints = Math.max(0, (project.totalPoints || 0) + (ptsAfter - ptsBefore));
+  // Recalculate total from scratch to stay accurate
+  let newTotal = 0;
+  Object.keys(project.days).forEach(k => {
+    newTotal += projCalcDayPts(project.days[k], project);
+  });
+  project.totalPoints = newTotal;
 
   // Check adaptation
   const adapted = projCheckAdaptation(project);
@@ -2005,8 +2038,8 @@ function renderDashboard(project) {
     const itemsHTML = cat.items.map(item => {
       const key = cat.id + '_' + item.id;
       const checked = !!dd[key];
-      return `<div class="proj-habit ${checked ? 'checked' : ''} ${!isToday ? 'past-locked' : ''}" 
-        data-key="${key}" onclick="${isToday ? 'projToggle(this)' : ''}">
+      return `<div class="proj-habit ${checked ? 'checked' : ''}" 
+        data-key="${key}" onclick="projToggle(this)">
         <div class="proj-cb">${checked ? '✓' : ''}</div>
         <div class="proj-hname">${item.name}</div>
       </div>`;
