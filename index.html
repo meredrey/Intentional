@@ -2997,17 +2997,24 @@ function previewProject() {
   const suggestedDuration = 90;
 
   const catsHTML = priorities.map(area => {
-    const habits = area.habitsList || [];
-    const tasks = area.tasksList || [];
+    const goals = area.goalsList || [];
+    const allHabits = area.habitsList || [];
+    const allTasks = area.tasksList || [];
     return `<div style="background:#f5f7f3;border-radius:10px;padding:12px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <span>${area.emoji}</span>
         <span style="font-size:0.85rem;font-weight:500;color:#2c3828">${area.name}</span>
         <span style="font-size:0.7rem;color:#8aaa78;margin-left:auto">${area.score}/10</span>
       </div>
-      ${habits.map(h=>`<div style="font-size:0.75rem;color:#4a6741;padding:3px 0">🔁 ${h.name} <span style="color:#8aaa78">(📊 ${h.scVal||70}% dni)</span></div>`).join('')}
-      ${tasks.map(t=>`<div style="font-size:0.75rem;color:#6a8858;padding:3px 0">📌 ${t.name}</div>`).join('')}
-      ${!habits.length && !tasks.length ? '<div style="font-size:0.72rem;color:#c0b0a0;font-style:italic">Brak celów — wróć do ewaluacji</div>' : ''}
+      ${goals.length ? goals.map(g=>`
+        <div style="font-size:0.75rem;font-weight:500;color:#2c3828;padding:4px 0 2px">🎯 ${g.text}</div>
+        ${(g.habits||[]).map(h=>`<div style="font-size:0.72rem;color:#4a6741;padding:2px 0 2px 12px">🔁 ${h.name} <span style="color:#8aaa78">(${h.sc==='streak'?'🔥'+h.scVal+' dni':h.sc==='weekly'?'📅'+h.scVal+'/tydz':'📊'+h.scVal+'%'})</span></div>`).join('')}
+        ${(g.tasks||[]).map(t=>`<div style="font-size:0.72rem;color:#6a8858;padding:2px 0 2px 12px">📌 ${t.name}</div>`).join('')}
+      `).join('') : `
+        ${allHabits.map(h=>`<div style="font-size:0.72rem;color:#4a6741;padding:2px 0">🔁 ${h.name}</div>`).join('')}
+        ${allTasks.map(t=>`<div style="font-size:0.72rem;color:#6a8858;padding:2px 0">📌 ${t.name}</div>`).join('')}
+        ${!allHabits.length && !allTasks.length ? '<div style="font-size:0.72rem;color:#c0b0a0;font-style:italic">Brak celów — wróć do ewaluacji</div>' : ''}
+      `}
     </div>`;
   }).join('');
 
@@ -3079,34 +3086,118 @@ function confirmGenerateProject() {
   generateProjectFromEval(name, duration, budget);
 }
 
-function removeEvalRow(btn) { btn.closest('div').remove(); }
-function removeEvalHabit(btn) { btn.closest('div').parentElement.remove(); }
 
-function addEvalGoal() {
+function initEvalHabitRows() {
+  document.querySelectorAll('.eval-habit-rows-placeholder').forEach(placeholder => {
+    const habits = JSON.parse(placeholder.dataset.habits || '[]');
+    const container = placeholder.nextElementSibling ? placeholder.parentElement.querySelector('.eval-habit-rows') : placeholder.parentElement;
+    // Find the actual eval-habit-rows div
+    const rows = placeholder.closest('.eval-goal-block')?.querySelector('.eval-habit-rows');
+    if (rows) {
+      habits.forEach(h => rows.appendChild(makeHabitRowEl(h.name, h.sc, h.scVal, h.days)));
+    }
+    placeholder.remove();
+  });
+}
+
+function removeEvalRow(el) { if(el) el.remove(); }
+function removeEvalGoalBlock(btn) { btn.closest('.eval-goal-block').remove(); }
+
+function addEvalGoalBlock() {
   const list = document.getElementById('eval-goals-list');
   if(!list) return;
+  const gi = list.querySelectorAll('.eval-goal-block').length;
   const div = document.createElement('div');
-  div.style.cssText = 'display:flex;gap:6px;margin-bottom:6px;align-items:center';
-  div.innerHTML = '<input placeholder="np. kolejny cel" class="eval-goal-input create-input" style="flex:1"><button onclick="removeEvalRow(this)" style="background:none;border:none;color:#c0b0c0;font-size:1rem;cursor:pointer">✕</button>';
+  div.className = 'eval-goal-block';
+  div.style.cssText = 'background:#f5f7f3;border-radius:12px;padding:14px;margin-bottom:10px;border:1.5px solid #e4ebe2';
+  div.innerHTML = '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px"><div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#4a6741;font-weight:500">Cel '+(gi+1)+'</div><input placeholder="np. kolejny wielki cel" class="eval-goal-input create-input" style="flex:1"><button onclick="removeEvalGoalBlock(this)" style="background:none;border:none;color:#c0b0c0;font-size:1rem;cursor:pointer;flex-shrink:0">✕</button></div><div style="margin-bottom:8px"><div style="font-size:0.65rem;color:#6a8858;margin-bottom:6px">🔁 Nawyki dzienne</div><div class="eval-habit-rows"></div><button onclick="addEvalHabitToGoal(this)" style="font-size:0.68rem;color:#6a8858;background:none;border:1px dashed #d4e8c8;border-radius:6px;padding:4px 10px;cursor:pointer;width:100%">+ nawyk</button></div><div><div style="font-size:0.65rem;color:#6a8858;margin-bottom:6px">📌 Zadania jednorazowe</div><div class="eval-task-rows"></div><button onclick="addEvalTaskToGoal(this)" style="font-size:0.68rem;color:#6a8858;background:none;border:1px dashed #d4e8c8;border-radius:6px;padding:4px 10px;cursor:pointer;width:100%">+ zadanie</button></div>';
   list.appendChild(div);
 }
 
-function addEvalHabit() {
-  const list = document.getElementById('eval-habits-list');
-  if(!list) return;
+function makeHabitRowEl(name, sc, scVal, days) {
   const div = document.createElement('div');
-  div.style.cssText = 'background:#f5f7f3;border-radius:10px;padding:10px;margin-bottom:6px';
-  div.innerHTML = '<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center"><span>🔁</span><input placeholder="nawyk" class="eval-habit-name create-input" style="flex:1"><button onclick="removeEvalHabit(this)" style="background:none;border:none;color:#c0b0c0;cursor:pointer">✕</button></div><div style="display:flex;gap:6px"><select class="eval-habit-sc create-select" style="flex:1"><option value="streak">🔥 dni z rzędu</option><option value="weekly">📅 razy/tydzień</option><option value="pct" selected>📊 % dni</option></select><input value="70" placeholder="wartość" class="eval-habit-scval create-input" style="width:64px"></div>';
-  list.appendChild(div);
+  div.className = 'eval-habit-row';
+  div.style.cssText = 'background:white;border:1px solid #e4ebe2;border-radius:8px;padding:8px;margin-bottom:6px';
+  
+  const row1 = document.createElement('div');
+  row1.style.cssText = 'display:flex;gap:6px;margin-bottom:6px;align-items:center';
+  
+  const nameInp = document.createElement('input');
+  nameInp.placeholder = 'nawyk'; nameInp.className = 'eval-habit-name create-input';
+  nameInp.style.flex = '1'; nameInp.value = name||'';
+  
+  const scSel = document.createElement('select');
+  scSel.className = 'eval-habit-sc create-select';
+  scSel.innerHTML = '<option value="streak">🔥 z rzędu</option><option value="weekly">📅 /tydz</option><option value="pct">📊 % dni</option><option value="days">📆 dni tygodnia</option>';
+  scSel.value = sc||'pct';
+  scSel.onchange = () => refreshHabitDays(scSel);
+  
+  const scVal_inp = document.createElement('input');
+  scVal_inp.value = scVal||'70'; scVal_inp.placeholder = 'wartość';
+  scVal_inp.className = 'eval-habit-scval create-input'; scVal_inp.style.width = '52px';
+  
+  const rmBtn = document.createElement('button');
+  rmBtn.innerHTML = '✕'; rmBtn.onclick = () => div.remove();
+  rmBtn.style.cssText = 'background:none;border:none;color:#c0b0c0;cursor:pointer;font-size:0.9rem;flex-shrink:0';
+  
+  row1.appendChild(nameInp); row1.appendChild(scSel); row1.appendChild(scVal_inp); row1.appendChild(rmBtn);
+  div.appendChild(row1);
+  
+  // Days of week selector
+  const DAYS = ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'];
+  const daysRow = document.createElement('div');
+  daysRow.className = 'habit-days-row';
+  daysRow.style.cssText = 'display:' + (sc==='days'?'flex':'none') + ';gap:4px;flex-wrap:wrap';
+  const selectedDays = days || [0,1,2,3,4]; // default Mon-Fri
+  DAYS.forEach((d,i) => {
+    const btn = document.createElement('button');
+    btn.textContent = d; btn.dataset.day = i;
+    btn.className = 'day-toggle' + (selectedDays.includes(i)?' active':'');
+    btn.style.cssText = 'padding:4px 8px;border-radius:20px;border:1.5px solid '+(selectedDays.includes(i)?'#4a6741':'#d4e8c8')+';background:'+(selectedDays.includes(i)?'#4a6741':'white')+';color:'+(selectedDays.includes(i)?'#c8d9a0':'#6a8858')+';font-size:0.68rem;cursor:pointer;font-family:"DM Sans",sans-serif';
+    btn.onclick = () => {
+      const isActive = btn.classList.contains('active');
+      btn.classList.toggle('active');
+      btn.style.background = isActive ? 'white' : '#4a6741';
+      btn.style.color = isActive ? '#6a8858' : '#c8d9a0';
+      btn.style.borderColor = isActive ? '#d4e8c8' : '#4a6741';
+    };
+    daysRow.appendChild(btn);
+  });
+  div.appendChild(daysRow);
+  return div;
 }
 
-function addEvalTask() {
-  const list = document.getElementById('eval-tasks-list');
-  if(!list) return;
+function refreshHabitDays(scSel) {
+  const row = scSel.closest('.eval-habit-row');
+  const daysRow = row.querySelector('.habit-days-row');
+  const scValInp = row.querySelector('.eval-habit-scval');
+  if (scSel.value === 'days') {
+    daysRow.style.display = 'flex';
+    scValInp.style.display = 'none';
+  } else {
+    daysRow.style.display = 'none';
+    scValInp.style.display = 'block';
+    scValInp.placeholder = scSel.value==='streak'?'dni':scSel.value==='weekly'?'razy':'%';
+  }
+}
+
+function addEvalHabitToGoal(btn) {
+  const rows = btn.previousElementSibling;
+  rows.appendChild(makeHabitRowEl('','pct','70',null));
+}
+
+function addEvalTaskToGoal(btn) {
+  const rows = btn.previousElementSibling;
   const div = document.createElement('div');
+  div.className = 'eval-task-row';
   div.style.cssText = 'display:flex;gap:6px;margin-bottom:6px;align-items:center';
-  div.innerHTML = '<span>📌</span><input placeholder="np. Znaleźć dietetyka" class="eval-task-input create-input" style="flex:1"><button onclick="removeEvalRow(this)" style="background:none;border:none;color:#c0b0c0;cursor:pointer">✕</button>';
-  list.appendChild(div);
+  const ti = document.createElement('input');
+  ti.placeholder = 'np. Znaleźć dietetyka'; ti.className = 'eval-task-input create-input'; ti.style.flex = '1';
+  const tb = document.createElement('button');
+  tb.innerHTML = '✕'; tb.onclick = () => div.remove();
+  tb.style.cssText = 'background:none;border:none;color:#c0b0c0;cursor:pointer;font-size:0.9rem;flex-shrink:0';
+  div.appendChild(ti); div.appendChild(tb);
+  rows.appendChild(div);
 }
 
 function renderCoachTab() {
@@ -3117,7 +3208,7 @@ function renderCoachTab() {
   const hasProject = data.generatedProjectId;
   const daysUntilQuarterly = getDaysUntilQuarterly(data);
 
-  if (coachTabView === 'eval') { panel.innerHTML = renderEvalView(data); return; }
+  if (coachTabView === 'eval') { panel.innerHTML = renderEvalView(data); setTimeout(initEvalHabitRows, 0); return; }
   if (coachTabView === 'quarterly') { panel.innerHTML = renderQuarterlyView(data); return; }
   if (coachTabView === 'wheel' || hasEval) { panel.innerHTML = renderWheelView(data); return; }
 
@@ -3218,61 +3309,62 @@ function renderEvalView(data) {
           Krok 2 — Wpisz wyniki rozmowy z ChatGPT
         </div>
 
+        <!-- Score -->
         <div style="margin-bottom:16px">
-          <div style="font-size:0.72rem;color:#6a8858;margin-bottom:8px">Zadowolenie (zatwierdzone z ChatGPT)</div>
+          <div style="font-size:0.72rem;color:#6a8858;margin-bottom:8px">Zadowolenie z obszaru (zatwierdzone z ChatGPT)</div>
           <div style="display:flex;gap:5px;flex-wrap:wrap">
             ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button onclick="selectScore(${n})" id="score-${n}"
               style="width:34px;height:34px;border-radius:50%;border:1.5px solid ${(areaData.score===n)?'#4a6741':'#d4e8c8'};background:${(areaData.score===n)?'#4a6741':'white'};color:${(areaData.score===n)?'#c8d9a0':'#6a8858'};font-size:0.8rem;cursor:pointer">${n}</button>`).join('')}
           </div>
         </div>
 
-        <div style="margin-bottom:16px">
-          <div style="font-size:0.72rem;color:#6a8858;margin-bottom:6px">Wielkie cele</div>
-          <div id="eval-goals-list">
-            ${(areaData.goalsList&&areaData.goalsList.length?areaData.goalsList:[{text:''}]).map((g,gi)=>`
-            <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
+        <!-- Goals with nested habits/tasks -->
+        <div style="font-size:0.72rem;color:#6a8858;margin-bottom:6px">Wielkie cele i mini kroki</div>
+        <div style="font-size:0.65rem;color:#a8bf90;margin-bottom:10px">Każdy cel z nawykami i zadaniami</div>
+        <div id="eval-goals-list">
+          ${(areaData.goalsList&&areaData.goalsList.length?areaData.goalsList:[{text:'',habits:[{name:'',sc:'pct',scVal:'70'}],tasks:[]}]).map((g,gi)=>`
+          <div class="eval-goal-block" style="background:#f5f7f3;border-radius:12px;padding:14px;margin-bottom:10px;border:1.5px solid #e4ebe2">
+            <!-- Goal name -->
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+              <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#4a6741;font-weight:500">Cel ${gi+1}</div>
               <input value="${g.text||''}" placeholder="np. Zredukować wagę o 15kg" class="eval-goal-input create-input" style="flex:1">
-              ${gi>0?'<button onclick="removeEvalRow(this)" style="background:none;border:none;color:#c0b0c0;font-size:1rem;cursor:pointer">✕</button>':''}
-            </div>`).join('')}
-          </div>
-          <button onclick="addEvalGoal()" style="width:100%;padding:8px;border:1.5px dashed #d4e8c8;border-radius:8px;background:none;color:#6a8858;font-size:0.72rem;cursor:pointer;font-family:'DM Sans',sans-serif">+ dodaj cel</button>
-        </div>
-
-        <div style="margin-bottom:16px">
-          <div style="font-size:0.72rem;color:#6a8858;margin-bottom:6px">🔁 Nawyki dzienne</div>
-          <div id="eval-habits-list">
-            ${(areaData.habitsList&&areaData.habitsList.length?areaData.habitsList:[{name:'',sc:'pct',scVal:'70'}]).map((h,hi)=>`
-            <div style="background:#f5f7f3;border-radius:10px;padding:10px;margin-bottom:6px">
-              <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
-                <span>🔁</span>
-                <input value="${h.name||''}" placeholder="np. Freeletics" class="eval-habit-name create-input" style="flex:1">
-                ${hi>0?'<button onclick="removeEvalHabit(this)" style="background:none;border:none;color:#c0b0c0;cursor:pointer">✕</button>':''}
+              ${gi>0?'<button onclick="removeEvalGoalBlock(this)" style="background:none;border:none;color:#c0b0c0;font-size:1rem;cursor:pointer;flex-shrink:0">✕</button>':''}
+            </div>
+            <!-- Habits -->
+            <div style="margin-bottom:8px">
+              <div style="font-size:0.65rem;color:#6a8858;margin-bottom:6px">🔁 Nawyki dzienne</div>
+              <div class="eval-habit-rows">
+                ${(g.habits&&g.habits.length?g.habits:[{name:'',sc:'pct',scVal:'70'}]).map(h=>`
+                <div class="eval-habit-row" style="display:flex;gap:6px;margin-bottom:6px;align-items:center;flex-wrap:wrap">
+                  <input value="${h.name||''}" placeholder="nawyk" class="eval-habit-name create-input" style="flex:1;min-width:120px">
+                  <select class="eval-habit-sc create-select">
+                    <option value="streak" ${h.sc==='streak'?'selected':''}>🔥 z rzędu</option>
+                    <option value="weekly" ${h.sc==='weekly'?'selected':''}>📅 /tydzień</option>
+                    <option value="pct" ${(!h.sc||h.sc==='pct')?'selected':''}>📊 % dni</option>
+                  </select>
+                  <input value="${h.scVal||'70'}" placeholder="wartość" class="eval-habit-scval create-input" style="width:52px">
+                  <button onclick="removeEvalRow(this.closest('.eval-habit-row'))" style="background:none;border:none;color:#c0b0c0;cursor:pointer;font-size:0.9rem">✕</button>
+                </div>`).join('')}
               </div>
-              <div style="display:flex;gap:6px">
-                <select class="eval-habit-sc create-select" style="flex:1">
-                  <option value="streak" ${h.sc==='streak'?'selected':''}>🔥 dni z rzędu</option>
-                  <option value="weekly" ${h.sc==='weekly'?'selected':''}>📅 razy/tydzień</option>
-                  <option value="pct" ${(!h.sc||h.sc==='pct')?'selected':''}>📊 % dni</option>
-                </select>
-                <input value="${h.scVal||'70'}" placeholder="wartość" class="eval-habit-scval create-input" style="width:64px">
+              <button onclick="addEvalHabitToGoal(this)" style="font-size:0.68rem;color:#6a8858;background:none;border:1px dashed #d4e8c8;border-radius:6px;padding:4px 10px;cursor:pointer;width:100%">+ nawyk</button>
+            </div>
+            <!-- Tasks -->
+            <div>
+              <div style="font-size:0.65rem;color:#6a8858;margin-bottom:6px">📌 Zadania jednorazowe</div>
+              <div class="eval-task-rows">
+                ${(g.tasks&&g.tasks.length?g.tasks:[]).map(t=>`
+                <div class="eval-task-row" style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
+                  <input value="${t.name||''}" placeholder="np. Znaleźć dietetyka" class="eval-task-input create-input" style="flex:1">
+                  <button onclick="removeEvalRow(this.closest('.eval-task-row'))" style="background:none;border:none;color:#c0b0c0;cursor:pointer;font-size:0.9rem">✕</button>
+                </div>`).join('')}
               </div>
-            </div>`).join('')}
-          </div>
-          <button onclick="addEvalHabit()" style="width:100%;padding:8px;border:1.5px dashed #d4e8c8;border-radius:8px;background:none;color:#6a8858;font-size:0.72rem;cursor:pointer;font-family:'DM Sans',sans-serif">+ dodaj nawyk</button>
+              <button onclick="addEvalTaskToGoal(this)" style="font-size:0.68rem;color:#6a8858;background:none;border:1px dashed #d4e8c8;border-radius:6px;padding:4px 10px;cursor:pointer;width:100%">+ zadanie</button>
+            </div>
+          </div>`).join('')}
         </div>
-
-        <div style="margin-bottom:4px">
-          <div style="font-size:0.72rem;color:#6a8858;margin-bottom:6px">📌 Zadania jednorazowe</div>
-          <div id="eval-tasks-list">
-            ${(areaData.tasksList||[]).map(t=>`
-            <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
-              <span>📌</span>
-              <input value="${t.name||''}" placeholder="np. Znaleźć dietetyka" class="eval-task-input create-input" style="flex:1">
-              <button onclick="removeEvalRow(this)" style="background:none;border:none;color:#c0b0c0;cursor:pointer">✕</button>
-            </div>`).join('')}
-          </div>
-          <button onclick="addEvalTask()" style="width:100%;padding:8px;border:1.5px dashed #d4e8c8;border-radius:8px;background:none;color:#6a8858;font-size:0.72rem;cursor:pointer;font-family:'DM Sans',sans-serif">+ dodaj zadanie</button>
-        </div>
+        <button onclick="addEvalGoalBlock()" style="width:100%;padding:10px;border:1.5px dashed #4a6741;border-radius:10px;background:none;color:#4a6741;font-size:0.72rem;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:4px">
+          + dodaj kolejny cel
+        </button>
       </div>
 
             <!-- Navigation -->
@@ -3315,24 +3407,32 @@ function evalSaveAndNext() {
   const score = selectedScore || data.areas[area.id]?.score;
   if(!score) { showToast('Wybierz ocenę (1-10)'); return; }
   
-  // Collect structured data from new form
-  const goalsList = [...document.querySelectorAll('.eval-goal-input')]
-    .map(i=>({text:i.value.trim()})).filter(g=>g.text);
-  const habitsList = [...document.querySelectorAll('#eval-habits-list > div')]
-    .map(div=>({
-      name: div.querySelector('.eval-habit-name')?.value?.trim()||'',
-      sc: div.querySelector('.eval-habit-sc')?.value||'pct',
-      scVal: div.querySelector('.eval-habit-scval')?.value?.trim()||'70'
-    })).filter(h=>h.name);
-  const tasksList = [...document.querySelectorAll('.eval-task-input')]
-    .map(i=>({name:i.value.trim()})).filter(t=>t.name);
+  // Collect nested goal structure
+  const goalsList = [...document.querySelectorAll('.eval-goal-block')].map(block => {
+    const text = block.querySelector('.eval-goal-input')?.value?.trim() || '';
+    const habits = [...block.querySelectorAll('.eval-habit-row')].map(row => ({
+      name: row.querySelector('.eval-habit-name')?.value?.trim() || '',
+      sc: row.querySelector('.eval-habit-sc')?.value || 'pct',
+      scVal: row.querySelector('.eval-habit-scval')?.value?.trim() || '70',
+      days: row.querySelector('.eval-habit-sc')?.value === 'days'
+        ? [...row.querySelectorAll('.day-toggle.active')].map(b => parseInt(b.dataset.day))
+        : null
+    })).filter(h => h.name);
+    const tasks = [...block.querySelectorAll('.eval-task-row')].map(row => ({
+      name: row.querySelector('.eval-task-input')?.value?.trim() || ''
+    })).filter(t => t.name);
+    return {text, habits, tasks};
+  }).filter(g => g.text);
+
+  // Flatten for backwards compat
+  const habitsList = goalsList.flatMap(g => g.habits);
+  const tasksList = goalsList.flatMap(g => g.tasks);
 
   data.areas[area.id] = {
     score,
     goalsList,
-    habitsList, 
+    habitsList,
     tasksList,
-    // Keep text versions for backwards compat
     goals: goalsList.map(g=>g.text).join('\n'),
     habits: habitsList.map(h=>h.name).join('\n'),
     tasks: tasksList.map(t=>t.name).join('\n'),
@@ -3547,7 +3647,7 @@ function generateProjectFromEval(projName, projDuration, projBudget) {
     const habits = area.habitsList || (area.habits||'').split('\n').filter(l=>l.trim()).map(h=>({name:h,sc:'pct',scVal:'70'}));
     const tasks = area.tasksList || (area.tasks||'').split('\n').filter(l=>l.trim()).map(t=>({name:t}));
     const items = [
-      ...habits.map((h,i) => ({id:`${area.id}_h${i}`,name:h.name,type:'habit',sc:h.sc||'pct',scVal:h.scVal||'70'})),
+      ...habits.map((h,i) => ({id:`${area.id}_h${i}`,name:h.name,type:'habit',sc:h.sc||'pct',scVal:h.scVal||'70',days:h.days||null})),
       ...tasks.map((t,i) => ({id:`${area.id}_t${i}`,name:t.name,type:'task',sc:'once',scVal:''})),
     ].filter(item => item.name);
 
