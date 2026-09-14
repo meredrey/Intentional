@@ -3452,6 +3452,15 @@ function renderEvalView(data) {
             </div>
           </div>`).join('')}
       </div>
+
+      <!-- Navigation -->
+      <div style="display:flex;gap:10px;margin-top:4px">
+        ${coachEvalStep > 0 ? `<button onclick="evalPrev()" class="btn-ghost" style="flex:1">← Poprzedni</button>` : ''}
+        <button onclick="evalSaveAndNext()" 
+          style="flex:2;padding:14px;background:#4a6741;color:#c8d9a0;border:none;border-radius:10px;font-family:'Jost',sans-serif;font-size:0.7rem;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer">
+          ${coachEvalStep < LIFE_AREAS.length - 1 ? 'Zapisz i dalej →' : 'Zakończ ewaluację ✓'}
+        </button>
+      </div>
     </div>
   </div>`;
 }
