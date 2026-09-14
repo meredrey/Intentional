@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="color-scheme" content="light">
-<title>Intentional</title>
+<title>Intentional v1.1</title>
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIyIiBmaWxsPSIjNGE2NzQxIi8+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMjgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M4ZDlhMCIgc3Ryb2tlLXdpZHRoPSIzIi8+PGxpbmUgeDE9IjUwIiB5MT0iMjIiIHgyPSI1MCIgeTI9Ijc4IiBzdHJva2U9IiNjOGQ5YTAiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNCIgZmlsbD0iI2M4ZDlhMCIvPjwvc3ZnPg==">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIyIiBmaWxsPSIjNGE2NzQxIi8+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMjgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M4ZDlhMCIgc3Ryb2tlLXdpZHRoPSIzIi8+PGxpbmUgeDE9IjUwIiB5MT0iMjIiIHgyPSI1MCIgeTI9Ijc4IiBzdHJva2U9IiNjOGQ5YTAiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNCIgZmlsbD0iI2M4ZDlhMCIvPjwvc3ZnPg==">
 <meta name="mobile-web-app-capable" content="yes">
@@ -391,6 +391,10 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
 .proj-habit{display:flex;align-items:center;gap:12px;padding:12px 14px;background:white;border-radius:10px;border:2px solid #D4C8E0;cursor:pointer;transition:all 0.18s;user-select:none}
 .proj-habit.checked{background:#F0EAF8;border-color:#9B82B0}
 .proj-habit.past-locked{cursor:default;opacity:0.7}
+.proj-task{border-style:dashed;background:#FAFAFA}
+.proj-task.checked{background:#EEF3F6;border-color:#8FAAB8;border-style:solid}
+.proj-task-cb{border-style:dashed;font-size:0.8rem}
+.proj-task.checked .proj-task-cb{background:#8FAAB8;border-color:#8FAAB8;font-size:0.7rem}
 .proj-cb{width:24px;height:24px;border-radius:50%;border:2px solid #9B82B0;background:white;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:0;color:white;transition:all 0.18s}
 .proj-habit.checked .proj-cb{background:#9B82B0;border-color:#9B82B0;font-size:0.7rem}
 .proj-hname{font-size:0.85rem;color:#2A1F35;flex:1}
@@ -1381,13 +1385,21 @@ function projDayAgo(d, ago) { const r = new Date(d); r.setDate(r.getDate()-ago);
 // ============================================================
 function projCalcCatPts(dd, cat) {
   const items = cat.items || [];
-  if (!items.length) return 0;
-  const checked = items.filter(item => dd[cat.id + '_' + item.id]);
+  // Only count habit items for daily points
+  const habitItems = items.filter(item => item.type !== 'task');
+  if (!habitItems.length) return 0;
+  const checked = habitItems.filter(item => dd[cat.id + '_' + item.id]);
   if (cat.logic === 'all') {
-    return checked.length === items.length ? cat.pts : 0;
+    return checked.length === habitItems.length ? cat.pts : 0;
   } else { // 'any'
     return checked.length > 0 ? cat.pts : 0;
   }
+}
+
+function projIsTaskDone(project, item, cat) {
+  // A one-time task is done if completed in ANY day
+  if (!project.days) return false;
+  return Object.values(project.days).some(dd => dd[cat.id + '_' + item.id] === true);
 }
 
 function projCalcDayPts(dd, project) {
@@ -1586,7 +1598,9 @@ function coachCreateNext() {
       const items = [];
       el.querySelectorAll('.cat-item-input').forEach(inp => {
         const v = inp.value.trim();
-        if (v) items.push({id: 'item_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), name: v});
+        const typeEl = inp.parentElement?.querySelector('.cat-item-type');
+        const type = typeEl?.value || 'habit';
+        if (v) items.push({id: 'item_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), name: v, type});
       });
       if (name) cats.push({id: 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2,5), name, emoji, logic, pts: 2, items});
     });
@@ -1626,18 +1640,18 @@ function coachCatTemplate(num) {
     </select>
   </div>
   <div class="cat-items-list">
-    <input class="cat-item-input create-input" placeholder="Cel szczegółowy 1">
-    <input class="cat-item-input create-input" placeholder="Cel szczegółowy 2">
+    <div style="display:flex;gap:6px;align-items:center"><input class="cat-item-input create-input" placeholder="Cel szczegółowy 1" style="flex:1"><select class="cat-item-type create-select" title="Typ"><option value="habit">🔁</option><option value="task">📌</option></select></div>
+    <div style="display:flex;gap:6px;align-items:center"><input class="cat-item-input create-input" placeholder="Cel szczegółowy 2" style="flex:1"><select class="cat-item-type create-select" title="Typ"><option value="habit">🔁</option><option value="task">📌</option></select></div>
   </div>
   <button onclick="coachAddItem(this)" class="create-add-btn">+ dodaj cel</button>`;
 }
 
 function coachAddItem(btn) {
   const list = btn.previousElementSibling;
-  const inp = document.createElement('input');
-  inp.className = 'cat-item-input create-input';
-  inp.placeholder = 'Cel szczegółowy';
-  list.appendChild(inp);
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;gap:6px;align-items:center';
+  wrap.innerHTML = '<input class="cat-item-input create-input" placeholder="Cel szczegółowy" style="flex:1"><select class="cat-item-type create-select" title="Typ"><option value="habit">🔁 nawyk</option><option value="task">📌 zadanie</option></select>';
+  list.appendChild(wrap);
 }
 
 function coachSaveProject(activate) {
@@ -1673,6 +1687,21 @@ function coachSaveProject(activate) {
 // ============================================================
 // PROJECT COACH — Toggle habit
 // ============================================================
+
+function projToggleTask(el) {
+  const projects = projectsGet();
+  const project = projects.find(p => p.id === localStorage.getItem(PROJ_ACTIVE_KEY));
+  if (!project) return;
+  const key = el.dataset.key;
+  const today = projTodayKey();
+  if (!project.days) project.days = {};
+  if (!project.days[today]) project.days[today] = {};
+  project.days[today][key] = true;
+  projectsSet(projects);
+  toast('📌 Zadanie ukończone! ✓');
+  renderCoach();
+}
+
 function projToggle(el) {
   const projects = projectsGet();
   const project = projects.find(p => p.id === localStorage.getItem(PROJ_ACTIVE_KEY));
@@ -2108,7 +2137,19 @@ function renderDashboard(project) {
     const isDone = catPts > 0;
     const itemsHTML = cat.items.map(item => {
       const key = cat.id + '_' + item.id;
-      const checked = !!dd[key];
+      const isTask = item.type === 'task';
+      const checked = isTask ? projIsTaskDone(project, item, cat) : !!dd[key];
+      if (isTask) {
+        return `<div class="proj-habit proj-task ${checked ? 'checked' : ''}" 
+          data-key="${key}" onclick="${!checked ? 'projToggleTask(this)' : ''}">
+          <div class="proj-cb proj-task-cb">${checked ? '✓' : '📌'}</div>
+          <div style="flex:1">
+            <div class="proj-hname">${item.name}</div>
+            ${item.successCriteria ? `<div style="font-size:0.68rem;color:#9B82B0;margin-top:2px">${item.successCriteria}</div>` : ''}
+          </div>
+          ${checked ? '<div style="font-size:0.65rem;color:#8FAAB8">Ukończone ✓</div>' : '<div style="font-size:0.65rem;color:#B09AC0">Jednorazowe</div>'}
+        </div>`;
+      }
       return `<div class="proj-habit ${checked ? 'checked' : ''}" 
         data-key="${key}" onclick="projToggle(this)">
         <div class="proj-cb">${checked ? '✓' : ''}</div>
@@ -2300,8 +2341,8 @@ function renderCreateWizard() {
             </select>
           </div>
           <div class="cat-items-list">
-            ${cat.items.map(item=>`<input class="cat-item-input create-input" value="${item.name}" placeholder="Cel szczegółowy">`).join('')}
-            <input class="cat-item-input create-input" placeholder="Cel szczegółowy (opcjonalnie)">
+            ${cat.items.map(item=>`<div style="display:flex;gap:6px;align-items:center"><input class="cat-item-input create-input" value="${item.name}" placeholder="Cel szczegółowy" style="flex:1"><select class="cat-item-type create-select" title="Typ"><option value="habit" ${(item.type||'habit')==='habit'?'selected':''}>🔁</option><option value="task" ${item.type==='task'?'selected':''}>📌</option></select></div>`).join('')}
+            <div style="display:flex;gap:6px;align-items:center"><input class="cat-item-input create-input" placeholder="Cel szczegółowy (opcjonalnie)" style="flex:1"><select class="cat-item-type create-select" title="Typ"><option value="habit">🔁</option><option value="task">📌</option></select></div>
           </div>
           <button onclick="coachAddItem(this)" class="create-add-btn">+ dodaj cel</button>
         </div>`).join('') :
@@ -2315,8 +2356,8 @@ function renderCreateWizard() {
           </select>
         </div>
         <div class="cat-items-list">
-          <input class="cat-item-input create-input" placeholder="Cel szczegółowy 1">
-          <input class="cat-item-input create-input" placeholder="Cel szczegółowy 2">
+          <div style="display:flex;gap:6px;align-items:center"><input class="cat-item-input create-input" placeholder="Cel szczegółowy 1" style="flex:1"><select class="cat-item-type create-select" title="Typ"><option value="habit">🔁 nawyk</option><option value="task">📌 zadanie</option></select></div>
+          <div style="display:flex;gap:6px;align-items:center"><input class="cat-item-input create-input" placeholder="Cel szczegółowy 2" style="flex:1"><select class="cat-item-type create-select" title="Typ"><option value="habit">🔁 nawyk</option><option value="task">📌 zadanie</option></select></div>
         </div>
         <button onclick="coachAddItem(this)" class="create-add-btn">+ dodaj cel</button>
       </div>`;
