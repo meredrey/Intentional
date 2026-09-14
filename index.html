@@ -1404,10 +1404,21 @@ function projDayAgo(d, ago) { const r = new Date(d); r.setDate(r.getDate()-ago);
 // ============================================================
 // PROJECT COACH — Points calculation
 // ============================================================
-function projCalcCatPts(dd, cat) {
+function isItemActiveToday(item, date) {
+  // If item has specific days, check if today matches
+  if (!item.days || !item.days.length) return true;
+  const d = date || new Date();
+  // JS: 0=Sun,1=Mon,...,6=Sat
+  // Our days: 0=Mon,1=Tue,...,6=Sun
+  const jsDay = d.getDay(); // 0=Sun
+  const ourDay = jsDay === 0 ? 6 : jsDay - 1; // convert to Mon=0
+  return item.days.includes(ourDay);
+}
+
+function projCalcCatPts(dd, cat, date) {
   const items = cat.items || [];
-  // Only count habit items for daily points
-  const habitItems = items.filter(item => item.type !== 'task');
+  // Only count habit items that are active today
+  const habitItems = items.filter(item => item.type !== 'task' && isItemActiveToday(item, date));
   if (!habitItems.length) return 0;
   const checked = habitItems.filter(item => dd[cat.id + '_' + item.id]);
   if (cat.logic === 'all') {
@@ -1423,13 +1434,16 @@ function projIsTaskDone(project, item, cat) {
   return Object.values(project.days).some(dd => dd[cat.id + '_' + item.id] === true);
 }
 
-function projCalcDayPts(dd, project) {
+function projCalcDayPts(dd, project, date) {
   if (!project) return 0;
-  return project.categories.reduce((sum, cat) => sum + projCalcCatPts(dd, cat), 0);
+  return project.categories.reduce((sum, cat) => sum + projCalcCatPts(dd, cat, date), 0);
 }
 
-function projMaxDayPts(project) {
-  return project.categories.reduce((sum, cat) => sum + cat.pts, 0);
+function projMaxDayPts(project, date) {
+  return project.categories.reduce((sum, cat) => {
+    const activeHabits = cat.items.filter(i => i.type !== 'task' && isItemActiveToday(i, date));
+    return sum + (activeHabits.length > 0 ? cat.pts : 0);
+  }, 0);
 }
 
 function projCalcTotal(project) {
@@ -2543,8 +2557,8 @@ function renderDashboard(project) {
   const vkey = projDateKey(coachViewingDate);
   const isToday = vkey === projTodayKey();
   const dd = project.days?.[vkey] || {};
-  const dayPts = projCalcDayPts(dd, project);
-  const maxPts = projMaxDayPts(project);
+  const dayPts = projCalcDayPts(dd, project, coachViewingDate);
+  const maxPts = projMaxDayPts(project, coachViewingDate);
   const totalPts = projCalcTotal(project);
 
   // Day number
@@ -2584,6 +2598,11 @@ function renderDashboard(project) {
         : item.sc === 'date' ? `🗓️ do ${item.scVal}`
         : item.sc === 'subjective' ? '⭐ subiektywnie' : '';
 
+      const DAYS_SHORT = ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'];
+      const isActiveToday = isItemActiveToday(item, coachViewingDate);
+      const daysLabel = item.days && item.days.length && item.days.length < 7
+        ? item.days.map(d => DAYS_SHORT[d]).join('/') : null;
+
       if (isMoodItem) {
         const currentMood = dd._mood;
         return `<div class="proj-habit ${currentMood?'checked':''}" data-key="${key}" onclick="projToggle(this)">
@@ -2614,10 +2633,20 @@ function renderDashboard(project) {
           ${checked?'<div style="font-size:0.65rem;color:#8FAAB8">Ukończone ✓</div>':''}
         </div>`;
       }
+      if (!isActiveToday) {
+        return `<div class="proj-habit" style="opacity:0.35;cursor:default">
+          <div class="proj-cb"></div>
+          <div style="flex:1">
+            <div class="proj-hname" style="color:#aaa">${item.name}</div>
+            <div style="font-size:0.62rem;color:#bbb">Nie dziś (${daysLabel||''})</div>
+          </div>
+        </div>`;
+      }
       return `<div class="proj-habit ${checked?'checked':''}" data-key="${key}" onclick="projToggle(this)">
         <div class="proj-cb">${checked?'✓':''}</div>
         <div style="flex:1">
           <div class="proj-hname">${item.name}</div>
+          ${daysLabel?`<div style="font-size:0.62rem;color:#B09AC0;margin-top:1px">${daysLabel}</div>`:''}
           ${scLabel?`<div style="font-size:0.65rem;color:#B09AC0;margin-top:2px">${scLabel}</div>`:''}
         </div>
       </div>`;
