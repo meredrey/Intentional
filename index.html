@@ -3101,28 +3101,28 @@ function renderEvalView(data) {
         </div>
 
         <div style="margin-bottom:12px">
-          <div style="font-size:0.72rem;color:#6a8858;margin-bottom:6px">Wielkie cele w tym obszarze</div>
+          <div style="font-size:0.72rem;color:#6a8858;margin-bottom:4px">Wielkie cele w tym obszarze</div><div style="font-size:0.65rem;color:#a8bf90;margin-bottom:6px;font-style:italic">Skopiuj z podsumowania ChatGPT</div>
           <textarea id="eval-goals" placeholder="np. Zredukować wagę o 15kg, mieć energię na cały dzień..."
-            style="width:100%;border:1px solid #d4e8c8;border-radius:8px;padding:10px;font-family:'DM Sans',sans-serif;font-size:0.82rem;min-height:70px;outline:none;resize:none;box-sizing:border-box"
+            style="width:100%;border:1.5px solid #D4C8E0;border-radius:10px;padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:0.82rem;min-height:70px;outline:none;resize:none;box-sizing:border-box;color:#2A1F35"
           >${areaData.goals||''}</textarea>
         </div>
 
         <div style="margin-bottom:12px">
-          <div style="font-size:0.72rem;color:#6a8858;margin-bottom:6px">Nawyki dzienne (do projektu)</div>
+          <div style="font-size:0.72rem;color:#6a8858;margin-bottom:4px">Nawyki dzienne</div><div style="font-size:0.65rem;color:#a8bf90;margin-bottom:6px;font-style:italic">Każdy nawyk w nowej linii. Format: "nawyk → success criteria: ..."</div>
           <textarea id="eval-habits" placeholder="np. Freeletics 3x/tydzień, 8h snu, bez alkoholu w tygodniu..."
-            style="width:100%;border:1px solid #d4e8c8;border-radius:8px;padding:10px;font-family:'DM Sans',sans-serif;font-size:0.82rem;min-height:70px;outline:none;resize:none;box-sizing:border-box"
+            style="width:100%;border:1.5px solid #D4C8E0;border-radius:10px;padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:0.82rem;min-height:70px;outline:none;resize:none;box-sizing:border-box;color:#2A1F35"
           >${areaData.habits||''}</textarea>
         </div>
 
         <div style="margin-bottom:12px">
-          <div style="font-size:0.72rem;color:#6a8858;margin-bottom:6px">Zadania jednorazowe</div>
+          <div style="font-size:0.72rem;color:#6a8858;margin-bottom:4px">Zadania jednorazowe (📌)</div><div style="font-size:0.65rem;color:#a8bf90;margin-bottom:6px;font-style:italic">Każde zadanie w nowej linii. Format: "zadanie → kiedy: ..."</div>
           <textarea id="eval-tasks" placeholder="np. Znaleźć dietetyka, kupić sprzęt sportowy..."
             style="width:100%;border:1px solid #d4e8c8;border-radius:8px;padding:10px;font-family:'DM Sans',sans-serif;font-size:0.82rem;min-height:60px;outline:none;resize:none;box-sizing:border-box"
           >${areaData.tasks||''}</textarea>
         </div>
 
         <div>
-          <div style="font-size:0.72rem;color:#6a8858;margin-bottom:6px">Success criteria (jak zmierzysz sukces?)</div>
+          <div style="font-size:0.72rem;color:#6a8858;margin-bottom:4px">Success criteria obszaru</div><div style="font-size:0.65rem;color:#a8bf90;margin-bottom:6px;font-style:italic">Jak będziesz wiedzieć że ten obszar idzie dobrze?</div>
           <textarea id="eval-criteria" placeholder="np. Streak 30 dni, waga poniżej 80kg, energia 8/10..."
             style="width:100%;border:1px solid #d4e8c8;border-radius:8px;padding:10px;font-family:'DM Sans',sans-serif;font-size:0.82rem;min-height:60px;outline:none;resize:none;box-sizing:border-box"
           >${areaData.criteria||''}</textarea>
@@ -3194,19 +3194,54 @@ function evalPrev() {
 }
 
 function generateAreaPrompt(area) {
-  return `Chcę przeprowadzić głęboką refleksję nad obszarem mojego życia: "${area.name}".
+  const successCriteriaExamples = {
+    zdrowie: 'np. 🔥 30 dni Freeletics z rzędu, 📊 80% dni z zielonym odżywianiem, ✅ badania krwi zrobione',
+    relacje: 'np. 🔥 7 dni z rzędu czas tylko z córkami, 📅 2x/tydzień aktywna obecność bez telefonu',
+    partner: 'np. 📅 3x/tydzień gest bliskości, 📊 70% dni z działaniem z appki',
+    praca: 'np. ✅ oferta pracy managerskiej, ✅ CV zaktualizowane, 📅 1 aplikacja/tydzień',
+    finanse: 'np. 📊 limit wydatków trzymany 3 miesiące z rzędu, ✅ oszczędności cel osiągnięty',
+    rozwoj: 'np. 🔥 30 dni Duolingo z rzędu, 📊 90% dni z nawykiem nauki',
+    kreatywnosc: 'np. ✅ rozdział książki ukończony, 📅 pianino 5x/tydzień',
+    dom: 'np. ✅ zakup domu, 📅 15 min porządku dziennie przez miesiąc',
+  };
+  const sc = successCriteriaExamples[area.id] || 'np. 🔥 X dni z rzędu, 📅 X razy w tygodniu, ✅ milestone ukończony, 📊 X% dni';
 
-Proszę, zadawaj mi pytania jedno po drugim i magluj mnie — nie pozwól mi na powierzchowne odpowiedzi. Chcę żebyś:
+  return `Jesteś moim osobistym life coachem przeprowadzającym mnie przez kwartalną ewaluację życia. Pracujemy teraz nad obszarem: **${area.name}** — "${area.tagline}".
 
-1. Zapytał jak mi AKTUALNIE jest w tym obszarze — z czego jestem dumna, co szwankuje, co mnie frustruje
-2. Pomógł mi zidentyfikować co tak naprawdę chcę osiągnąć (popychaj mnie wyżej niż sama bym to zrobiła)
-3. Zdefiniował 2-3 AMBITNE, konkretne cele na najbliższe 6-12 miesięcy
-4. Rozbił te cele na małe, codzienne nawyki i jednorazowe zadania
-5. Zaproponował success criteria — jak będę wiedzieć że mi się udało?
+**TWOJA ROLA:**
+Jesteś wymagającym, empatycznym coachem. Nie akceptujesz pierwszej odpowiedzi jako wystarczającej. Kwestionujesz moje założenia, sprawdzasz czy nie racjonalizuję, i aktywnie pushasz mnie w kierunku wyższych ambicji niż te, które sama sobie stawiam. Jednocześnie jesteś życzliwy i rozumiesz kontekst mojego życia.
 
-Na końcu poproszę Cię o podsumowanie w ustrukturyzowanej formie.
+**ZASADY ROZMOWY:**
+- Zadawaj jedno pytanie na raz i czekaj na moją odpowiedź
+- Drąż głębiej — "dlaczego?" i "co to dla Ciebie znaczy naprawdę?" są Twoimi narzędziami
+- Gdy odpowiadam zbyt ogólnie lub za skromnie — powiedz mi to wprost i zapytaj ponownie
+- Kwestionuj moje ograniczające przekonania ("nie mam czasu", "nie jestem w stanie") — sprawdź czy to prawda
+- Porównaj moje ambicje do moich wartości i możliwości — czy strzelam wystarczająco wysoko?
 
-Zacznij od pierwszego pytania.`;
+**PRZEBIEG SESJI:**
+1. Zacznij od pytania o obecny stan — jak mi jest teraz w tym obszarze?
+2. Odkryj co naprawdę chcę (nie tylko co myślę że powinnam chcieć)
+3. Zdefiniuj 2-4 ambitne, konkretne cele na 6-12 miesięcy
+4. Rozbij każdy cel na:
+   → Nawyki dzienne (rzeczy które robię regularnie — codziennie lub kilka razy w tygodniu)
+   → Zadania jednorazowe (konkretne kroki, milestones)
+5. Na końcu oceń moje zadowolenie z obszaru na skali 1-10 i zapytaj czy się zgadzam. Jeśli nie — rozmawiamy dalej.
+
+**FORMAT KOŃCOWEGO PODSUMOWANIA** (gdy skończymy):
+Podaj je dokładnie w tej strukturze, abym mogła wkleić do aplikacji:
+
+OCENA: [1-10] (zatwierdzona przeze mnie)
+WIELKIE CELE:
+- [cel 1]
+- [cel 2]
+NAWYKI DZIENNE (do codziennego śledzenia):
+- [nawyk] → success criteria: [${sc.split(',')[0].trim()}]
+- [nawyk] → success criteria: [...]
+ZADANIA JEDNORAZOWE:
+- [zadanie] → kiedy: [termin lub "gdy gotowa"]
+SUCCESS CRITERIA OBSZARU: [jak będę wiedzieć że ten obszar idzie dobrze?]
+
+**Zacznij od pierwszego pytania. Nie przedstawiaj się ani nie tłumacz swojej roli — po prostu zacznij coaching.**`;
 }
 
 // ============================================================
@@ -3439,25 +3474,28 @@ function renderQuarterlyView(data) {
     return `${a.emoji} ${a.name}: ${s}/10\nCele: ${goals}`;
   }).join('\n\n');
 
-  const prompt = `Czas na Quarterly Review! Minęły 90 dni od ostatniej ewaluacji. Oto moje dane:
+  const prompt = `Jesteś moim osobistym life coachem. Czas na Quarterly Review — minęły 90 dni od ostatniej ewaluacji. Mam dla Ciebie pełne dane z aplikacji.
 
-📊 PROJEKT (ostatnie 90 dni):
-• Łączne punkty: ${weeklyPts}
-• Aktywne dni: ${totalDays}
-• Skuteczność per kategoria:
+TWOJA ROLA: Jesteś wymagającym, empatycznym coachem. Twój cel to pomóc mi wyciągnąć wnioski z ostatniego kwartału i zaprojektować następny jeszcze lepiej. Kwestionujesz moje założenia, nie pozwalasz mi być zbyt miękka ani zbyt surowa dla siebie. Patrzysz na dane obiektywnie i wskazujesz wzorce których sama nie widzę.
+
+DANE Z OSTATNICH 90 DNI:
+Projekt — skuteczność:
+Łączne punkty: ${weeklyPts}, Aktywne dni: ${totalDays}
+Per kategoria:
 ${catSummary}
 
-🎯 POPRZEDNIA EWALUACJA OBSZARÓW:
+Poprzednia ocena obszarów życia:
 ${areaSummary}
 
-Proszę pomóż mi:
-1. Ocenić ostatni kwartał — co osiągnęłam, co nie wyszło?
-2. Sprawdzić czy moje cele są nadal trafne i ambitne
-3. Zidentyfikować które obszary znacząco się poprawiły (może warto zmienić fokus?)
-4. Zaktualizować priorytety na następny kwartał
-5. Zaproponować zmiany w projekcie (nowe nawyki, usunięcie starych)
+PRZEBIEG SESJI:
+1. Zacznij od analizy danych — co rzuca Ci się w oczy? Co jest zaskakujące?
+2. Zapytaj jak się czuję z tym co osiągnęłam — co mnie cieszy, co frustruje?
+3. Sprawdź każdy priorytetowy obszar — czy cele są nadal trafne i ambitne?
+4. Zidentyfikuj obszary które się poprawiły (może czas zmienić fokus na inne?)
+5. Zaproponuj konkretne zmiany na następny kwartał
+6. Na końcu — zaktualizowana ocena każdego obszaru 1-10 i propozycja 2-3 nowych priorytetów
 
-Zacznij od pierwszego pytania.`;
+Zacznij od obserwacji danych. Nie przedstawiaj się — po prostu zacznij.`;
 
   return `<div style="background:#f5f7f3;min-height:100%;padding-bottom:80px">
     <div style="background:#4a6741;padding:16px 20px;display:flex;align-items:center;gap:12px">
