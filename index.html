@@ -3117,15 +3117,23 @@ function confirmGenerateProject() {
 
 
 function initEvalHabitRows() {
-  document.querySelectorAll('.eval-habit-rows-placeholder').forEach(placeholder => {
-    const habits = JSON.parse(placeholder.dataset.habits || '[]');
-    const container = placeholder.nextElementSibling ? placeholder.parentElement.querySelector('.eval-habit-rows') : placeholder.parentElement;
-    // Find the actual eval-habit-rows div
-    const rows = placeholder.closest('.eval-goal-block')?.querySelector('.eval-habit-rows');
-    if (rows) {
-      habits.forEach(h => rows.appendChild(makeHabitRowEl(h.name, h.sc, h.scVal, h.days)));
+  // For each goal block, populate habit rows from data-habits attribute
+  document.querySelectorAll('.eval-goal-block').forEach(block => {
+    const ph = block.querySelector('.eval-habit-rows-placeholder');
+    const rows = block.querySelector('.eval-habit-rows');
+    if (!rows) return;
+    rows.innerHTML = '';
+    if (ph) {
+      try {
+        const habits = JSON.parse(ph.dataset.habits || '[]');
+        habits.forEach(h => rows.appendChild(makeHabitRowEl(h.name, h.sc, h.scVal, h.days)));
+      } catch(e) {}
+      ph.remove();
     }
-    placeholder.remove();
+    // Always ensure at least one empty habit row
+    if (!rows.children.length) {
+      rows.appendChild(makeHabitRowEl('','pct','70',null));
+    }
   });
 }
 
