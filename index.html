@@ -19,11 +19,12 @@
 html,body{background:#f5f7f3!important;color:#2c3828}
 body{font-family:'Jost',sans-serif;font-weight:300;min-height:100vh}
 @media(prefers-color-scheme:dark){html,body,div{background-color:inherit!important}}
-.app-header{background:#4a6741;padding:max(28px,env(safe-area-inset-top)) 20px 14px;display:flex;align-items:center;gap:10px}
+.app-header{background:#4a6741;padding:max(28px,env(safe-area-inset-top)) 20px 12px;display:flex;align-items:center;gap:10px}
 .app-logo-svg{width:28px;height:28px;flex-shrink:0}
 .app-name{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:300;letter-spacing:0.2em;color:#f5f7f3;text-transform:uppercase}
 .app-tagline{font-size:0.6rem;letter-spacing:0.18em;color:#a8bf90;text-transform:uppercase;margin-left:auto;flex-shrink:0}
 .app-tabs{display:flex;background:white;border-bottom:1px solid #e4ebe2;position:sticky;top:0;z-index:400;box-shadow:0 2px 8px rgba(74,103,65,0.07)}
+
 .app-tab{flex:1;padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;font-family:'Jost',sans-serif;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#8aaa78;transition:all 0.2s}
 .app-tab .ti{font-size:1rem}
 .app-tab.active{color:#4a6741;border-bottom-color:#4a6741;font-weight:500}
@@ -470,9 +471,8 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
   <div class="app-tagline">Twój system do życia</div>
 </div>
 <div class="app-tabs">
-  <button class="app-tab" onclick="switchTab('coach')" id="tab-coach"><span class="ti">✦</span>Coach</button>
-  <button class="app-tab" onclick="switchTab('focus')" id="tab-focus"><span class="ti">🌿</span>Focus</button>
-  <button class="app-tab" onclick="switchTab('goals')" id="tab-goals"><span class="ti">🌱</span>Cele</button>
+  <button class="app-tab" onclick="switchTab('coach')" id="tab-coach"><span class="ti">✦</span>Daily</button>
+  <button class="app-tab" onclick="switchTab('goals')" id="tab-goals"><span class="ti">🧭</span>Coach</button>
 </div>
 <div class="panel dc-panel" id="panel-coach">
 <!-- rendered by renderCoach() -->
@@ -643,6 +643,7 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2200);
 }
 let activeTab=localStorage.getItem(TAB_KEY)||'coach';
+
 function switchTab(tab){
   try{
     if(tab==='wheel'){tab='goals';}
@@ -1721,6 +1722,25 @@ function coachSaveProject(activate) {
   coachDraft.rewards = rewards;
   coachDraft.startDate = activate ? new Date().toISOString() : null;
   
+  // Auto-add mood category if not already present
+  const hasMood = coachDraft.categories.some(c => c.id === 'mood');
+  if (!hasMood) {
+    coachDraft.categories.push({
+      id: 'mood',
+      name: 'Nastrój',
+      emoji: '🧠',
+      pts: 1,
+      logic: 'any',
+      items: [{
+        id: 'mood_daily',
+        name: 'Zapisz nastrój dnia',
+        type: 'habit',
+        sc: 'pct',
+        scVal: '80'
+      }]
+    });
+  }
+
   if (activate) {
     // Check if there's an active project
     const currentActive = projects.find(p => p.status === 'active');
@@ -1771,6 +1791,12 @@ function projToggle(el) {
   if (!project.days[vkey]) project.days[vkey] = {};
 
   const key = el.dataset.key;
+  
+  // Special handling for mood item — open mood picker
+  if (key === 'mood_mood_daily') {
+    openMoodTracker();
+    return;
+  }
   const isChecked = !!project.days[vkey][key];
   
   const ptsBefore = projCalcDayPts(project.days[vkey], project);
@@ -2044,6 +2070,8 @@ function saveMood(el, emoji, label) {
   if (!project.days) project.days = {};
   if (!project.days[key]) project.days[key] = {};
   project.days[key]._mood = emoji;
+  // Mark mood habit as done
+  project.days[key]['mood_mood_daily'] = true;
   project.totalPoints = projCalcTotal(project);
   projectsSet(projects);
   document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
@@ -2452,6 +2480,43 @@ function renderCoach() {
   
   // Dashboard view
   panel.innerHTML = renderDashboard(project);
+  // Render focus widget inside dashboard
+  setTimeout(() => {
+    const fw = document.getElementById('dailyFocusWidget');
+    if (fw) {
+      const priorities = getPriorities();
+      const lg = lgGet();
+      const data = getLGData();
+      const priAreas = data.filter(a => priorities.includes(a.id));
+      
+      // Find next uncompleted step per priority area
+      const steps = priAreas.map(area => {
+        for (const g of area.goals) {
+          if (g.type === 'tracker') continue;
+          for (let i = 0; i < g.ms.length; i++) {
+            if (!lg[g.id+'_'+i]) return {area, goal: g, idx: i, ms: g.ms[i]};
+          }
+        }
+        return {area, done: true};
+      }).filter(Boolean);
+
+      if (!steps.length) { fw.innerHTML = ''; return; }
+
+      const stepsHTML = steps.map(s => s.done 
+        ? `<div style="font-size:0.78rem;color:#8aaa78;padding:6px 0">${s.area.emoji} ${s.area.name} — ukończone! 🎉</div>`
+        : `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #e4ebe2">
+            <div style="font-size:0.8rem;color:#8aaa78;min-width:60px">${s.area.emoji} ${s.area.name.split(' ')[0]}</div>
+            <div style="font-size:0.82rem;color:#2c3828;flex:1">${s.ms.t}</div>
+            <div onclick="lgToggleMs('${s.goal.id}',${s.idx})" style="width:22px;height:22px;border-radius:50%;border:1.5px solid #c8d9a0;background:white;cursor:pointer;flex-shrink:0"></div>
+          </div>`
+      ).join('');
+
+      fw.innerHTML = `<div style="background:white;border-radius:12px;border:1px solid #e4ebe2;padding:14px 16px;margin:0 0 4px">
+        <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:#8aaa78;margin-bottom:8px">🎯 Priorytety dnia</div>
+        ${stepsHTML}
+      </div>`;
+    }
+  }, 50);
 }
 
 // ============================================================
@@ -2509,23 +2574,52 @@ function renderDashboard(project) {
     const isDone = catPts > 0;
     const itemsHTML = cat.items.map(item => {
       const key = cat.id + '_' + item.id;
+      const isMoodItem = key === 'mood_mood_daily';
       const isTask = item.type === 'task';
+      const isAchieved = !!item.scAchieved;
       const checked = isTask ? projIsTaskDone(project, item, cat) : !!dd[key];
-      if (isTask) {
-        return `<div class="proj-habit proj-task ${checked ? 'checked' : ''}" 
-          data-key="${key}" onclick="${!checked ? 'projToggleTask(this)' : ''}">
-          <div class="proj-cb proj-task-cb">${checked ? '✓' : '📌'}</div>
+      const scLabel = item.sc === 'streak' ? `🔥 ${item.scVal} dni z rzędu`
+        : item.sc === 'weekly' ? `📅 ${item.scVal}x/tydzień`
+        : item.sc === 'pct' ? `📊 ${item.scVal}% dni`
+        : item.sc === 'date' ? `🗓️ do ${item.scVal}`
+        : item.sc === 'subjective' ? '⭐ subiektywnie' : '';
+
+      if (isMoodItem) {
+        const currentMood = dd._mood;
+        return `<div class="proj-habit ${currentMood?'checked':''}" data-key="${key}" onclick="projToggle(this)">
+          <div class="proj-cb" style="${currentMood?'background:#9B82B0;border-color:#9B82B0;font-size:1rem':''}">${currentMood||''}</div>
           <div style="flex:1">
-            <div class="proj-hname">${item.name}</div>
-            ${item.successCriteria ? `<div style="font-size:0.68rem;color:#9B82B0;margin-top:2px">${item.successCriteria}</div>` : ''}
+            <div class="proj-hname">${currentMood?'Nastrój zapisany':'Zapisz nastrój dnia'}</div>
+            ${currentMood?'<div style="font-size:0.65rem;color:#9B82B0">Kliknij żeby zmienić</div>':''}
           </div>
-          ${checked ? '<div style="font-size:0.65rem;color:#8FAAB8">Ukończone ✓</div>' : '<div style="font-size:0.65rem;color:#B09AC0">Jednorazowe</div>'}
+          ${!currentMood?'<div style="font-size:0.75rem">😊</div>':''}
         </div>`;
       }
-      return `<div class="proj-habit ${checked ? 'checked' : ''}" 
-        data-key="${key}" onclick="projToggle(this)">
-        <div class="proj-cb">${checked ? '✓' : ''}</div>
-        <div class="proj-hname">${item.name}</div>
+      if (isAchieved) {
+        return `<div class="proj-habit proj-achieved">
+          <div class="proj-cb" style="background:#8FAAB8;border-color:#8FAAB8;font-size:0.7rem">✓</div>
+          <div style="flex:1">
+            <div class="proj-hname" style="text-decoration:line-through;color:#9B82B0">${item.name}</div>
+            <div style="font-size:0.65rem;color:#8FAAB8">Osiągnięte 🏆</div>
+          </div>
+        </div>`;
+      }
+      if (isTask) {
+        return `<div class="proj-habit proj-task ${checked?'checked':''}" data-key="${key}" onclick="${!checked?'projToggleTask(this)':''}">
+          <div class="proj-cb proj-task-cb">${checked?'✓':'📌'}</div>
+          <div style="flex:1">
+            <div class="proj-hname">${item.name}</div>
+            ${scLabel?`<div style="font-size:0.65rem;color:#B09AC0;margin-top:2px">${scLabel}</div>`:''}
+          </div>
+          ${checked?'<div style="font-size:0.65rem;color:#8FAAB8">Ukończone ✓</div>':''}
+        </div>`;
+      }
+      return `<div class="proj-habit ${checked?'checked':''}" data-key="${key}" onclick="projToggle(this)">
+        <div class="proj-cb">${checked?'✓':''}</div>
+        <div style="flex:1">
+          <div class="proj-hname">${item.name}</div>
+          ${scLabel?`<div style="font-size:0.65rem;color:#B09AC0;margin-top:2px">${scLabel}</div>`:''}
+        </div>
       </div>`;
     }).join('');
 
@@ -2613,6 +2707,9 @@ function renderDashboard(project) {
         </div>
         <div class="streak-dots" style="justify-content:center">${dotsHTML}</div>
       </div>
+
+      <!-- Focus widget -->
+      <div id="dailyFocusWidget" style="margin:0 0 12px"></div>
 
       <!-- Today points -->
       <div class="points-card">
