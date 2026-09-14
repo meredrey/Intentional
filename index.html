@@ -2509,7 +2509,7 @@ function renderCreateWizard() {
     </div>`;
 
   if (coachCreateStep === 2) {
-    const existingCats = coachDraft.categories.length > 0 ? 
+    const existingCats = coachDraft.categories.length > 0 ?
       coachDraft.categories.map((cat,i) => `
         <div class="create-cat">
           <div class="create-cat-header">
@@ -2521,8 +2521,8 @@ function renderCreateWizard() {
             </select>
           </div>
           <div class="cat-items-list">
-            ${cat.items.map(item=>`<div style="display:flex;gap:6px;align-items:center"><input class="cat-item-input create-input" value="${item.name}" placeholder="Cel szczegółowy" style="flex:1"><select class="cat-item-type create-select" title="Typ"><option value="habit" ${(item.type||'habit')==='habit'?'selected':''}>🔁</option><option value="task" ${item.type==='task'?'selected':''}>📌</option></select></div>`).join('')}
-            <div style="display:flex;gap:6px;align-items:center"><input class="cat-item-input create-input" placeholder="Cel szczegółowy (opcjonalnie)" style="flex:1"><select class="cat-item-type create-select" title="Typ"><option value="habit">🔁</option><option value="task">📌</option></select></div>
+            ${cat.items.map(item=>itemRowHTML('Cel szczegółowy', item.name, item.type, item.sc, item.scVal)).join('')}
+            ${itemRowHTML('Cel szczegółowy (opcjonalnie)')}
           </div>
           <button onclick="coachAddItem(this)" class="create-add-btn">+ dodaj cel</button>
         </div>`).join('') :
@@ -2536,8 +2536,8 @@ function renderCreateWizard() {
           </select>
         </div>
         <div class="cat-items-list">
-          <div style="display:flex;gap:6px;align-items:center"><input class="cat-item-input create-input" placeholder="Cel szczegółowy 1" style="flex:1"><select class="cat-item-type create-select" title="Typ"><option value="habit">🔁 nawyk</option><option value="task">📌 zadanie</option></select></div>
-          <div style="display:flex;gap:6px;align-items:center"><input class="cat-item-input create-input" placeholder="Cel szczegółowy 2" style="flex:1"><select class="cat-item-type create-select" title="Typ"><option value="habit">🔁 nawyk</option><option value="task">📌 zadanie</option></select></div>
+          ${itemRowHTML('Cel szczegółowy 1')}
+          ${itemRowHTML('Cel szczegółowy 2')}
         </div>
         <button onclick="coachAddItem(this)" class="create-add-btn">+ dodaj cel</button>
       </div>`;
