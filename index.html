@@ -401,6 +401,7 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
 .proj-task.checked{background:#EEF3F6;border-color:#8FAAB8;border-style:solid}
 .proj-task-cb{border-style:dashed;font-size:0.8rem}
 .proj-task.checked .proj-task-cb{background:#8FAAB8;border-color:#8FAAB8;font-size:0.7rem}
+.proj-achieved{opacity:0.6;cursor:default;background:#F0F5F8;border-color:#C8D8E0}
 .proj-cb{width:24px;height:24px;border-radius:50%;border:2px solid #9B82B0;background:white;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:0;color:white;transition:all 0.18s}
 .proj-habit.checked .proj-cb{background:#9B82B0;border-color:#9B82B0;font-size:0.7rem}
 .proj-hname{font-size:0.85rem;color:#2A1F35;flex:1}
@@ -1781,6 +1782,9 @@ function projToggle(el) {
   
   if (adapted && project.pendingReflection) {
     setTimeout(() => showReflectionPrompt(project), 800);
+  } else {
+    const achieved = checkSuccessCriteria(project);
+    if (achieved.length) setTimeout(() => showScAchievedModal(project, achieved), 600);
   }
 }
 
@@ -2105,6 +2109,137 @@ function syncAndReload() {
       renderCoach();
     }
   }).catch(() => showToast('Błąd połączenia z Sheets'));
+}
+
+
+function checkSuccessCriteria(project) {
+  if (!project || !project.days) return [];
+  const achieved = [];
+  const today = new Date();
+  const allDayKeys = Object.keys(project.days).sort();
+
+  project.categories.forEach(cat => {
+    cat.items.forEach(item => {
+      if (item.scAchieved) return; // already marked
+      const key = cat.id + '_' + item.id;
+      const sc = item.sc || (item.type === 'task' ? 'once' : 'streak');
+      const scVal = parseInt(item.scVal) || 0;
+      let met = false;
+
+      if (item.type === 'task') {
+        if (sc === 'once') {
+          met = Object.values(project.days).some(dd => dd[key]);
+        } else if (sc === 'subjective') {
+          met = Object.values(project.days).some(dd => dd[key]);
+        } else if (sc === 'date') {
+          const deadline = new Date(item.scVal);
+          met = today > deadline && Object.values(project.days).some(dd => dd[key]);
+        }
+      } else {
+        // habit
+        if (sc === 'streak') {
+          let streak = 0;
+          for (let i = 0; i <= 365; i++) {
+            const d = new Date(today); d.setDate(d.getDate() - i);
+            const k = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+            if (project.days[k]?.[key]) streak++;
+            else if (i > 0) break;
+          }
+          met = scVal > 0 && streak >= scVal;
+        } else if (sc === 'weekly') {
+          // count in last 7 days
+          let count = 0;
+          for (let i = 0; i < 7; i++) {
+            const d = new Date(today); d.setDate(d.getDate() - i);
+            const k = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+            if (project.days[k]?.[key]) count++;
+          }
+          met = scVal > 0 && count >= scVal;
+        } else if (sc === 'pct') {
+          const total = allDayKeys.length;
+          const done = allDayKeys.filter(k => project.days[k]?.[key]).length;
+          met = total >= 7 && scVal > 0 && (done/total*100) >= scVal;
+        }
+      }
+
+      if (met) achieved.push({cat, item, key});
+    });
+  });
+  return achieved;
+}
+
+function markScAchieved(projId, catId, itemId) {
+  const projects = projectsGet();
+  const project = projects.find(p => p.id === projId);
+  if (!project) return;
+  const cat = project.categories.find(c => c.id === catId);
+  if (!cat) return;
+  const item = cat.items.find(i => i.id === itemId);
+  if (!item) return;
+  item.scAchieved = true;
+  item.scAchievedAt = new Date().toISOString();
+  projectsSet(projects);
+}
+
+function showScAchievedModal(project, achieved) {
+  if (!achieved.length) return;
+  const item = achieved[0]; // show one at a time
+  const scLabels = {streak:'🔥 Streak osiągnięty!',weekly:'📅 Cel tygodniowy osiągnięty!',pct:'📊 Cel procentowy osiągnięty!',once:'✅ Zadanie ukończone!',subjective:'⭐ Cel osiągnięty!',date:'🗓️ Ukończone przed terminem!'};
+  const label = scLabels[item.item.sc] || '✅ Cel osiągnięty!';
+  
+  document.getElementById('reflectionModal').innerHTML = `
+    <div class="modal-overlay open" onclick="closeReflection(event)">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <div style="text-align:center;padding:8px 0 16px">
+          <div style="font-size:2.5rem">🎉</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:#2A1F35;margin:8px 0">${label}</div>
+          <div style="font-size:0.9rem;color:#6B5878;margin-bottom:16px"><strong>${item.cat.emoji} ${item.cat.name}</strong> → ${item.item.name}</div>
+        </div>
+        <div style="background:#F5F0FA;border-radius:10px;padding:14px;margin-bottom:16px;font-size:0.85rem;color:#6B5878">
+          Cel zostaje widoczny jako osiągnięty. Chcesz zastąpić go nowym wyzwaniem?
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button onclick="replaceScItem('${project.id}','${item.cat.id}','${item.item.id}')" 
+            class="proj-btn-primary">✏️ Zastąp nowym wyzwaniem</button>
+          <button onclick="keepScItem('${project.id}','${item.cat.id}','${item.item.id}')" 
+            class="btn-ghost">Zostaw jako osiągnięty</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('reflectionModal').style.display = 'block';
+}
+
+function keepScItem(projId, catId, itemId) {
+  markScAchieved(projId, catId, itemId);
+  document.getElementById('reflectionModal').style.display = 'none';
+  document.getElementById('reflectionModal').innerHTML = '';
+  renderCoach();
+  showToast('🏆 Cel oznaczony jako osiągnięty!');
+}
+
+function replaceScItem(projId, catId, itemId) {
+  const newName = prompt('Wpisz nowe wyzwanie:');
+  if (!newName?.trim()) return;
+  markScAchieved(projId, catId, itemId);
+  
+  const projects = projectsGet();
+  const project = projects.find(p => p.id === projId);
+  const cat = project?.categories.find(c => c.id === catId);
+  if (!cat) return;
+  
+  cat.items.push({
+    id: 'item_' + Date.now(),
+    name: newName.trim(),
+    type: cat.items.find(i=>i.id===itemId)?.type || 'habit',
+    sc: cat.items.find(i=>i.id===itemId)?.sc || 'streak',
+    scVal: cat.items.find(i=>i.id===itemId)?.scVal || ''
+  });
+  projectsSet(projects);
+  document.getElementById('reflectionModal').style.display = 'none';
+  document.getElementById('reflectionModal').innerHTML = '';
+  renderCoach();
+  showToast('✨ Nowe wyzwanie dodane!');
 }
 
 function renderCoach() {
