@@ -2227,9 +2227,33 @@ function checkSuccessCriteria(project) {
           }
           met = scVal > 0 && count >= scVal;
         } else if (sc === 'pct') {
-          const total = allDayKeys.length;
-          const done = allDayKeys.filter(k => project.days[k]?.[key]).length;
-          met = total >= 7 && scVal > 0 && (done/total*100) >= scVal;
+          // Count only active days for this habit (respects days-of-week setting)
+          const startDate = new Date(project.startDate);
+          const duration = project.duration || 90;
+          const endDate = new Date(startDate); endDate.setDate(endDate.getDate() + duration);
+          const projectEnded = today >= endDate;
+          
+          // Count active days (days when this habit was supposed to run)
+          let activeDays = 0, doneDays = 0;
+          allDayKeys.forEach(k => {
+            const d = new Date(...k.split('-').map((v,i)=>i===1?v-1:v));
+            if (isItemActiveToday(item, d)) {
+              activeDays++;
+              if (project.days[k]?.[key]) doneDays++;
+            }
+          });
+          
+          if (projectEnded) {
+            // After project ends — check final %
+            met = activeDays > 0 && scVal > 0 && (doneDays/activeDays*100) >= scVal;
+          } else {
+            // During project — check if mathematically impossible to reach goal
+            // (motivational: warn if falling too far behind)
+            const daysLeft = Math.ceil((endDate - today) / 86400000);
+            const maxPossible = doneDays + daysLeft;
+            const needed = Math.ceil(scVal/100 * (activeDays + daysLeft));
+            met = false; // don't trigger until project ends
+          }
         }
       }
 
@@ -2592,9 +2616,24 @@ function renderDashboard(project) {
       const isTask = item.type === 'task';
       const isAchieved = !!item.scAchieved;
       const checked = isTask ? projIsTaskDone(project, item, cat) : !!dd[key];
+      // Calculate pct progress for display
+      let pctProgress = '';
+      if (item.sc === 'pct' && !item.scAchieved) {
+        const allKeys = Object.keys(project.days||{});
+        let activeCnt = 0, doneCnt = 0;
+        allKeys.forEach(k => {
+          const d = new Date(...k.split('-').map((v,i)=>i===1?v-1:v));
+          if (isItemActiveToday(item, d)) {
+            activeCnt++;
+            if (project.days[k]?.[key]) doneCnt++;
+          }
+        });
+        const curPct = activeCnt > 0 ? Math.round(doneCnt/activeCnt*100) : 0;
+        pctProgress = activeCnt > 0 ? ` (${curPct}% z ${item.scVal}%)` : '';
+      }
       const scLabel = item.sc === 'streak' ? `🔥 ${item.scVal} dni z rzędu`
         : item.sc === 'weekly' ? `📅 ${item.scVal}x/tydzień`
-        : item.sc === 'pct' ? `📊 ${item.scVal}% dni`
+        : item.sc === 'pct' ? `📊 cel: ${item.scVal}% dni${pctProgress}`
         : item.sc === 'date' ? `🗓️ do ${item.scVal}`
         : item.sc === 'subjective' ? '⭐ subiektywnie' : '';
 
@@ -3152,11 +3191,10 @@ function addEvalGoalBlock() {
 }
 
 function makeHabitRowEl(name, sc, scVal, days) {
-  name = name||''; sc = sc||'pct'; scVal = scVal||'70';
-  const selectedDays = days || null; // null = every day
+  name = name||''; sc = sc||'pct'; scVal = scVal||'90';
   const DAYS = ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'];
-  const allWeek = !selectedDays;
-  const activeDays = selectedDays || [0,1,2,3,4];
+  const allWeek = !days;
+  const activeDays = days || [0,1,2,3,4];
 
   const div = document.createElement('div');
   div.className = 'eval-habit-row';
@@ -3164,7 +3202,7 @@ function makeHabitRowEl(name, sc, scVal, days) {
 
   // Row 1: name + remove
   const row1 = document.createElement('div');
-  row1.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:8px';
+  row1.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:10px';
   const nameInp = document.createElement('input');
   nameInp.placeholder = 'Nazwa nawyku'; nameInp.className = 'eval-habit-name create-input';
   nameInp.style.flex = '1'; nameInp.value = name;
@@ -3176,25 +3214,20 @@ function makeHabitRowEl(name, sc, scVal, days) {
 
   // Row 2: days of week
   const row2 = document.createElement('div');
-  row2.style.cssText = 'margin-bottom:8px';
+  row2.style.cssText = 'margin-bottom:10px';
   const row2label = document.createElement('div');
   row2label.style.cssText = 'font-size:0.65rem;color:#6a8858;margin-bottom:5px';
-  row2label.textContent = 'Dni tygodnia';
+  row2label.textContent = 'Kiedy robię:';
   const daysWrap = document.createElement('div');
   daysWrap.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap';
 
-  // "Codziennie" toggle
   const allBtn = document.createElement('button');
   allBtn.textContent = 'Codziennie';
   allBtn.className = 'day-toggle-all' + (allWeek?' active':'');
-  allBtn.style.cssText = 'padding:4px 10px;border-radius:20px;border:1.5px solid '+(allWeek?'#4a6741':'#d4e8c8')+';background:'+(allWeek?'#4a6741':'white')+';color:'+(allWeek?'#c8d9a0':'#6a8858')+';font-size:0.68rem;cursor:pointer;font-family:"DM Sans",sans-serif';
+  allBtn.style.cssText = 'padding:5px 10px;border-radius:20px;border:1.5px solid '+(allWeek?'#4a6741':'#d4e8c8')+';background:'+(allWeek?'#4a6741':'white')+';color:'+(allWeek?'#c8d9a0':'#6a8858')+';font-size:0.68rem;cursor:pointer;font-family:"DM Sans",sans-serif';
   allBtn.onclick = () => {
-    const isActive = allBtn.classList.contains('active');
-    if (!isActive) {
-      // Activate all
-      allBtn.classList.add('active'); allBtn.style.background='#4a6741'; allBtn.style.color='#c8d9a0'; allBtn.style.borderColor='#4a6741';
-      daysWrap.querySelectorAll('.day-btn').forEach(b => { b.classList.remove('active'); b.style.background='white'; b.style.color='#6a8858'; b.style.borderColor='#d4e8c8'; });
-    }
+    allBtn.classList.add('active'); allBtn.style.background='#4a6741'; allBtn.style.color='#c8d9a0'; allBtn.style.borderColor='#4a6741';
+    daysWrap.querySelectorAll('.day-btn').forEach(b => { b.classList.remove('active'); b.style.background='white'; b.style.color='#6a8858'; b.style.borderColor='#d4e8c8'; });
   };
   daysWrap.appendChild(allBtn);
 
@@ -3202,14 +3235,13 @@ function makeHabitRowEl(name, sc, scVal, days) {
     const btn = document.createElement('button');
     btn.textContent = d; btn.dataset.day = i; btn.className = 'day-btn' + ((!allWeek&&activeDays.includes(i))?' active':'');
     const isA = !allWeek && activeDays.includes(i);
-    btn.style.cssText = 'padding:4px 7px;border-radius:20px;border:1.5px solid '+(isA?'#4a6741':'#d4e8c8')+';background:'+(isA?'#4a6741':'white')+';color:'+(isA?'#c8d9a0':'#6a8858')+';font-size:0.68rem;cursor:pointer;font-family:"DM Sans",sans-serif';
+    btn.style.cssText = 'padding:5px 7px;border-radius:20px;border:1.5px solid '+(isA?'#4a6741':'#d4e8c8')+';background:'+(isA?'#4a6741':'white')+';color:'+(isA?'#c8d9a0':'#6a8858')+';font-size:0.68rem;cursor:pointer;font-family:"DM Sans",sans-serif';
     btn.onclick = () => {
       const wasActive = btn.classList.contains('active');
       btn.classList.toggle('active');
       btn.style.background = wasActive?'white':'#4a6741';
       btn.style.color = wasActive?'#6a8858':'#c8d9a0';
       btn.style.borderColor = wasActive?'#d4e8c8':'#4a6741';
-      // Deactivate "Codziennie"
       allBtn.classList.remove('active'); allBtn.style.background='white'; allBtn.style.color='#6a8858'; allBtn.style.borderColor='#d4e8c8';
     };
     daysWrap.appendChild(btn);
@@ -3217,29 +3249,29 @@ function makeHabitRowEl(name, sc, scVal, days) {
   row2.appendChild(row2label); row2.appendChild(daysWrap);
   div.appendChild(row2);
 
-  // Row 3: success criteria
+  // Row 3: success criteria - simplified
   const row3 = document.createElement('div');
-  row3.style.cssText = 'display:flex;gap:6px;align-items:center';
-  const row3label = document.createElement('div');
-  row3label.style.cssText = 'font-size:0.65rem;color:#6a8858;white-space:nowrap';
-  row3label.textContent = 'Sukces gdy:';
+  row3.style.cssText = 'display:flex;gap:8px;align-items:center;background:#f5f7f3;border-radius:8px;padding:8px';
+  
+  const scLabel = document.createElement('div');
+  scLabel.style.cssText = 'font-size:0.65rem;color:#6a8858;white-space:nowrap';
+  scLabel.textContent = '✓ Sukces =';
+  
   const scSel = document.createElement('select');
   scSel.className = 'eval-habit-sc create-select'; scSel.style.flex = '1';
-  scSel.innerHTML = '<option value="streak">🔥 X dni z rzędu</option><option value="weekly">📅 X razy/tydzień</option><option value="pct">📊 X% aktywnych dni</option>';
-  scSel.value = sc;
+  scSel.innerHTML = '<option value="pct">% aktywnych dni</option><option value="streak">dni z rzędu</option>';
+  scSel.value = sc === 'weekly' ? 'pct' : sc;
+  
   const scValInp = document.createElement('input');
-  scValInp.value = scVal; scValInp.placeholder = '%';
-  scValInp.className = 'eval-habit-scval create-input'; scValInp.style.width = '56px';
+  scValInp.value = scVal; scValInp.type = 'number'; scValInp.min = '1';
+  scValInp.className = 'eval-habit-scval create-input'; scValInp.style.width = '52px';
+  
   const scUnit = document.createElement('div');
-  scUnit.className = 'sc-unit';
   scUnit.style.cssText = 'font-size:0.65rem;color:#9B82B0;white-space:nowrap';
-  const updateUnit = () => {
-    scUnit.textContent = scSel.value==='streak'?'dni':scSel.value==='weekly'?'razy':'%';
-    scValInp.placeholder = scSel.value==='streak'?'ile':scSel.value==='weekly'?'ile':'%';
-  };
-  updateUnit();
-  scSel.onchange = updateUnit;
-  row3.appendChild(row3label); row3.appendChild(scSel); row3.appendChild(scValInp); row3.appendChild(scUnit);
+  const updateUnit = () => { scUnit.textContent = scSel.value==='streak'?'dni z rzędu':'% aktywnych dni'; };
+  updateUnit(); scSel.onchange = updateUnit;
+  
+  row3.appendChild(scLabel); row3.appendChild(scValInp); row3.appendChild(scSel); row3.appendChild(scUnit);
   div.appendChild(row3);
   return div;
 }
