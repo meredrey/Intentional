@@ -3144,71 +3144,98 @@ function addEvalGoalBlock() {
 }
 
 function makeHabitRowEl(name, sc, scVal, days) {
+  name = name||''; sc = sc||'pct'; scVal = scVal||'70';
+  const selectedDays = days || null; // null = every day
+  const DAYS = ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'];
+  const allWeek = !selectedDays;
+  const activeDays = selectedDays || [0,1,2,3,4];
+
   const div = document.createElement('div');
   div.className = 'eval-habit-row';
-  div.style.cssText = 'background:white;border:1px solid #e4ebe2;border-radius:8px;padding:8px;margin-bottom:6px';
-  
+  div.style.cssText = 'background:white;border:1.5px solid #e4ebe2;border-radius:10px;padding:10px;margin-bottom:8px';
+
+  // Row 1: name + remove
   const row1 = document.createElement('div');
-  row1.style.cssText = 'display:flex;gap:6px;margin-bottom:6px;align-items:center';
-  
+  row1.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:8px';
   const nameInp = document.createElement('input');
-  nameInp.placeholder = 'nawyk'; nameInp.className = 'eval-habit-name create-input';
-  nameInp.style.flex = '1'; nameInp.value = name||'';
-  
-  const scSel = document.createElement('select');
-  scSel.className = 'eval-habit-sc create-select';
-  scSel.innerHTML = '<option value="streak">🔥 z rzędu</option><option value="weekly">📅 /tydz</option><option value="pct">📊 % dni</option><option value="days">📆 dni tygodnia</option>';
-  scSel.value = sc||'pct';
-  scSel.onchange = () => refreshHabitDays(scSel);
-  
-  const scVal_inp = document.createElement('input');
-  scVal_inp.value = scVal||'70'; scVal_inp.placeholder = 'wartość';
-  scVal_inp.className = 'eval-habit-scval create-input'; scVal_inp.style.width = '52px';
-  
+  nameInp.placeholder = 'Nazwa nawyku'; nameInp.className = 'eval-habit-name create-input';
+  nameInp.style.flex = '1'; nameInp.value = name;
   const rmBtn = document.createElement('button');
   rmBtn.innerHTML = '✕'; rmBtn.onclick = () => div.remove();
-  rmBtn.style.cssText = 'background:none;border:none;color:#c0b0c0;cursor:pointer;font-size:0.9rem;flex-shrink:0';
-  
-  row1.appendChild(nameInp); row1.appendChild(scSel); row1.appendChild(scVal_inp); row1.appendChild(rmBtn);
+  rmBtn.style.cssText = 'background:none;border:none;color:#c0b0c0;cursor:pointer;font-size:1rem;flex-shrink:0';
+  row1.appendChild(nameInp); row1.appendChild(rmBtn);
   div.appendChild(row1);
-  
-  // Days of week selector
-  const DAYS = ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'];
-  const daysRow = document.createElement('div');
-  daysRow.className = 'habit-days-row';
-  daysRow.style.cssText = 'display:' + (sc==='days'?'flex':'none') + ';gap:4px;flex-wrap:wrap';
-  const selectedDays = days || [0,1,2,3,4]; // default Mon-Fri
+
+  // Row 2: days of week
+  const row2 = document.createElement('div');
+  row2.style.cssText = 'margin-bottom:8px';
+  const row2label = document.createElement('div');
+  row2label.style.cssText = 'font-size:0.65rem;color:#6a8858;margin-bottom:5px';
+  row2label.textContent = 'Dni tygodnia';
+  const daysWrap = document.createElement('div');
+  daysWrap.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap';
+
+  // "Codziennie" toggle
+  const allBtn = document.createElement('button');
+  allBtn.textContent = 'Codziennie';
+  allBtn.className = 'day-toggle-all' + (allWeek?' active':'');
+  allBtn.style.cssText = 'padding:4px 10px;border-radius:20px;border:1.5px solid '+(allWeek?'#4a6741':'#d4e8c8')+';background:'+(allWeek?'#4a6741':'white')+';color:'+(allWeek?'#c8d9a0':'#6a8858')+';font-size:0.68rem;cursor:pointer;font-family:"DM Sans",sans-serif';
+  allBtn.onclick = () => {
+    const isActive = allBtn.classList.contains('active');
+    if (!isActive) {
+      // Activate all
+      allBtn.classList.add('active'); allBtn.style.background='#4a6741'; allBtn.style.color='#c8d9a0'; allBtn.style.borderColor='#4a6741';
+      daysWrap.querySelectorAll('.day-btn').forEach(b => { b.classList.remove('active'); b.style.background='white'; b.style.color='#6a8858'; b.style.borderColor='#d4e8c8'; });
+    }
+  };
+  daysWrap.appendChild(allBtn);
+
   DAYS.forEach((d,i) => {
     const btn = document.createElement('button');
-    btn.textContent = d; btn.dataset.day = i;
-    btn.className = 'day-toggle' + (selectedDays.includes(i)?' active':'');
-    btn.style.cssText = 'padding:4px 8px;border-radius:20px;border:1.5px solid '+(selectedDays.includes(i)?'#4a6741':'#d4e8c8')+';background:'+(selectedDays.includes(i)?'#4a6741':'white')+';color:'+(selectedDays.includes(i)?'#c8d9a0':'#6a8858')+';font-size:0.68rem;cursor:pointer;font-family:"DM Sans",sans-serif';
+    btn.textContent = d; btn.dataset.day = i; btn.className = 'day-btn' + ((!allWeek&&activeDays.includes(i))?' active':'');
+    const isA = !allWeek && activeDays.includes(i);
+    btn.style.cssText = 'padding:4px 7px;border-radius:20px;border:1.5px solid '+(isA?'#4a6741':'#d4e8c8')+';background:'+(isA?'#4a6741':'white')+';color:'+(isA?'#c8d9a0':'#6a8858')+';font-size:0.68rem;cursor:pointer;font-family:"DM Sans",sans-serif';
     btn.onclick = () => {
-      const isActive = btn.classList.contains('active');
+      const wasActive = btn.classList.contains('active');
       btn.classList.toggle('active');
-      btn.style.background = isActive ? 'white' : '#4a6741';
-      btn.style.color = isActive ? '#6a8858' : '#c8d9a0';
-      btn.style.borderColor = isActive ? '#d4e8c8' : '#4a6741';
+      btn.style.background = wasActive?'white':'#4a6741';
+      btn.style.color = wasActive?'#6a8858':'#c8d9a0';
+      btn.style.borderColor = wasActive?'#d4e8c8':'#4a6741';
+      // Deactivate "Codziennie"
+      allBtn.classList.remove('active'); allBtn.style.background='white'; allBtn.style.color='#6a8858'; allBtn.style.borderColor='#d4e8c8';
     };
-    daysRow.appendChild(btn);
+    daysWrap.appendChild(btn);
   });
-  div.appendChild(daysRow);
+  row2.appendChild(row2label); row2.appendChild(daysWrap);
+  div.appendChild(row2);
+
+  // Row 3: success criteria
+  const row3 = document.createElement('div');
+  row3.style.cssText = 'display:flex;gap:6px;align-items:center';
+  const row3label = document.createElement('div');
+  row3label.style.cssText = 'font-size:0.65rem;color:#6a8858;white-space:nowrap';
+  row3label.textContent = 'Sukces gdy:';
+  const scSel = document.createElement('select');
+  scSel.className = 'eval-habit-sc create-select'; scSel.style.flex = '1';
+  scSel.innerHTML = '<option value="streak">🔥 X dni z rzędu</option><option value="weekly">📅 X razy/tydzień</option><option value="pct">📊 X% aktywnych dni</option>';
+  scSel.value = sc;
+  const scValInp = document.createElement('input');
+  scValInp.value = scVal; scValInp.placeholder = '%';
+  scValInp.className = 'eval-habit-scval create-input'; scValInp.style.width = '56px';
+  const scUnit = document.createElement('div');
+  scUnit.className = 'sc-unit';
+  scUnit.style.cssText = 'font-size:0.65rem;color:#9B82B0;white-space:nowrap';
+  const updateUnit = () => {
+    scUnit.textContent = scSel.value==='streak'?'dni':scSel.value==='weekly'?'razy':'%';
+    scValInp.placeholder = scSel.value==='streak'?'ile':scSel.value==='weekly'?'ile':'%';
+  };
+  updateUnit();
+  scSel.onchange = updateUnit;
+  row3.appendChild(row3label); row3.appendChild(scSel); row3.appendChild(scValInp); row3.appendChild(scUnit);
+  div.appendChild(row3);
   return div;
 }
 
-function refreshHabitDays(scSel) {
-  const row = scSel.closest('.eval-habit-row');
-  const daysRow = row.querySelector('.habit-days-row');
-  const scValInp = row.querySelector('.eval-habit-scval');
-  if (scSel.value === 'days') {
-    daysRow.style.display = 'flex';
-    scValInp.style.display = 'none';
-  } else {
-    daysRow.style.display = 'none';
-    scValInp.style.display = 'block';
-    scValInp.placeholder = scSel.value==='streak'?'dni':scSel.value==='weekly'?'razy':'%';
-  }
-}
 
 function addEvalHabitToGoal(btn) {
   const rows = btn.previousElementSibling;
@@ -3443,9 +3470,9 @@ function evalSaveAndNext() {
       name: row.querySelector('.eval-habit-name')?.value?.trim() || '',
       sc: row.querySelector('.eval-habit-sc')?.value || 'pct',
       scVal: row.querySelector('.eval-habit-scval')?.value?.trim() || '70',
-      days: row.querySelector('.eval-habit-sc')?.value === 'days'
-        ? [...row.querySelectorAll('.day-toggle.active')].map(b => parseInt(b.dataset.day))
-        : null
+      days: row.querySelector('.day-toggle-all.active')
+        ? null  // null = every day
+        : [...row.querySelectorAll('.day-btn.active')].map(b => parseInt(b.dataset.day))
     })).filter(h => h.name);
     const tasks = [...block.querySelectorAll('.eval-task-row')].map(row => ({
       name: row.querySelector('.eval-task-input')?.value?.trim() || ''
