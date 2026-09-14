@@ -3536,6 +3536,132 @@ function evalPrev() {
 }
 
 
+function generateAreaPrompt(area) {
+  const successCriteriaExamples = {
+    zdrowie: 'np. 90% aktywnych dni Freeletics, 🔥 30 dni z rzędu bez alkoholu w tygodniu',
+    relacje: 'np. 90% dni z aktywnością z dziećmi Pn-Pt, 🔥 7 dni czas bez telefonu',
+    partner: 'np. 90% dni z gestem bliskości, 📅 date night 2x/miesiąc',
+    praca: 'np. ✅ awans osiągnięty, ✅ CV zaktualizowane, 90% dni z learning habit',
+    finanse: 'np. 90% dni z budżetem w limicie, ✅ oszczędności cel osiągnięty',
+    rozwoj: 'np. 🔥 30 dni Duolingo z rzędu, 90% dni z nawykiem nauki',
+    kreatywnosc: 'np. ✅ projekt ukończony, 90% dni Pn-Pt z nawykiem kreatywnym',
+    dom: 'np. ✅ zakup domu, 90% dni z 15 min porządku',
+  };
+  const sc = successCriteriaExamples[area.id] || 'np. 90% aktywnych dni, 🔥 X dni z rzędu, ✅ milestone ukończony';
+
+  return `Jesteś moim osobistym life coachem przeprowadzającym mnie przez kwartalną ewaluację życia. Pracujemy teraz nad obszarem: **${area.name}** — "${area.tagline}".
+
+**TWOJA ROLA:**
+Jesteś wymagającym, empatycznym coachem. Nie akceptujesz pierwszej odpowiedzi jako wystarczającej. Kwestionujesz moje założenia, sprawdzasz czy nie racjonalizuję, i aktywnie pushasz mnie w kierunku wyższych ambicji niż te, które sama sobie stawiam. Jednocześnie jesteś życzliwy i rozumiesz kontekst mojego życia.
+
+**ZASADY ROZMOWY:**
+- Zadawaj jedno pytanie na raz i czekaj na moją odpowiedź
+- Drąż głębiej — "dlaczego?" i "co to dla Ciebie znaczy naprawdę?" są Twoimi narzędziami
+- Gdy odpowiadam zbyt ogólnie lub za skromnie — powiedz mi to wprost i zapytaj ponownie
+- Kwestionuj moje ograniczające przekonania ("nie mam czasu", "nie jestem w stanie")
+- Porównaj moje ambicje do moich wartości i możliwości — czy strzelam wystarczająco wysoko?
+
+**PRZEBIEG SESJI:**
+1. Zacznij od pytania o obecny stan — jak mi jest teraz w tym obszarze?
+2. Odkryj co naprawdę chcę (nie tylko co myślę że powinnam chcieć)
+3. Zdefiniuj 2-4 ambitne, konkretne cele na 6-12 miesięcy
+4. Rozbij każdy cel na nawyki dzienne i zadania jednorazowe
+5. Na końcu oceń moje zadowolenie z obszaru na skali 1-10 i zapytaj czy się zgadzam
+
+**FORMAT KOŃCOWEGO PODSUMOWANIA:**
+OCENA: [1-10]
+WIELKIE CELE:
+- [cel 1]
+- [cel 2]
+NAWYKI DZIENNE:
+- [nawyk] → success criteria: [${sc.split(',')[0].trim()}]
+ZADANIA JEDNORAZOWE:
+- [zadanie] → kiedy: [termin]
+
+**Zacznij od pierwszego pytania. Nie przedstawiaj się — po prostu zacznij coaching.**`;
+}
+
+function renderWheelView(data) {
+  const areas = data.areas || {};
+  const daysUntil = getDaysUntilQuarterly(data);
+  const isQuarterlyDue = daysUntil !== null && daysUntil <= 0;
+  const hasProject = data.generatedProjectId;
+
+  const sorted = LIFE_AREAS.map(a => ({...a, score: areas[a.id]?.score || 5}))
+    .sort((a,b) => a.score - b.score);
+  const priorities = sorted.slice(0,3);
+  const avg = LIFE_AREAS.reduce((s,a) => s + (areas[a.id]?.score||5), 0) / LIFE_AREAS.length;
+  const wheelSVG = drawLifeWheel(areas);
+
+  const priorityCards = priorities.map(p => {
+    const aData = areas[p.id] || {};
+    const goals = aData.goalsList || [];
+    return `<div style="background:white;border-radius:10px;border:1px solid #e4ebe2;padding:12px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-size:1.1rem">${p.emoji}</span>
+        <span style="font-size:0.85rem;font-weight:500;color:#2c3828;flex:1">${p.name}</span>
+        <span style="font-size:0.75rem;background:#eef2ea;color:#4a6741;padding:2px 8px;border-radius:20px">${p.score}/10</span>
+      </div>
+      ${goals.length ? `<div style="font-size:0.75rem;color:#6a8858;line-height:1.5">${goals[0].text}</div>` : 
+        aData.goals ? `<div style="font-size:0.75rem;color:#6a8858">${aData.goals.split('\n')[0]}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  return `<div style="background:#f5f7f3;min-height:100%;padding-bottom:100px">
+    ${isQuarterlyDue ? `
+    <div style="background:#4a6741;padding:14px 20px;display:flex;align-items:center;gap:12px">
+      <div style="flex:1;font-size:0.82rem;color:#c8d9a0">🔄 Czas na Quarterly Review — minęły 90 dni!</div>
+      <button onclick="coachTabView='quarterly';renderCoachTab()" 
+        style="background:#c8d9a0;color:#2c3828;border:none;border-radius:8px;padding:7px 14px;font-size:0.72rem;cursor:pointer;font-family:'Jost',sans-serif">
+        Rozpocznij
+      </button>
+    </div>` : daysUntil ? `
+    <div style="background:#eef2ea;padding:10px 20px;font-size:0.72rem;color:#6a8858;text-align:center">
+      Następny Quarterly Review za ${daysUntil} dni
+    </div>` : ''}
+
+    <div style="display:flex;justify-content:center;padding:20px 0 8px">${wheelSVG}</div>
+    <div style="text-align:center;font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#8aaa78;margin-bottom:16px">
+      Średnia: ${avg.toFixed(1)}/10
+    </div>
+
+    <div style="padding:0 16px">
+      <div style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#6a8858;margin-bottom:10px">🎯 Obszary do pracy teraz</div>
+      ${priorityCards}
+      <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
+        ${!hasProject ? `
+        <button onclick="previewProject()" 
+          style="width:100%;padding:15px;background:#4a6741;color:#c8d9a0;border:none;border-radius:12px;font-family:'Jost',sans-serif;font-size:0.7rem;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer">
+          🚀 Podgląd i generuj projekt
+        </button>` : `
+        <div style="background:#eef2ea;border-radius:10px;padding:12px;text-align:center;font-size:0.82rem;color:#4a6741">
+          ✓ Projekt wygenerowany — sprawdź Daily
+        </div>
+        <button onclick="previewProject()" class="btn-ghost">🔄 Wygeneruj nowy projekt</button>`}
+        <button onclick="coachTabView='eval';coachEvalStep=0;renderCoachTab()" class="btn-ghost">✎ Edytuj ewaluację</button>
+      </div>
+
+      <div style="margin-top:24px">
+        <div style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#8aaa78;margin-bottom:10px">Wszystkie obszary</div>
+        ${LIFE_AREAS.map(a => {
+          const s = areas[a.id]?.score || '—';
+          const w = typeof s === 'number' ? s*10 : 50;
+          const col = typeof s === 'number' ? (s>=7?'#6ab87a':s>=5?'#4a6741':'#d07060') : '#d4e8c8';
+          return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #e4ebe2">
+            <span style="font-size:1rem;width:24px">${a.emoji}</span>
+            <span style="font-size:0.82rem;color:#2c3828;flex:1">${a.name}</span>
+            <div style="width:80px;height:5px;background:#e4ebe2;border-radius:3px;overflow:hidden">
+              <div style="width:${w}%;height:100%;background:${col};border-radius:3px"></div>
+            </div>
+            <span style="font-size:0.75rem;color:#6a8858;width:24px;text-align:right">${s}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+
 function drawLifeWheel(areas) {
   const cx=140,cy=140,r=108,n=8,step=Math.PI*2/n;
   let s='';
