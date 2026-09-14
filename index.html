@@ -3274,7 +3274,7 @@ function makeHabitRowEl(name, sc, scVal, days) {
   
   const scValInp = document.createElement('input');
   scValInp.value = scVal; scValInp.type = 'number'; scValInp.min = '1';
-  scValInp.className = 'eval-habit-scval create-input'; scValInp.style.width = '52px';
+  scValInp.className = 'eval-habit-scval create-input'; scValInp.style.width = '80px'; scValInp.style.minWidth = '80px';
   
   const scUnit = document.createElement('div');
   scUnit.style.cssText = 'font-size:0.65rem;color:#9B82B0;white-space:nowrap';
@@ -3455,6 +3455,86 @@ function renderEvalView(data) {
     </div>
   </div>`;
 }
+
+let selectedScore = null;
+function selectScore(n) {
+  selectedScore = n;
+  for(let i=1;i<=10;i++) {
+    const btn = document.getElementById('score-'+i);
+    if(!btn) continue;
+    if(i===n){btn.style.background='#4a6741';btn.style.color='#c8d9a0';btn.style.borderColor='#4a6741';}
+    else{btn.style.background='white';btn.style.color='#6a8858';btn.style.borderColor='#d4e8c8';}
+  }
+}
+
+function copyEvalPrompt() {
+  const text = document.getElementById('evalPromptText')?.textContent;
+  if(!text) return;
+  navigator.clipboard.writeText(text).then(()=>showToast('📋 Skopiowano!')).catch(()=>{
+    const el=document.createElement('textarea');el.value=text;el.style.position='fixed';el.style.opacity='0';
+    document.body.appendChild(el);el.select();document.execCommand('copy');
+    document.body.removeChild(el);showToast('📋 Skopiowano!');
+  });
+}
+
+function evalSaveAndNext() {
+  const area = LIFE_AREAS[coachEvalStep];
+  const data = coachGet();
+  if(!data.areas) data.areas = {};
+  const score = selectedScore || data.areas[area.id]?.score;
+  if(!score) { showToast('Wybierz ocenę (1-10)'); return; }
+
+  // Collect nested goal structure
+  const goalBlocks = document.querySelectorAll('.eval-goal-block');
+  const goalsList = [...goalBlocks].map(block => {
+    const text = block.querySelector('.eval-goal-input')?.value?.trim() || '';
+    const habitRows = block.querySelectorAll('.eval-habit-row');
+    const habits = [...habitRows].map(row => {
+      const name = row.querySelector('.eval-habit-name')?.value?.trim() || '';
+      const sc = row.querySelector('.eval-habit-sc')?.value || 'pct';
+      const scVal = row.querySelector('.eval-habit-scval')?.value?.trim() || '90';
+      const allActive = row.querySelector('.day-toggle-all.active');
+      const days = allActive ? null : [...row.querySelectorAll('.day-btn.active')].map(b => parseInt(b.dataset.day));
+      return {name, sc, scVal, days};
+    }).filter(h => h.name);
+    const tasks = [...block.querySelectorAll('.eval-task-row')].map(row => ({
+      name: row.querySelector('.eval-task-input')?.value?.trim() || ''
+    })).filter(t => t.name);
+    return {text, habits, tasks};
+  }).filter(g => g.text || g.habits.length || g.tasks.length);
+
+  // Flatten for backwards compat
+  const habitsList = goalsList.flatMap(g => g.habits);
+  const tasksList = goalsList.flatMap(g => g.tasks);
+
+  data.areas[area.id] = {
+    score,
+    goalsList,
+    habitsList,
+    tasksList,
+    goals: goalsList.map(g=>g.text).join('\n'),
+    habits: habitsList.map(h=>h.name).join('\n'),
+    tasks: tasksList.map(t=>t.name).join('\n'),
+  };
+  selectedScore = null;
+
+  if(coachEvalStep < LIFE_AREAS.length - 1) {
+    coachEvalStep++;
+    coachSet(data);
+    renderCoachTab();
+  } else {
+    data.lastEvalDate = new Date().toISOString();
+    coachSet(data);
+    coachTabView = 'wheel';
+    renderCoachTab();
+    showToast('🎉 Ewaluacja ukończona!');
+  }
+}
+
+function evalPrev() {
+  if(coachEvalStep > 0) { coachEvalStep--; selectedScore = null; renderCoachTab(); }
+}
+
 
 function drawLifeWheel(areas) {
   const cx=140,cy=140,r=108,n=8,step=Math.PI*2/n;
