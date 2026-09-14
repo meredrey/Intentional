@@ -2232,14 +2232,18 @@ function checkSuccessCriteria(project) {
           }
           met = scVal > 0 && streak >= scVal;
         } else if (sc === 'weekly') {
-          // count in last 7 days
-          let count = 0;
-          for (let i = 0; i < 7; i++) {
-            const d = new Date(today); d.setDate(d.getDate() - i);
-            const k = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
-            if (project.days[k]?.[key]) count++;
+          // Check last 4 complete weeks
+          let weeksOk = 0, weekCount = 0;
+          for (let w = 0; w < 4; w++) {
+            let count = 0;
+            for (let d2 = 0; d2 < 7; d2++) {
+              const dd2 = new Date(today); dd2.setDate(dd2.getDate() - (w*7 + d2));
+              const k = `${dd2.getFullYear()}-${dd2.getMonth()+1}-${dd2.getDate()}`;
+              if (project.days[k]?.[key]) count++;
+            }
+            weeksOk += count >= scVal ? 1 : 0; weekCount++;
           }
-          met = scVal > 0 && count >= scVal;
+          met = weekCount >= 2 && weeksOk === weekCount;
         } else if (sc === 'pct') {
           // Count only active days for this habit (respects days-of-week setting)
           const startDate = new Date(project.startDate);
@@ -2645,9 +2649,10 @@ function renderDashboard(project) {
         const curPct = activeCnt > 0 ? Math.round(doneCnt/activeCnt*100) : 0;
         pctProgress = activeCnt > 0 ? ` (${curPct}% z ${item.scVal}%)` : '';
       }
+      const minCountLabel = item.minCount ? ` (min. ${item.minCount}x)` : '';
       const scLabel = item.sc === 'streak' ? `🔥 ${item.scVal} dni z rzędu`
         : item.sc === 'weekly' ? `📅 ${item.scVal}x/tydzień`
-        : item.sc === 'pct' ? `📊 cel: ${item.scVal}% dni${pctProgress}`
+        : item.sc === 'pct' ? `📊 cel: ${item.scVal}% dni${pctProgress}${minCountLabel}`
         : item.sc === 'max' ? `📉 maks. ${item.scVal}x/tydzień`
         : item.sc === 'date' ? `🗓️ do ${item.scVal}`
         : item.sc === 'subjective' ? '⭐ subiektywnie' : '';
@@ -3193,10 +3198,52 @@ function addEvalGoalBlock() {
   const list = document.getElementById('eval-goals-list');
   if(!list) return;
   const gi = list.querySelectorAll('.eval-goal-block').length;
+  
+  // Build block with DOM elements
   const div = document.createElement('div');
   div.className = 'eval-goal-block';
   div.style.cssText = 'background:#f5f7f3;border-radius:12px;padding:14px;margin-bottom:10px;border:1.5px solid #e4ebe2';
-  div.innerHTML = '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px"><div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#4a6741;font-weight:500">Cel '+(gi+1)+'</div><input placeholder="np. kolejny wielki cel" class="eval-goal-input create-input" style="flex:1"><button onclick="removeEvalGoalBlock(this)" style="background:none;border:none;color:#c0b0c0;font-size:1rem;cursor:pointer;flex-shrink:0">✕</button></div><div style="margin-bottom:8px"><div style="font-size:0.65rem;color:#6a8858;margin-bottom:6px">🔁 Nawyki dzienne</div><div class="eval-habit-rows"></div><button onclick="addEvalHabitToGoal(this)" style="font-size:0.68rem;color:#6a8858;background:none;border:1px dashed #d4e8c8;border-radius:6px;padding:4px 10px;cursor:pointer;width:100%">+ nawyk</button></div><div><div style="font-size:0.65rem;color:#6a8858;margin-bottom:6px">📌 Zadania jednorazowe</div><div class="eval-task-rows"></div><button onclick="addEvalTaskToGoal(this)" style="font-size:0.68rem;color:#6a8858;background:none;border:1px dashed #d4e8c8;border-radius:6px;padding:4px 10px;cursor:pointer;width:100%">+ zadanie</button></div>';
+
+  // Header: cel number + input + remove
+  const header = document.createElement('div');
+  header.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:10px';
+  header.innerHTML = '<div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#4a6741;font-weight:500">Cel '+(gi+1)+'</div>';
+  const goalInp = document.createElement('input');
+  goalInp.placeholder = 'np. kolejny wielki cel'; goalInp.className = 'eval-goal-input create-input'; goalInp.style.flex = '1';
+  const rmBtn = document.createElement('button');
+  rmBtn.innerHTML = '✕'; rmBtn.onclick = () => div.remove();
+  rmBtn.style.cssText = 'background:none;border:none;color:#c0b0c0;font-size:1rem;cursor:pointer;flex-shrink:0';
+  header.appendChild(goalInp); header.appendChild(rmBtn);
+  div.appendChild(header);
+
+  // Habits section
+  const habitsSection = document.createElement('div');
+  habitsSection.style.cssText = 'margin-bottom:8px';
+  const habitsLabel = document.createElement('div');
+  habitsLabel.style.cssText = 'font-size:0.65rem;color:#6a8858;margin-bottom:6px';
+  habitsLabel.textContent = '🔁 Nawyki dzienne';
+  const habitRows = document.createElement('div');
+  habitRows.className = 'eval-habit-rows';
+  habitRows.appendChild(makeHabitRowEl('','pct','90',null)); // Add initial habit row with days
+  const addHabitBtn = document.createElement('button');
+  addHabitBtn.textContent = '+ nawyk'; addHabitBtn.onclick = () => addEvalHabitToGoal(addHabitBtn);
+  addHabitBtn.style.cssText = 'font-size:0.68rem;color:#6a8858;background:none;border:1px dashed #d4e8c8;border-radius:6px;padding:4px 10px;cursor:pointer;width:100%;margin-top:4px';
+  habitsSection.appendChild(habitsLabel); habitsSection.appendChild(habitRows); habitsSection.appendChild(addHabitBtn);
+  div.appendChild(habitsSection);
+
+  // Tasks section
+  const tasksSection = document.createElement('div');
+  const tasksLabel = document.createElement('div');
+  tasksLabel.style.cssText = 'font-size:0.65rem;color:#6a8858;margin-bottom:6px';
+  tasksLabel.textContent = '📌 Zadania jednorazowe';
+  const taskRows = document.createElement('div');
+  taskRows.className = 'eval-task-rows';
+  const addTaskBtn = document.createElement('button');
+  addTaskBtn.textContent = '+ zadanie'; addTaskBtn.onclick = () => addEvalTaskToGoal(addTaskBtn);
+  addTaskBtn.style.cssText = 'font-size:0.68rem;color:#6a8858;background:none;border:1px dashed #d4e8c8;border-radius:6px;padding:4px 10px;cursor:pointer;width:100%;margin-top:4px';
+  tasksSection.appendChild(tasksLabel); tasksSection.appendChild(taskRows); tasksSection.appendChild(addTaskBtn);
+  div.appendChild(tasksSection);
+
   list.appendChild(div);
 }
 
@@ -3256,7 +3303,23 @@ function makeHabitRowEl(name, sc, scVal, days) {
     };
     daysWrap.appendChild(btn);
   });
-  row2.appendChild(row2label); row2.appendChild(daysWrap);
+  // Min count row
+  const minRow = document.createElement('div');
+  minRow.style.cssText = 'display:flex;gap:6px;align-items:center;margin-top:6px';
+  const minLabel = document.createElement('div');
+  minLabel.style.cssText = 'font-size:0.65rem;color:#a8bf90;white-space:nowrap';
+  minLabel.textContent = 'min. razy w tym przedziale:';
+  const minInp = document.createElement('input');
+  minInp.type = 'number'; minInp.min = '1'; minInp.value = ''; 
+  minInp.placeholder = 'opcjonalnie';
+  minInp.className = 'eval-habit-mincount create-input';
+  minInp.style.cssText = 'width:100px';
+  const minUnit = document.createElement('div');
+  minUnit.style.cssText = 'font-size:0.65rem;color:#a8bf90';
+  minUnit.textContent = 'razy';
+  minRow.appendChild(minLabel); minRow.appendChild(minInp); minRow.appendChild(minUnit);
+
+  row2.appendChild(row2label); row2.appendChild(daysWrap); row2.appendChild(minRow);
   div.appendChild(row2);
 
   // Row 3: success criteria - simplified
@@ -3292,7 +3355,7 @@ function makeHabitRowEl(name, sc, scVal, days) {
 
 function addEvalHabitToGoal(btn) {
   const rows = btn.previousElementSibling;
-  rows.appendChild(makeHabitRowEl('','pct','70',null));
+  rows.appendChild(makeHabitRowEl('','pct','90',null));
 }
 
 function addEvalTaskToGoal(btn) {
@@ -3508,7 +3571,8 @@ function evalSaveAndNext() {
       const scVal = row.querySelector('.eval-habit-scval')?.value?.trim() || '90';
       const allActive = row.querySelector('.day-toggle-all.active');
       const days = allActive ? null : [...row.querySelectorAll('.day-btn.active')].map(b => parseInt(b.dataset.day));
-      return {name, sc, scVal, days};
+      const minCount = row.querySelector('.eval-habit-mincount')?.value?.trim() || '';
+      return {name, sc, scVal, days, minCount};
     }).filter(h => h.name);
     const tasks = [...block.querySelectorAll('.eval-task-row')].map(row => ({
       name: row.querySelector('.eval-task-input')?.value?.trim() || ''
