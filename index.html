@@ -391,6 +391,12 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
 .proj-habit{display:flex;align-items:center;gap:12px;padding:12px 14px;background:white;border-radius:10px;border:2px solid #D4C8E0;cursor:pointer;transition:all 0.18s;user-select:none}
 .proj-habit.checked{background:#F0EAF8;border-color:#9B82B0}
 .proj-habit.past-locked{cursor:default;opacity:0.7}
+.item-row{background:white;border:1.5px solid #D4C8E0;border-radius:10px;padding:10px;margin-bottom:6px}
+.item-row-top{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.item-row-sc{display:flex;gap:6px;align-items:center}
+.item-row{background:white;border:1.5px solid #D4C8E0;border-radius:10px;padding:10px;margin-bottom:6px}
+.item-row-top{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.item-row-sc{display:flex;gap:6px;align-items:center}
 .proj-task{border-style:dashed;background:#FAFAFA}
 .proj-task.checked{background:#EEF3F6;border-color:#8FAAB8;border-style:solid}
 .proj-task-cb{border-style:dashed;font-size:0.8rem}
@@ -1596,11 +1602,12 @@ function coachCreateNext() {
       const emoji = el.querySelector('.cat-emoji-input')?.value?.trim() || '⭐';
       const logic = el.querySelector('.cat-logic-select')?.value || 'any';
       const items = [];
-      el.querySelectorAll('.cat-item-input').forEach(inp => {
-        const v = inp.value.trim();
-        const typeEl = inp.parentElement?.querySelector('.cat-item-type');
-        const type = typeEl?.value || 'habit';
-        if (v) items.push({id: 'item_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), name: v, type});
+      el.querySelectorAll('.item-row').forEach(row => {
+        const v = row.querySelector('.cat-item-input')?.value?.trim();
+        const type = row.querySelector('.cat-item-type')?.value || 'habit';
+        const sc = row.querySelector('.cat-item-sc')?.value || (type==='task'?'once':'streak');
+        const scVal = row.querySelector('.cat-item-scval')?.value?.trim() || '';
+        if (v) items.push({id: 'item_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), name: v, type, sc, scVal});
       });
       if (name) cats.push({id: 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2,5), name, emoji, logic, pts: 2, items});
     });
@@ -1630,28 +1637,66 @@ function coachAddCategory() {
   container.appendChild(div);
 }
 
+function itemRowHTML(placeholder, name, type, sc, scVal) {
+  name = name || ''; type = type || 'habit'; sc = sc || (type==='task'?'once':'streak'); scVal = scVal || '';
+  const scOptions = type === 'task'
+    ? ['<option value="once"'+(sc==='once'?' selected':'')+'>✅ jednorazowe</option>',
+       '<option value="date"'+(sc==='date'?' selected':'')+'>🗓️ przed datą</option>',
+       '<option value="subjective"'+(sc==='subjective'?' selected':'')+'>⭐ subiektywnie</option>'].join('')
+    : ['<option value="streak"'+(sc==='streak'?' selected':'')+'>🔥 dni z rzędu</option>',
+       '<option value="weekly"'+(sc==='weekly'?' selected':'')+'>📅 razy/tydzień</option>',
+       '<option value="pct"'+(sc==='pct'?' selected':'')+'>📊 % dni</option>'].join('');
+  const needsVal = sc==='streak'||sc==='weekly'||sc==='pct'||sc==='date';
+  const vph = sc==='streak'?'ile dni':sc==='weekly'?'ile razy':sc==='pct'?'%':sc==='date'?'RRRR-MM-DD':'';
+  return '<div class="item-row">'
+    + '<div class="item-row-top">'
+    + '<input class="cat-item-input create-input" placeholder="'+placeholder+'" value="'+name+'" style="flex:1">'
+    + '<select class="cat-item-type create-select" onchange="refreshItemRow(this)">'
+    + '<option value="habit"'+(type==='habit'?' selected':'')+'>🔁</option>'
+    + '<option value="task"'+(type==='task'?' selected':'')+'>📌</option>'
+    + '</select></div>'
+    + '<div class="item-row-sc">'
+    + '<select class="cat-item-sc create-select" style="flex:1" onchange="refreshItemRow(this)">'+scOptions+'</select>'
+    + '<input class="cat-item-scval create-input" placeholder="'+vph+'" value="'+scVal+'" style="width:80px;display:'+(needsVal?'block':'none')+'">'
+    + '</div></div>';
+}
+
+function refreshItemRow(el) {
+  const row = el.closest('.item-row');
+  const type = row.querySelector('.cat-item-type').value;
+  const scSel = row.querySelector('.cat-item-sc');
+  if (el === row.querySelector('.cat-item-type')) {
+    scSel.innerHTML = type === 'task'
+      ? '<option value="once">✅ jednorazowe</option><option value="date">🗓️ przed datą</option><option value="subjective">⭐ subiektywnie</option>'
+      : '<option value="streak">🔥 dni z rzędu</option><option value="weekly">📅 razy/tydzień</option><option value="pct">📊 % dni</option>';
+  }
+  const sc = scSel.value;
+  const needsVal = sc==='streak'||sc==='weekly'||sc==='pct'||sc==='date';
+  const scValEl = row.querySelector('.cat-item-scval');
+  scValEl.style.display = needsVal ? 'block' : 'none';
+  scValEl.placeholder = sc==='streak'?'ile dni':sc==='weekly'?'ile razy':sc==='pct'?'%':sc==='date'?'RRRR-MM-DD':'';
+}
+
 function coachCatTemplate(num) {
-  return `<div class="create-cat-header">
-    <input class="cat-emoji-input create-input" value="⭐" style="width:48px;text-align:center">
-    <input class="cat-name-input create-input" placeholder="Nazwa kategorii ${num}" style="flex:1">
-    <select class="cat-logic-select create-select">
-      <option value="any">przynajmniej jedno</option>
-      <option value="all">wszystkie wymagane</option>
-    </select>
-  </div>
-  <div class="cat-items-list">
-    <div style="display:flex;gap:6px;align-items:center"><input class="cat-item-input create-input" placeholder="Cel szczegółowy 1" style="flex:1"><select class="cat-item-type create-select" title="Typ"><option value="habit">🔁</option><option value="task">📌</option></select></div>
-    <div style="display:flex;gap:6px;align-items:center"><input class="cat-item-input create-input" placeholder="Cel szczegółowy 2" style="flex:1"><select class="cat-item-type create-select" title="Typ"><option value="habit">🔁</option><option value="task">📌</option></select></div>
-  </div>
-  <button onclick="coachAddItem(this)" class="create-add-btn">+ dodaj cel</button>`;
+  return '<div class="create-cat-header">'
+    + '<input class="cat-emoji-input create-input" value="⭐" style="width:48px;text-align:center">'
+    + '<input class="cat-name-input create-input" placeholder="Nazwa kategorii '+num+'" style="flex:1">'
+    + '<select class="cat-logic-select create-select">'
+    + '<option value="any">przynajmniej jedno</option>'
+    + '<option value="all">wszystkie wymagane</option>'
+    + '</select></div>'
+    + '<div class="cat-items-list">'
+    + itemRowHTML('Cel szczegółowy 1')
+    + itemRowHTML('Cel szczegółowy 2')
+    + '</div>'
+    + '<button onclick="coachAddItem(this)" class="create-add-btn">+ dodaj cel</button>';
 }
 
 function coachAddItem(btn) {
   const list = btn.previousElementSibling;
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'display:flex;gap:6px;align-items:center';
-  wrap.innerHTML = '<input class="cat-item-input create-input" placeholder="Cel szczegółowy" style="flex:1"><select class="cat-item-type create-select" title="Typ"><option value="habit">🔁 nawyk</option><option value="task">📌 zadanie</option></select>';
-  list.appendChild(wrap);
+  const tmp = document.createElement('div');
+  tmp.innerHTML = itemRowHTML('Cel szczegółowy');
+  list.appendChild(tmp.firstElementChild);
 }
 
 function coachSaveProject(activate) {
