@@ -659,7 +659,7 @@ function switchTab(tab){
     if(fab)fab.style.display=tab==='goals'?'flex':'none';
     if(tab==='coach')renderCoach();
     if(tab==='focus')renderFocus();
-    if(tab==='goals')renderLG();
+    if(tab==='goals')renderCoachTab();
     window.scrollTo(0,0);
   }catch(e){console.error('switchTab error:',e);}
 }
@@ -2948,6 +2948,563 @@ function renderProjectsList() {
         <button onclick="coachStartCreate()" class="proj-btn-primary" style="width:100%;margin-top:16px">+ Nowy projekt</button>
       </div>
     </div>`;
+}
+
+
+// ============================================================
+// COACH TAB — Life Design System
+// ============================================================
+const COACH_KEY = 'intentional_coach_v1';
+
+const LIFE_AREAS = [
+  {id:'zdrowie', emoji:'💪', name:'Zdrowie & Energia', tagline:'Twoja energia to fundament wszystkiego'},
+  {id:'relacje', emoji:'👨‍👩‍👧', name:'Rodzina & Bliskość', tagline:'Relacje które zostają w sercu'},
+  {id:'partner', emoji:'💑', name:'Relacja z partnerem', tagline:'Codzienne małe gesty'},
+  {id:'praca', emoji:'💼', name:'Praca & Kariera', tagline:'Masz kompetencje lidera'},
+  {id:'finanse', emoji:'💰', name:'Finanse', tagline:'Bezpieczeństwo finansowe to autonomia'},
+  {id:'rozwoj', emoji:'🌱', name:'Rozwój osobisty', tagline:'Stawać się lepszą wersją siebie'},
+  {id:'kreatywnosc', emoji:'🎨', name:'Kreatywność & Projekty', tagline:'Rzeczy tylko dla siebie'},
+  {id:'dom', emoji:'🏡', name:'Dom & Przestrzeń', tagline:'Dom który czujesz zanim wejdziesz'},
+];
+
+function coachGet() {
+  try { return JSON.parse(localStorage.getItem(COACH_KEY) || '{}'); } catch { return {}; }
+}
+function coachSet(data) {
+  localStorage.setItem(COACH_KEY, JSON.stringify(data));
+}
+
+let coachTabView = 'home'; // 'home' | 'eval' | 'wheel' | 'quarterly'
+let coachEvalStep = 0; // which area we're on
+
+// ============================================================
+// COACH TAB — Main render
+// ============================================================
+function renderCoachTab() {
+  const panel = document.getElementById('panel-goals');
+  if (!panel) return;
+  const data = coachGet();
+  const hasEval = data.areas && Object.keys(data.areas).length === LIFE_AREAS.length;
+  const hasProject = data.generatedProjectId;
+  const daysUntilQuarterly = getDaysUntilQuarterly(data);
+
+  if (coachTabView === 'eval') { panel.innerHTML = renderEvalView(data); return; }
+  if (coachTabView === 'quarterly') { panel.innerHTML = renderQuarterlyView(data); return; }
+  if (coachTabView === 'wheel' || hasEval) { panel.innerHTML = renderWheelView(data); return; }
+
+  // Home / empty state
+  panel.innerHTML = renderCoachHome(data, hasEval, daysUntilQuarterly);
+}
+
+function getDaysUntilQuarterly(data) {
+  if (!data.lastEvalDate) return null;
+  const last = new Date(data.lastEvalDate);
+  const next = new Date(last); next.setDate(next.getDate() + 90);
+  const diff = Math.ceil((next - new Date()) / 86400000);
+  return diff;
+}
+
+// ============================================================
+// HOME VIEW
+// ============================================================
+function renderCoachHome(data, hasEval, daysUntilQuarterly) {
+  if (hasEval) return renderWheelView(data);
+
+  return `<div style="background:#f5f7f3;min-height:100%;padding:40px 24px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+    <div style="font-size:3rem;margin-bottom:20px">🧭</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:#2c3828;margin-bottom:12px;font-weight:300">
+      Zaprojektuj swoje życie
+    </div>
+    <div style="font-size:0.88rem;color:#6a8858;line-height:1.7;max-width:300px;margin-bottom:32px">
+      Przeprowadzimy Cię przez 8 obszarów życia. Dla każdego wygenerujemy prompt do ChatGPT — pogłębiona rozmowa pomoże Ci zdefiniować ambitne cele i małe kroki.
+    </div>
+    <div style="background:white;border-radius:12px;border:1px solid #d4e8c8;padding:16px 20px;margin-bottom:24px;width:100%;max-width:320px;text-align:left">
+      <div style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#8aaa78;margin-bottom:10px">Co się stanie</div>
+      ${['🗣️ Ewaluacja 8 obszarów życia z AI','🎯 Koło życia i identyfikacja priorytetów','🚀 Automatyczny projekt z celami dziennymi'].map(s=>`<div style="font-size:0.82rem;color:#2c3828;padding:5px 0;border-bottom:1px solid #f0f5ee">${s}</div>`).join('')}
+    </div>
+    <button onclick="startEvaluation()" 
+      style="background:#4a6741;color:#c8d9a0;border:none;border-radius:12px;padding:16px 32px;font-family:'Jost',sans-serif;font-size:0.72rem;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;width:100%;max-width:320px">
+      Rozpocznij ewaluację →
+    </button>
+    <div style="font-size:0.72rem;color:#a8bf90;margin-top:12px">Zajmie ok. 30-60 minut</div>
+  </div>`;
+}
+
+// ============================================================
+// EVALUATION VIEW
+// ============================================================
+function startEvaluation() {
+  coachTabView = 'eval';
+  coachEvalStep = 0;
+  renderCoachTab();
+}
+
+function renderEvalView(data) {
+  const area = LIFE_AREAS[coachEvalStep];
+  const areaData = data.areas?.[area.id] || {};
+  const progress = `${coachEvalStep + 1} / ${LIFE_AREAS.length}`;
+  const pct = Math.round((coachEvalStep / LIFE_AREAS.length) * 100);
+
+  const prompt = generateAreaPrompt(area);
+
+  return `<div style="background:#f5f7f3;min-height:100%;padding-bottom:80px">
+    <!-- Header -->
+    <div style="background:#4a6741;padding:16px 20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <button onclick="coachTabView='home';renderCoachTab()" 
+          style="background:none;border:none;color:#c8d9a0;font-size:0.8rem;cursor:pointer">← Wróć</button>
+        <div style="font-size:0.65rem;letter-spacing:0.2em;color:#8aaa78;text-transform:uppercase">Ewaluacja ${progress}</div>
+      </div>
+      <div style="height:4px;background:rgba(255,255,255,0.2);border-radius:2px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:#c8d9a0;border-radius:2px;transition:width 0.4s"></div>
+      </div>
+    </div>
+
+    <!-- Area header -->
+    <div style="padding:24px 20px 16px;border-bottom:1px solid #e4ebe2;background:white">
+      <div style="font-size:2rem;margin-bottom:8px">${area.emoji}</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:#2c3828">${area.name}</div>
+      <div style="font-size:0.82rem;color:#6a8858;font-style:italic;margin-top:4px">${area.tagline}</div>
+    </div>
+
+    <div style="padding:20px">
+      <!-- Step 1: Copy prompt -->
+      <div style="background:white;border-radius:12px;border:1px solid #e4ebe2;padding:16px;margin-bottom:16px">
+        <div style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#6a8858;margin-bottom:10px">
+          Krok 1 — Skopiuj prompt i wklej do ChatGPT
+        </div>
+        <div style="background:#f5f7f3;border-radius:8px;padding:12px;font-size:0.78rem;color:#2c3828;line-height:1.6;max-height:160px;overflow-y:auto;margin-bottom:10px">
+          ${prompt.replace(/\n/g,'<br>')}
+        </div>
+        <button onclick="copyEvalPrompt()" 
+          style="width:100%;padding:10px;background:#4a6741;color:#c8d9a0;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer">
+          📋 Kopiuj prompt
+        </button>
+        <div id="evalPromptText" style="display:none">${prompt}</div>
+      </div>
+
+      <!-- Step 2: Fill in results -->
+      <div style="background:white;border-radius:12px;border:1px solid #e4ebe2;padding:16px;margin-bottom:16px">
+        <div style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#6a8858;margin-bottom:14px">
+          Krok 2 — Wpisz wyniki rozmowy
+        </div>
+
+        <div style="margin-bottom:12px">
+          <div style="font-size:0.72rem;color:#6a8858;margin-bottom:6px">Zadowolenie z obszaru (1-10)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${[1,2,3,4,5,6,7,8,9,10].map(n=>`
+              <button onclick="selectScore(${n})" id="score-${n}"
+                style="width:36px;height:36px;border-radius:50%;border:1.5px solid ${(areaData.score===n)?'#4a6741':'#d4e8c8'};background:${(areaData.score===n)?'#4a6741':'white'};color:${(areaData.score===n)?'#c8d9a0':'#6a8858'};font-size:0.82rem;cursor:pointer">
+                ${n}
+              </button>`).join('')}
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <div style="font-size:0.72rem;color:#6a8858;margin-bottom:6px">Wielkie cele w tym obszarze</div>
+          <textarea id="eval-goals" placeholder="np. Zredukować wagę o 15kg, mieć energię na cały dzień..."
+            style="width:100%;border:1px solid #d4e8c8;border-radius:8px;padding:10px;font-family:'DM Sans',sans-serif;font-size:0.82rem;min-height:70px;outline:none;resize:none;box-sizing:border-box"
+          >${areaData.goals||''}</textarea>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <div style="font-size:0.72rem;color:#6a8858;margin-bottom:6px">Nawyki dzienne (do projektu)</div>
+          <textarea id="eval-habits" placeholder="np. Freeletics 3x/tydzień, 8h snu, bez alkoholu w tygodniu..."
+            style="width:100%;border:1px solid #d4e8c8;border-radius:8px;padding:10px;font-family:'DM Sans',sans-serif;font-size:0.82rem;min-height:70px;outline:none;resize:none;box-sizing:border-box"
+          >${areaData.habits||''}</textarea>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <div style="font-size:0.72rem;color:#6a8858;margin-bottom:6px">Zadania jednorazowe</div>
+          <textarea id="eval-tasks" placeholder="np. Znaleźć dietetyka, kupić sprzęt sportowy..."
+            style="width:100%;border:1px solid #d4e8c8;border-radius:8px;padding:10px;font-family:'DM Sans',sans-serif;font-size:0.82rem;min-height:60px;outline:none;resize:none;box-sizing:border-box"
+          >${areaData.tasks||''}</textarea>
+        </div>
+
+        <div>
+          <div style="font-size:0.72rem;color:#6a8858;margin-bottom:6px">Success criteria (jak zmierzysz sukces?)</div>
+          <textarea id="eval-criteria" placeholder="np. Streak 30 dni, waga poniżej 80kg, energia 8/10..."
+            style="width:100%;border:1px solid #d4e8c8;border-radius:8px;padding:10px;font-family:'DM Sans',sans-serif;font-size:0.82rem;min-height:60px;outline:none;resize:none;box-sizing:border-box"
+          >${areaData.criteria||''}</textarea>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div style="display:flex;gap:10px">
+        ${coachEvalStep > 0 ? `<button onclick="evalPrev()" class="btn-ghost" style="flex:1">← Poprzedni</button>` : ''}
+        <button onclick="evalSaveAndNext()" 
+          style="flex:2;padding:14px;background:#4a6741;color:#c8d9a0;border:none;border-radius:10px;font-family:'Jost',sans-serif;font-size:0.7rem;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer">
+          ${coachEvalStep < LIFE_AREAS.length - 1 ? 'Zapisz i dalej →' : 'Zakończ ewaluację ✓'}
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+let selectedScore = null;
+function selectScore(n) {
+  selectedScore = n;
+  for(let i=1;i<=10;i++) {
+    const btn = document.getElementById('score-'+i);
+    if(!btn) continue;
+    if(i===n){btn.style.background='#4a6741';btn.style.color='#c8d9a0';btn.style.borderColor='#4a6741';}
+    else{btn.style.background='white';btn.style.color='#6a8858';btn.style.borderColor='#d4e8c8';}
+  }
+}
+
+function copyEvalPrompt() {
+  const text = document.getElementById('evalPromptText')?.textContent;
+  if(!text) return;
+  navigator.clipboard.writeText(text).then(()=>showToast('📋 Skopiowano!')).catch(()=>{
+    const el=document.createElement('textarea');el.value=text;el.style.position='fixed';el.style.opacity='0';
+    document.body.appendChild(el);el.select();document.execCommand('copy');
+    document.body.removeChild(el);showToast('📋 Skopiowano!');
+  });
+}
+
+function evalSaveAndNext() {
+  const area = LIFE_AREAS[coachEvalStep];
+  const data = coachGet();
+  if(!data.areas) data.areas = {};
+  const score = selectedScore || data.areas[area.id]?.score;
+  if(!score) { showToast('Wybierz ocenę (1-10)'); return; }
+  data.areas[area.id] = {
+    score,
+    goals: document.getElementById('eval-goals')?.value?.trim() || '',
+    habits: document.getElementById('eval-habits')?.value?.trim() || '',
+    tasks: document.getElementById('eval-tasks')?.value?.trim() || '',
+    criteria: document.getElementById('eval-criteria')?.value?.trim() || '',
+  };
+  selectedScore = null;
+  if(coachEvalStep < LIFE_AREAS.length - 1) {
+    coachEvalStep++;
+    coachSet(data);
+    renderCoachTab();
+  } else {
+    data.lastEvalDate = new Date().toISOString();
+    coachSet(data);
+    coachTabView = 'wheel';
+    renderCoachTab();
+    showToast('🎉 Ewaluacja ukończona!');
+  }
+}
+
+function evalPrev() {
+  if(coachEvalStep > 0) { coachEvalStep--; selectedScore = null; renderCoachTab(); }
+}
+
+function generateAreaPrompt(area) {
+  return `Chcę przeprowadzić głęboką refleksję nad obszarem mojego życia: "${area.name}".
+
+Proszę, zadawaj mi pytania jedno po drugim i magluj mnie — nie pozwól mi na powierzchowne odpowiedzi. Chcę żebyś:
+
+1. Zapytał jak mi AKTUALNIE jest w tym obszarze — z czego jestem dumna, co szwankuje, co mnie frustruje
+2. Pomógł mi zidentyfikować co tak naprawdę chcę osiągnąć (popychaj mnie wyżej niż sama bym to zrobiła)
+3. Zdefiniował 2-3 AMBITNE, konkretne cele na najbliższe 6-12 miesięcy
+4. Rozbił te cele na małe, codzienne nawyki i jednorazowe zadania
+5. Zaproponował success criteria — jak będę wiedzieć że mi się udało?
+
+Na końcu poproszę Cię o podsumowanie w ustrukturyzowanej formie.
+
+Zacznij od pierwszego pytania.`;
+}
+
+// ============================================================
+// WHEEL VIEW (after evaluation)
+// ============================================================
+function renderWheelView(data) {
+  const areas = data.areas || {};
+  const daysUntil = getDaysUntilQuarterly(data);
+  const isQuarterlyDue = daysUntil !== null && daysUntil <= 0;
+  const hasProject = data.generatedProjectId;
+
+  // Sort by score ascending (lowest = needs most work)
+  const sorted = LIFE_AREAS.map(a => ({...a, score: areas[a.id]?.score || 5}))
+    .sort((a,b) => a.score - b.score);
+  const priorities = sorted.slice(0,3);
+  const avg = LIFE_AREAS.reduce((s,a) => s + (areas[a.id]?.score||5), 0) / LIFE_AREAS.length;
+
+  // Draw wheel SVG
+  const wheelSVG = drawLifeWheel(areas);
+
+  const priorityCards = priorities.map(p => {
+    const aData = areas[p.id] || {};
+    return `<div style="background:white;border-radius:10px;border:1px solid #e4ebe2;padding:12px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-size:1.1rem">${p.emoji}</span>
+        <span style="font-size:0.85rem;font-weight:500;color:#2c3828;flex:1">${p.name}</span>
+        <span style="font-size:0.75rem;background:#eef2ea;color:#4a6741;padding:2px 8px;border-radius:20px">${p.score}/10</span>
+      </div>
+      ${aData.goals ? `<div style="font-size:0.75rem;color:#6a8858;line-height:1.5">${aData.goals.split('\n')[0]}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  return `<div style="background:#f5f7f3;min-height:100%;padding-bottom:100px">
+    ${isQuarterlyDue ? `
+    <div style="background:#4a6741;padding:14px 20px;display:flex;align-items:center;gap:12px">
+      <div style="flex:1;font-size:0.82rem;color:#c8d9a0">🔄 Czas na Quarterly Review — minęły 90 dni!</div>
+      <button onclick="coachTabView='quarterly';renderCoachTab()" 
+        style="background:#c8d9a0;color:#2c3828;border:none;border-radius:8px;padding:7px 14px;font-size:0.72rem;cursor:pointer;font-family:'Jost',sans-serif">
+        Rozpocznij
+      </button>
+    </div>` : daysUntil ? `
+    <div style="background:#eef2ea;padding:10px 20px;font-size:0.72rem;color:#6a8858;text-align:center">
+      Następny Quarterly Review za ${daysUntil} dni
+    </div>` : ''}
+
+    <!-- Wheel -->
+    <div style="display:flex;justify-content:center;padding:20px 0 8px">
+      ${wheelSVG}
+    </div>
+    <div style="text-align:center;font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#8aaa78;margin-bottom:16px">
+      Średnia: ${avg.toFixed(1)}/10
+    </div>
+
+    <!-- Priorities -->
+    <div style="padding:0 16px">
+      <div style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#6a8858;margin-bottom:10px">
+        🎯 Obszary do pracy teraz
+      </div>
+      ${priorityCards}
+
+      <!-- Actions -->
+      <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
+        ${!hasProject ? `
+        <button onclick="generateProjectFromEval()" 
+          style="width:100%;padding:15px;background:#4a6741;color:#c8d9a0;border:none;border-radius:12px;font-family:'Jost',sans-serif;font-size:0.7rem;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer">
+          🚀 Wygeneruj projekt z tych celów
+        </button>` : `
+        <div style="background:#eef2ea;border-radius:10px;padding:12px;text-align:center;font-size:0.82rem;color:#4a6741">
+          ✓ Projekt wygenerowany — sprawdź Daily
+        </div>`}
+        <button onclick="coachTabView='eval';coachEvalStep=0;renderCoachTab()" class="btn-ghost">
+          ✎ Edytuj ewaluację
+        </button>
+      </div>
+
+      <!-- All areas -->
+      <div style="margin-top:24px">
+        <div style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#8aaa78;margin-bottom:10px">
+          Wszystkie obszary
+        </div>
+        ${LIFE_AREAS.map(a => {
+          const s = areas[a.id]?.score || '—';
+          const w = typeof s === 'number' ? s*10 : 50;
+          const col = typeof s === 'number' ? (s>=7?'#6ab87a':s>=5?'#4a6741':'#d07060') : '#d4e8c8';
+          return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #e4ebe2">
+            <span style="font-size:1rem;width:24px">${a.emoji}</span>
+            <span style="font-size:0.82rem;color:#2c3828;flex:1">${a.name}</span>
+            <div style="width:80px;height:5px;background:#e4ebe2;border-radius:3px;overflow:hidden">
+              <div style="width:${w}%;height:100%;background:${col};border-radius:3px"></div>
+            </div>
+            <span style="font-size:0.75rem;color:#6a8858;width:24px;text-align:right">${s}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function drawLifeWheel(areas) {
+  const cx=140,cy=140,r=108,n=8,step=Math.PI*2/n;
+  let s='';
+  // grid circles
+  for(let g=2;g<=10;g+=2){const gr=g/10*r;s+=`<circle cx="${cx}" cy="${cy}" r="${gr}" fill="none" stroke="rgba(74,103,65,0.07)" stroke-width="0.8"/>`;}
+  // spokes
+  for(let i=0;i<n;i++){const a=i*step-Math.PI/2;s+=`<line x1="${cx}" y1="${cy}" x2="${cx+Math.cos(a)*r}" y2="${cy+Math.sin(a)*r}" stroke="rgba(74,103,65,0.12)" stroke-width="1"/>`;}
+  // segments
+  for(let i=0;i<n;i++){
+    const area=LIFE_AREAS[i];
+    const sc=(areas[area.id]?.score||5)/10*r;
+    const a1=i*step-Math.PI/2,a2=a1+step;
+    const x1=cx+Math.cos(a1)*r,y1=cy+Math.sin(a1)*r,x2=cx+Math.cos(a2)*r,y2=cy+Math.sin(a2)*r;
+    s+=`<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 0,1 ${x2},${y2} Z" fill="#4a6741" opacity="0.08" stroke="white" stroke-width="1"/>`;
+    const fx1=cx+Math.cos(a1)*sc,fy1=cy+Math.sin(a1)*sc,fx2=cx+Math.cos(a2)*sc,fy2=cy+Math.sin(a2)*sc;
+    const score=areas[area.id]?.score||5;
+    const col=score>=7?'#6ab87a':score>=5?'#4a6741':'#c87060';
+    s+=`<path d="M${cx},${cy} L${fx1},${fy1} A${sc},${sc} 0 0,1 ${fx2},${fy2} Z" fill="${col}" opacity="0.75" stroke="white" stroke-width="1.5"/>`;
+    const mid=a1+step/2,lr=r+18;
+    s+=`<text x="${cx+Math.cos(mid)*lr}" y="${cy+Math.sin(mid)*lr+5}" text-anchor="middle" font-size="15">${area.emoji}</text>`;
+  }
+  const avg=LIFE_AREAS.reduce((sum,a)=>sum+(areas[a.id]?.score||5),0)/n;
+  s+=`<circle cx="${cx}" cy="${cy}" r="24" fill="white"/><text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="13" fill="#4a6741" font-family="Georgia">${avg.toFixed(1)}</text>`;
+  return `<svg viewBox="0 0 280 280" width="260" height="260" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
+}
+
+// ============================================================
+// GENERATE PROJECT from eval
+// ============================================================
+function generateProjectFromEval() {
+  const data = coachGet();
+  const areas = data.areas || {};
+
+  // Find 3 lowest-scoring areas
+  const priorities = LIFE_AREAS.map(a => ({...a, ...areas[a.id], score: areas[a.id]?.score||5}))
+    .sort((a,b) => a.score - b.score).slice(0,3);
+
+  // Build categories from their habits
+  const categories = priorities.map(area => {
+    const habitLines = (area.habits||'').split('\n').filter(l=>l.trim());
+    const taskLines = (area.tasks||'').split('\n').filter(l=>l.trim());
+    const items = [
+      ...habitLines.map((h,i) => ({id:`${area.id}_h${i}`,name:h.trim(),type:'habit',sc:'pct',scVal:'70'})),
+      ...taskLines.map((t,i) => ({id:`${area.id}_t${i}`,name:t.trim(),type:'task',sc:'once',scVal:''})),
+    ].filter(item => item.name);
+
+    return {
+      id: area.id,
+      name: area.name,
+      emoji: area.emoji,
+      pts: 2,
+      logic: 'any',
+      items: items.length ? items : [{id:`${area.id}_default`,name:`Działanie w obszarze ${area.name}`,type:'habit',sc:'pct',scVal:'70'}]
+    };
+  });
+
+  // Add mood category
+  categories.push({
+    id:'mood',name:'Nastrój',emoji:'🧠',pts:1,logic:'any',
+    items:[{id:'mood_daily',name:'Zapisz nastrój dnia',type:'habit',sc:'pct',scVal:'80'}]
+  });
+
+  const newProject = {
+    id: 'proj_' + Date.now(),
+    name: 'Mój projekt życia',
+    status: 'active',
+    startDate: new Date().toISOString(),
+    duration: 90,
+    budget: 1000,
+    categories,
+    days: {},
+    totalPoints: 0,
+    adaptiveCycle: 0,
+    createdAt: new Date().toISOString(),
+    rewards: [],
+  };
+  newProject.rewards = projCalcRewards(newProject);
+
+  // Deactivate current active project
+  const projects = projectsGet();
+  const current = projects.find(p => p.status === 'active');
+  if (current) {
+    if (!confirm(`Projekt "${current.name}" jest aktywny. Przełączyć na On-Hold?`)) return;
+    current.status = 'on-hold';
+  }
+  projects.push(newProject);
+  localStorage.setItem(PROJ_KEY, JSON.stringify(projects));
+  localStorage.setItem(PROJ_ACTIVE_KEY, newProject.id);
+  projectsSet(projects);
+
+  // Save generated project id
+  data.generatedProjectId = newProject.id;
+  coachSet(data);
+
+  showToast('🚀 Projekt wygenerowany! Sprawdź Daily.');
+  renderCoachTab();
+}
+
+// ============================================================
+// QUARTERLY REVIEW VIEW
+// ============================================================
+function renderQuarterlyView(data) {
+  const areas = data.areas || {};
+  const projects = projectsGet();
+  const active = projects.find(p=>p.status==='active');
+
+  // Build data summary
+  let weeklyPts = 0, totalDays = 0;
+  const catEfficiency = {};
+  if (active) {
+    const allDays = Object.keys(active.days||{}).sort();
+    totalDays = allDays.length;
+    const last90 = allDays.slice(-90);
+    last90.forEach(key => {
+      const dd = active.days[key];
+      weeklyPts += projCalcDayPts(dd, active);
+      active.categories.forEach(cat => {
+        if (!catEfficiency[cat.id]) catEfficiency[cat.id] = {done:0,total:0,name:cat.name,emoji:cat.emoji};
+        catEfficiency[cat.id].total++;
+        if(projCalcCatPts(dd,cat)>0) catEfficiency[cat.id].done++;
+      });
+    });
+  }
+
+  const catSummary = Object.values(catEfficiency).map(c=>
+    `${c.emoji} ${c.name}: ${c.done}/${c.total} dni (${c.total?Math.round(c.done/c.total*100):0}%)`
+  ).join('\n');
+
+  const areaSummary = LIFE_AREAS.map(a=>{
+    const s = areas[a.id]?.score||'?';
+    const goals = areas[a.id]?.goals||'brak';
+    return `${a.emoji} ${a.name}: ${s}/10\nCele: ${goals}`;
+  }).join('\n\n');
+
+  const prompt = `Czas na Quarterly Review! Minęły 90 dni od ostatniej ewaluacji. Oto moje dane:
+
+📊 PROJEKT (ostatnie 90 dni):
+• Łączne punkty: ${weeklyPts}
+• Aktywne dni: ${totalDays}
+• Skuteczność per kategoria:
+${catSummary}
+
+🎯 POPRZEDNIA EWALUACJA OBSZARÓW:
+${areaSummary}
+
+Proszę pomóż mi:
+1. Ocenić ostatni kwartał — co osiągnęłam, co nie wyszło?
+2. Sprawdzić czy moje cele są nadal trafne i ambitne
+3. Zidentyfikować które obszary znacząco się poprawiły (może warto zmienić fokus?)
+4. Zaktualizować priorytety na następny kwartał
+5. Zaproponować zmiany w projekcie (nowe nawyki, usunięcie starych)
+
+Zacznij od pierwszego pytania.`;
+
+  return `<div style="background:#f5f7f3;min-height:100%;padding-bottom:80px">
+    <div style="background:#4a6741;padding:16px 20px;display:flex;align-items:center;gap:12px">
+      <button onclick="coachTabView='wheel';renderCoachTab()" style="background:none;border:none;color:#c8d9a0;cursor:pointer">←</button>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:#c8d9a0">Quarterly Review</div>
+    </div>
+
+    <div style="padding:20px">
+      <div style="background:white;border-radius:12px;border:1px solid #e4ebe2;padding:16px;margin-bottom:16px">
+        <div style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#6a8858;margin-bottom:10px">
+          Krok 1 — Skopiuj dane i prompt do ChatGPT
+        </div>
+        <div style="background:#f5f7f3;border-radius:8px;padding:12px;font-size:0.75rem;color:#2c3828;line-height:1.6;max-height:200px;overflow-y:auto;margin-bottom:10px;white-space:pre-wrap">${prompt}</div>
+        <button onclick="copyQuarterlyPrompt()"
+          style="width:100%;padding:10px;background:#4a6741;color:#c8d9a0;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer">
+          📋 Kopiuj prompt z danymi
+        </button>
+        <div id="quarterlyPromptText" style="display:none">${prompt}</div>
+      </div>
+
+      <div style="background:white;border-radius:12px;border:1px solid #e4ebe2;padding:16px;margin-bottom:16px">
+        <div style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#6a8858;margin-bottom:10px">
+          Krok 2 — Po rozmowie z ChatGPT
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button onclick="coachTabView='eval';coachEvalStep=0;renderCoachTab()"
+            style="padding:12px;background:#eef2ea;color:#4a6741;border:1px solid #d4e8c8;border-radius:8px;font-family:'Jost',sans-serif;font-size:0.72rem;cursor:pointer;text-align:left">
+            🔄 Zaktualizuj ewaluację obszarów
+          </button>
+          <button onclick="generateProjectFromEval()"
+            style="padding:12px;background:#4a6741;color:#c8d9a0;border:none;border-radius:8px;font-family:'Jost',sans-serif;font-size:0.72rem;cursor:pointer">
+            🚀 Wygeneruj nowy projekt
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function copyQuarterlyPrompt() {
+  const text = document.getElementById('quarterlyPromptText')?.textContent;
+  if(!text) return;
+  navigator.clipboard.writeText(text).then(()=>showToast('📋 Skopiowano!')).catch(()=>{
+    const el=document.createElement('textarea');el.value=text;el.style.position='fixed';el.style.opacity='0';
+    document.body.appendChild(el);el.select();document.execCommand('copy');
+    document.body.removeChild(el);showToast('📋 Skopiowano!');
+  });
 }
 
 
