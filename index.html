@@ -2197,6 +2197,22 @@ function checkSuccessCriteria(project) {
       const scVal = parseInt(item.scVal) || 0;
       let met = false;
 
+      // Min X times per week among active days only
+      if (sc === 'weekly_min') {
+        const weeks = {};
+        allDayKeys.forEach(k => {
+          const d = new Date(...k.split('-').map((v,i)=>i===1?v-1:v));
+          if (!isItemActiveToday(item, d)) return; // only count active days
+          const weekNum = Math.floor((d - new Date(d.getFullYear(),0,1)) / 604800000);
+          const weekKey = `${d.getFullYear()}-W${weekNum}`;
+          if (!weeks[weekKey]) weeks[weekKey] = {done:0, total:0};
+          weeks[weekKey].total++;
+          if (project.days[k]?.[key]) weeks[weekKey].done++;
+        });
+        const weekVals = Object.values(weeks);
+        // Success = in every week with active days, done >= scVal
+        met = weekVals.length >= 4 && weekVals.every(w => w.done >= scVal);
+      }
       // Max type - check if never exceeded limit
       if (sc === 'max') {
         // Count per week and check none exceeded scVal
@@ -2649,10 +2665,10 @@ function renderDashboard(project) {
         const curPct = activeCnt > 0 ? Math.round(doneCnt/activeCnt*100) : 0;
         pctProgress = activeCnt > 0 ? ` (${curPct}% z ${item.scVal}%)` : '';
       }
-      const minCountLabel = item.minCount ? ` (min. ${item.minCount}x)` : '';
       const scLabel = item.sc === 'streak' ? `🔥 ${item.scVal} dni z rzędu`
+        : item.sc === 'weekly_min' ? `📅 min. ${item.scVal}x w aktywnych dniach/tydzień`
         : item.sc === 'weekly' ? `📅 ${item.scVal}x/tydzień`
-        : item.sc === 'pct' ? `📊 cel: ${item.scVal}% dni${pctProgress}${minCountLabel}`
+        : item.sc === 'pct' ? `📊 cel: ${item.scVal}% dni${pctProgress}`
         : item.sc === 'max' ? `📉 maks. ${item.scVal}x/tydzień`
         : item.sc === 'date' ? `🗓️ do ${item.scVal}`
         : item.sc === 'subjective' ? '⭐ subiektywnie' : '';
@@ -3303,23 +3319,7 @@ function makeHabitRowEl(name, sc, scVal, days) {
     };
     daysWrap.appendChild(btn);
   });
-  // Min count row
-  const minRow = document.createElement('div');
-  minRow.style.cssText = 'display:flex;gap:6px;align-items:center;margin-top:6px';
-  const minLabel = document.createElement('div');
-  minLabel.style.cssText = 'font-size:0.65rem;color:#a8bf90;white-space:nowrap';
-  minLabel.textContent = 'min. razy w tym przedziale:';
-  const minInp = document.createElement('input');
-  minInp.type = 'number'; minInp.min = '1'; minInp.value = ''; 
-  minInp.placeholder = 'opcjonalnie';
-  minInp.className = 'eval-habit-mincount create-input';
-  minInp.style.cssText = 'width:100px';
-  const minUnit = document.createElement('div');
-  minUnit.style.cssText = 'font-size:0.65rem;color:#a8bf90';
-  minUnit.textContent = 'razy';
-  minRow.appendChild(minLabel); minRow.appendChild(minInp); minRow.appendChild(minUnit);
-
-  row2.appendChild(row2label); row2.appendChild(daysWrap); row2.appendChild(minRow);
+  row2.appendChild(row2label); row2.appendChild(daysWrap);
   div.appendChild(row2);
 
   // Row 3: success criteria - simplified
@@ -3332,8 +3332,8 @@ function makeHabitRowEl(name, sc, scVal, days) {
   
   const scSel = document.createElement('select');
   scSel.className = 'eval-habit-sc create-select'; scSel.style.flex = '1';
-  scSel.innerHTML = '<option value="pct">% aktywnych dni</option><option value="streak">dni z rzędu</option><option value="max">maks. razy/tydzień</option>';
-  scSel.value = ['pct','streak','max'].includes(sc) ? sc : 'pct';
+  scSel.innerHTML = '<option value="pct">% aktywnych dni</option><option value="weekly_min">min. razy w wybranych dniach</option><option value="streak">dni z rzędu</option><option value="max">maks. razy/tydzień</option>';
+  scSel.value = ['pct','streak','max','weekly_min'].includes(sc) ? sc : 'pct';
   
   const scValInp = document.createElement('input');
   scValInp.value = scVal; scValInp.type = 'number'; scValInp.min = '1';
@@ -3341,9 +3341,10 @@ function makeHabitRowEl(name, sc, scVal, days) {
   
   const scUnit = document.createElement('div');
   scUnit.style.cssText = 'font-size:0.65rem;color:#9B82B0;white-space:nowrap';
-  const updateUnit = () => { 
-    scUnit.textContent = scSel.value==='streak'?'dni z rzędu':scSel.value==='max'?'razy/tydzień (maks.)':'% aktywnych dni';
-    scValInp.placeholder = scSel.value==='streak'?'ile':scSel.value==='max'?'ile':'%';
+  const updateUnit = () => {
+    const v = scSel.value;
+    scUnit.textContent = v==='streak'?'dni z rzędu':v==='max'?'razy/tydz. (maks.)':v==='weekly_min'?'razy min. (w wybranych dniach)':'% aktywnych dni';
+    scValInp.placeholder = v==='pct'?'%':'ile';
   };
   updateUnit(); scSel.onchange = updateUnit;
   
