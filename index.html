@@ -3673,18 +3673,30 @@ function renderWheelView(data) {
       </div>
 
       <div style="margin-top:24px">
-        <div style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#8aaa78;margin-bottom:10px">Wszystkie obszary</div>
+        <div style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#8aaa78;margin-bottom:10px">Wszystkie obszary i cele</div>
         ${LIFE_AREAS.map(a => {
           const s = areas[a.id]?.score || '—';
           const w = typeof s === 'number' ? s*10 : 50;
           const col = typeof s === 'number' ? (s>=7?'#6ab87a':s>=5?'#4a6741':'#d07060') : '#d4e8c8';
-          return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #e4ebe2">
-            <span style="font-size:1rem;width:24px">${a.emoji}</span>
-            <span style="font-size:0.82rem;color:#2c3828;flex:1">${a.name}</span>
-            <div style="width:80px;height:5px;background:#e4ebe2;border-radius:3px;overflow:hidden">
-              <div style="width:${w}%;height:100%;background:${col};border-radius:3px"></div>
+          const aData = areas[a.id] || {};
+          const goals = aData.goalsList || [];
+          const isPriority = priorities.some(p => p.id === a.id);
+          return `<div style="border-bottom:1px solid #e4ebe2;padding:10px 0">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:${goals.length?'8px':'0'}">
+              <span style="font-size:1rem;width:24px">${a.emoji}</span>
+              <span style="font-size:0.85rem;color:#2c3828;flex:1;font-weight:${isPriority?'500':'400'}">${a.name}${isPriority?' 🎯':''}</span>
+              <div style="width:60px;height:5px;background:#e4ebe2;border-radius:3px;overflow:hidden">
+                <div style="width:${w}%;height:100%;background:${col};border-radius:3px"></div>
+              </div>
+              <span style="font-size:0.75rem;color:#6a8858;width:24px;text-align:right">${s}</span>
             </div>
-            <span style="font-size:0.75rem;color:#6a8858;width:24px;text-align:right">${s}</span>
+            ${goals.length ? `<div style="padding-left:32px">
+              ${goals.map(g => `
+                <div style="font-size:0.78rem;font-weight:500;color:#2c3828;margin-bottom:4px">🎯 ${g.text}</div>
+                ${(g.habits||[]).map(h=>`<div style="font-size:0.72rem;color:#4a6741;padding:2px 0 2px 12px">🔁 ${h.name}${h.days&&h.days.length<7?' <span style="color:#8aaa78">('+['Pn','Wt','Śr','Cz','Pt','Sb','Nd'].filter((_,i)=>h.days.includes(i)).join('/')+')</span>':''}</div>`).join('')}
+                ${(g.tasks||[]).map(t=>`<div style="font-size:0.72rem;color:#6a8858;padding:2px 0 2px 12px">📌 ${t.name}</div>`).join('')}
+              `).join('')}
+            </div>` : aData.goals ? `<div style="padding-left:32px;font-size:0.75rem;color:#6a8858">${aData.goals.split('\n').filter(Boolean).map(g=>`<div style="padding:2px 0">🎯 ${g}</div>`).join('')}</div>` : ''}
           </div>`;
         }).join('')}
       </div>
