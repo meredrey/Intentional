@@ -2571,43 +2571,6 @@ function renderCoach() {
   
   // Dashboard view
   panel.innerHTML = renderDashboard(project);
-  // Render focus widget inside dashboard
-  setTimeout(() => {
-    const fw = document.getElementById('dailyFocusWidget');
-    if (fw) {
-      const priorities = getPriorities();
-      const lg = lgGet();
-      const data = getLGData();
-      const priAreas = data.filter(a => priorities.includes(a.id));
-      
-      // Find next uncompleted step per priority area
-      const steps = priAreas.map(area => {
-        for (const g of area.goals) {
-          if (g.type === 'tracker') continue;
-          for (let i = 0; i < g.ms.length; i++) {
-            if (!lg[g.id+'_'+i]) return {area, goal: g, idx: i, ms: g.ms[i]};
-          }
-        }
-        return {area, done: true};
-      }).filter(Boolean);
-
-      if (!steps.length) { fw.innerHTML = ''; return; }
-
-      const stepsHTML = steps.map(s => s.done 
-        ? `<div style="font-size:0.78rem;color:#8aaa78;padding:6px 0">${s.area.emoji} ${s.area.name} — ukończone! 🎉</div>`
-        : `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #e4ebe2">
-            <div style="font-size:0.8rem;color:#8aaa78;min-width:60px">${s.area.emoji} ${s.area.name.split(' ')[0]}</div>
-            <div style="font-size:0.82rem;color:#2c3828;flex:1">${s.ms.t}</div>
-            <div onclick="lgToggleMs('${s.goal.id}',${s.idx})" style="width:22px;height:22px;border-radius:50%;border:1.5px solid #c8d9a0;background:white;cursor:pointer;flex-shrink:0"></div>
-          </div>`
-      ).join('');
-
-      fw.innerHTML = `<div style="background:white;border-radius:12px;border:1px solid #e4ebe2;padding:14px 16px;margin:0 0 4px">
-        <div style="font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:#8aaa78;margin-bottom:8px">🎯 Priorytety dnia</div>
-        ${stepsHTML}
-      </div>`;
-    }
-  }, 50);
 }
 
 // ============================================================
@@ -2803,9 +2766,6 @@ function renderDashboard(project) {
         </div>
         <div class="streak-dots" style="justify-content:center">${dotsHTML}</div>
       </div>
-
-      <!-- Focus widget -->
-      <div id="dailyFocusWidget" style="margin:0 0 12px"></div>
 
       <!-- Today points -->
       <div class="points-card">
