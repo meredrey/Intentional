@@ -2213,19 +2213,31 @@ function checkSuccessCriteria(project) {
         // Success = in every week with active days, done >= scVal
         met = weekVals.length >= 4 && weekVals.every(w => w.done >= scVal);
       }
-      // Max type - check if never exceeded limit
+      // Max type - count only active days per week
       if (sc === 'max') {
-        // Count per week and check none exceeded scVal
         const weeks = {};
         allDayKeys.forEach(k => {
           const d = new Date(...k.split('-').map((v,i)=>i===1?v-1:v));
-          const weekKey = `${d.getFullYear()}-W${Math.floor((d - new Date(d.getFullYear(),0,1))/604800000)}`;
+          if (!isItemActiveToday(item, d)) return;
+          const weekNum = Math.floor((d - new Date(d.getFullYear(),0,1))/604800000);
+          const weekKey = `${d.getFullYear()}-W${weekNum}`;
           if (!weeks[weekKey]) weeks[weekKey] = 0;
           if (project.days[k]?.[key]) weeks[weekKey]++;
         });
         const weekVals = Object.values(weeks);
-        const exceeded = weekVals.some(w => w > scVal);
-        met = weekVals.length >= 4 && !exceeded;
+        met = weekVals.length >= 4 && weekVals.every(w => w <= scVal);
+      }
+      // Monthly min
+      if (sc === 'monthly') {
+        const months = {};
+        allDayKeys.forEach(k => {
+          const d = new Date(...k.split('-').map((v,i)=>i===1?v-1:v));
+          const monthKey = `${d.getFullYear()}-${d.getMonth()}`;
+          if (!months[monthKey]) months[monthKey] = 0;
+          if (project.days[k]?.[key]) months[monthKey]++;
+        });
+        const monthVals = Object.values(months);
+        met = monthVals.length >= 2 && monthVals.every(m => m >= scVal);
       }
       if (item.type === 'task') {
         if (sc === 'once') {
@@ -2666,10 +2678,11 @@ function renderDashboard(project) {
         pctProgress = activeCnt > 0 ? ` (${curPct}% z ${item.scVal}%)` : '';
       }
       const scLabel = item.sc === 'streak' ? `🔥 ${item.scVal} dni z rzędu`
-        : item.sc === 'weekly_min' ? `📅 min. ${item.scVal}x w aktywnych dniach/tydzień`
+        : item.sc === 'weekly_min' ? `📅 min. ${item.scVal}x/tydz. (wybranych)`
+        : item.sc === 'monthly' ? `📅 min. ${item.scVal}x/miesiąc`
         : item.sc === 'weekly' ? `📅 ${item.scVal}x/tydzień`
         : item.sc === 'pct' ? `📊 cel: ${item.scVal}% dni${pctProgress}`
-        : item.sc === 'max' ? `📉 maks. ${item.scVal}x/tydzień`
+        : item.sc === 'max' ? `📉 maks. ${item.scVal}x/tydz. (wybranych)`
         : item.sc === 'date' ? `🗓️ do ${item.scVal}`
         : item.sc === 'subjective' ? '⭐ subiektywnie' : '';
 
@@ -3332,8 +3345,8 @@ function makeHabitRowEl(name, sc, scVal, days) {
   
   const scSel = document.createElement('select');
   scSel.className = 'eval-habit-sc create-select'; scSel.style.flex = '1';
-  scSel.innerHTML = '<option value="pct">% aktywnych dni</option><option value="weekly_min">min. razy w wybranych dniach</option><option value="streak">dni z rzędu</option><option value="max">maks. razy/tydzień</option>';
-  scSel.value = ['pct','streak','max','weekly_min'].includes(sc) ? sc : 'pct';
+  scSel.innerHTML = '<option value="pct">% aktywnych dni</option><option value="weekly_min">min. X razy/tydzień (w wybranych)</option><option value="monthly">min. X razy/miesiąc</option><option value="streak">X dni z rzędu</option><option value="max">maks. X razy/tydzień (w wybranych)</option>';
+  scSel.value = ['pct','streak','max','weekly_min','monthly'].includes(sc) ? sc : 'pct';
   
   const scValInp = document.createElement('input');
   scValInp.value = scVal; scValInp.type = 'number'; scValInp.min = '1';
@@ -3343,7 +3356,8 @@ function makeHabitRowEl(name, sc, scVal, days) {
   scUnit.style.cssText = 'font-size:0.65rem;color:#9B82B0;white-space:nowrap';
   const updateUnit = () => {
     const v = scSel.value;
-    scUnit.textContent = v==='streak'?'dni z rzędu':v==='max'?'razy/tydz. (maks.)':v==='weekly_min'?'razy min. (w wybranych dniach)':'% aktywnych dni';
+    const units = {pct:'% aktywnych dni',weekly_min:'razy/tydz. min.',monthly:'razy/miesiąc min.',streak:'dni z rzędu',max:'razy/tydz. maks.'};
+    scUnit.textContent = units[v] || '';
     scValInp.placeholder = v==='pct'?'%':'ile';
   };
   updateUnit(); scSel.onchange = updateUnit;
