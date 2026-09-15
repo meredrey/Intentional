@@ -2183,131 +2183,102 @@ function syncAndReload() {
 }
 
 
-function checkSuccessCriteria(project) {
-  if (!project || !project.days) return [];
-  const achieved = [];
+function getHabitStatus(project, item, cat) {
+  if (!project || !project.days) return null;
+  const key = cat.id + '_' + item.id;
+  const sc = item.sc || 'pct';
+  const scVal = parseFloat(item.scVal) || 0;
   const today = new Date();
   const allDayKeys = Object.keys(project.days).sort();
+  if (!allDayKeys.length) return null;
 
-  project.categories.forEach(cat => {
-    cat.items.forEach(item => {
-      if (item.scAchieved) return; // already marked
-      const key = cat.id + '_' + item.id;
-      const sc = item.sc || (item.type === 'task' ? 'once' : 'streak');
-      const scVal = parseInt(item.scVal) || 0;
-      let met = false;
-
-      // Min X times per week among active days only
-      if (sc === 'weekly_min') {
-        const weeks = {};
-        allDayKeys.forEach(k => {
-          const d = new Date(...k.split('-').map((v,i)=>i===1?v-1:v));
-          if (!isItemActiveToday(item, d)) return; // only count active days
-          const weekNum = Math.floor((d - new Date(d.getFullYear(),0,1)) / 604800000);
-          const weekKey = `${d.getFullYear()}-W${weekNum}`;
-          if (!weeks[weekKey]) weeks[weekKey] = {done:0, total:0};
-          weeks[weekKey].total++;
-          if (project.days[k]?.[key]) weeks[weekKey].done++;
-        });
-        const weekVals = Object.values(weeks);
-        // Success = in every week with active days, done >= scVal
-        met = weekVals.length >= 4 && weekVals.every(w => w.done >= scVal);
+  if (sc === 'pct') {
+    // % of active days so far
+    let active = 0, done = 0;
+    allDayKeys.forEach(k => {
+      const d = new Date(...k.split('-').map((v,i)=>i===1?v-1:v));
+      if (isItemActiveToday(item, d)) {
+        active++;
+        if (project.days[k]?.[key]) done++;
       }
-      // Max type - count only active days per week
-      if (sc === 'max') {
-        const weeks = {};
-        allDayKeys.forEach(k => {
-          const d = new Date(...k.split('-').map((v,i)=>i===1?v-1:v));
-          if (!isItemActiveToday(item, d)) return;
-          const weekNum = Math.floor((d - new Date(d.getFullYear(),0,1))/604800000);
-          const weekKey = `${d.getFullYear()}-W${weekNum}`;
-          if (!weeks[weekKey]) weeks[weekKey] = 0;
-          if (project.days[k]?.[key]) weeks[weekKey]++;
-        });
-        const weekVals = Object.values(weeks);
-        met = weekVals.length >= 4 && weekVals.every(w => w <= scVal);
-      }
-      // Monthly min
-      if (sc === 'monthly') {
-        const months = {};
-        allDayKeys.forEach(k => {
-          const d = new Date(...k.split('-').map((v,i)=>i===1?v-1:v));
-          const monthKey = `${d.getFullYear()}-${d.getMonth()}`;
-          if (!months[monthKey]) months[monthKey] = 0;
-          if (project.days[k]?.[key]) months[monthKey]++;
-        });
-        const monthVals = Object.values(months);
-        met = monthVals.length >= 2 && monthVals.every(m => m >= scVal);
-      }
-      if (item.type === 'task') {
-        if (sc === 'once') {
-          met = Object.values(project.days).some(dd => dd[key]);
-        } else if (sc === 'subjective') {
-          met = Object.values(project.days).some(dd => dd[key]);
-        } else if (sc === 'date') {
-          const deadline = new Date(item.scVal);
-          met = today > deadline && Object.values(project.days).some(dd => dd[key]);
-        }
-      } else {
-        // habit
-        if (sc === 'streak') {
-          let streak = 0;
-          for (let i = 0; i <= 365; i++) {
-            const d = new Date(today); d.setDate(d.getDate() - i);
-            const k = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
-            if (project.days[k]?.[key]) streak++;
-            else if (i > 0) break;
-          }
-          met = scVal > 0 && streak >= scVal;
-        } else if (sc === 'weekly') {
-          // Check last 4 complete weeks
-          let weeksOk = 0, weekCount = 0;
-          for (let w = 0; w < 4; w++) {
-            let count = 0;
-            for (let d2 = 0; d2 < 7; d2++) {
-              const dd2 = new Date(today); dd2.setDate(dd2.getDate() - (w*7 + d2));
-              const k = `${dd2.getFullYear()}-${dd2.getMonth()+1}-${dd2.getDate()}`;
-              if (project.days[k]?.[key]) count++;
-            }
-            weeksOk += count >= scVal ? 1 : 0; weekCount++;
-          }
-          met = weekCount >= 2 && weeksOk === weekCount;
-        } else if (sc === 'pct') {
-          // Count only active days for this habit (respects days-of-week setting)
-          const startDate = new Date(project.startDate);
-          const duration = project.duration || 90;
-          const endDate = new Date(startDate); endDate.setDate(endDate.getDate() + duration);
-          const projectEnded = today >= endDate;
-          
-          // Count active days (days when this habit was supposed to run)
-          let activeDays = 0, doneDays = 0;
-          allDayKeys.forEach(k => {
-            const d = new Date(...k.split('-').map((v,i)=>i===1?v-1:v));
-            if (isItemActiveToday(item, d)) {
-              activeDays++;
-              if (project.days[k]?.[key]) doneDays++;
-            }
-          });
-          
-          if (projectEnded) {
-            // After project ends — check final %
-            met = activeDays > 0 && scVal > 0 && (doneDays/activeDays*100) >= scVal;
-          } else {
-            // During project — check if mathematically impossible to reach goal
-            // (motivational: warn if falling too far behind)
-            const daysLeft = Math.ceil((endDate - today) / 86400000);
-            const maxPossible = doneDays + daysLeft;
-            const needed = Math.ceil(scVal/100 * (activeDays + daysLeft));
-            met = false; // don't trigger until project ends
-          }
-        }
-      }
-
-      if (met) achieved.push({cat, item, key});
     });
-  });
-  return achieved;
+    if (active < 3) return null;
+    const pct = Math.round(done/active*100);
+    if (pct >= scVal) return {status:'on-track', label:`✅ ${pct}% (cel: ${scVal}%)`};
+    if (pct >= scVal * 0.8) return {status:'at-risk', label:`⚠️ ${pct}% (cel: ${scVal}%)`};
+    return {status:'off-track', label:`❌ ${pct}% (cel: ${scVal}%)`};
+  }
+
+  if (sc === 'streak') {
+    let streak = 0;
+    for (let i = 0; i <= 365; i++) {
+      const d = new Date(today); d.setDate(d.getDate()-i);
+      const k = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+      if (!isItemActiveToday(item, d)) continue;
+      if (project.days[k]?.[key]) streak++;
+      else break;
+    }
+    if (streak >= scVal) return {status:'on-track', label:`✅ ${streak} dni z rzędu (cel: ${scVal})`};
+    if (streak >= scVal * 0.7) return {status:'at-risk', label:`⚠️ ${streak}/${scVal} dni z rzędu`};
+    return {status:'off-track', label:`❌ ${streak}/${scVal} dni z rzędu`};
+  }
+
+  if (sc === 'weekly_min') {
+    // Check last full week
+    const weekDone = [], weekTotal = [];
+    for (let w = 0; w < 4; w++) {
+      let done = 0, total = 0;
+      for (let d2 = 0; d2 < 7; d2++) {
+        const d = new Date(today); d.setDate(d.getDate()-(w*7+d2));
+        if (!isItemActiveToday(item, d)) continue;
+        total++;
+        const k = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+        if (project.days[k]?.[key]) done++;
+      }
+      if (total > 0) { weekDone.push(done); weekTotal.push(total); }
+    }
+    if (!weekDone.length) return null;
+    const lastWeek = weekDone[0];
+    if (lastWeek >= scVal) return {status:'on-track', label:`✅ ${lastWeek}x ostatni tydz. (cel: min. ${scVal}x)`};
+    if (lastWeek >= scVal-1) return {status:'at-risk', label:`⚠️ ${lastWeek}x ostatni tydz. (cel: ${scVal}x)`};
+    return {status:'off-track', label:`❌ ${lastWeek}x ostatni tydz. (cel: ${scVal}x)`};
+  }
+
+  if (sc === 'monthly') {
+    // Check current month
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+    let done = 0;
+    allDayKeys.forEach(k => {
+      const d = new Date(...k.split('-').map((v,i)=>i===1?v-1:v));
+      if (d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth()) {
+        if (project.days[k]?.[key]) done++;
+      }
+    });
+    const daysLeft = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate() - now.getDate();
+    if (done >= scVal) return {status:'on-track', label:`✅ ${done}x ten miesiąc (cel: ${scVal}x)`};
+    if (done + Math.ceil(daysLeft/7) >= scVal) return {status:'at-risk', label:`⚠️ ${done}/${scVal}x ten miesiąc`};
+    return {status:'off-track', label:`❌ ${done}/${scVal}x ten miesiąc`};
+  }
+
+  if (sc === 'max') {
+    // Check last week - did we stay under limit?
+    let lastWeekDone = 0;
+    for (let d2 = 0; d2 < 7; d2++) {
+      const d = new Date(today); d.setDate(d.getDate()-d2);
+      if (!isItemActiveToday(item, d)) continue;
+      const k = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+      if (project.days[k]?.[key]) lastWeekDone++;
+    }
+    if (lastWeekDone <= scVal) return {status:'on-track', label:`✅ ${lastWeekDone}x ostatni tydz. (maks. ${scVal}x)`};
+    return {status:'off-track', label:`❌ ${lastWeekDone}x ostatni tydz. (maks. ${scVal}x)`};
+  }
+
+  return null;
 }
+
+function checkSuccessCriteria(project) { return []; } // no longer triggers modal
+
 
 function markScAchieved(projId, catId, itemId) {
   const projects = projectsGet();
@@ -2662,29 +2633,10 @@ function renderDashboard(project) {
       const isTask = item.type === 'task';
       const isAchieved = !!item.scAchieved;
       const checked = isTask ? projIsTaskDone(project, item, cat) : !!dd[key];
-      // Calculate pct progress for display
-      let pctProgress = '';
-      if (item.sc === 'pct' && !item.scAchieved) {
-        const allKeys = Object.keys(project.days||{});
-        let activeCnt = 0, doneCnt = 0;
-        allKeys.forEach(k => {
-          const d = new Date(...k.split('-').map((v,i)=>i===1?v-1:v));
-          if (isItemActiveToday(item, d)) {
-            activeCnt++;
-            if (project.days[k]?.[key]) doneCnt++;
-          }
-        });
-        const curPct = activeCnt > 0 ? Math.round(doneCnt/activeCnt*100) : 0;
-        pctProgress = activeCnt > 0 ? ` (${curPct}% z ${item.scVal}%)` : '';
-      }
-      const scLabel = item.sc === 'streak' ? `🔥 ${item.scVal} dni z rzędu`
-        : item.sc === 'weekly_min' ? `📅 min. ${item.scVal}x/tydz. (wybranych)`
-        : item.sc === 'monthly' ? `📅 min. ${item.scVal}x/miesiąc`
-        : item.sc === 'weekly' ? `📅 ${item.scVal}x/tydzień`
-        : item.sc === 'pct' ? `📊 cel: ${item.scVal}% dni${pctProgress}`
-        : item.sc === 'max' ? `📉 maks. ${item.scVal}x/tydz. (wybranych)`
-        : item.sc === 'date' ? `🗓️ do ${item.scVal}`
-        : item.sc === 'subjective' ? '⭐ subiektywnie' : '';
+      const habitStatus = item.sc ? getHabitStatus(project, item, cat) : null;
+      const statusColors = {'on-track':'#4a7a4a','at-risk':'#8a6a20','off-track':'#8a3030'};
+      const scLabel = habitStatus ? habitStatus.label : (item.sc ? `📊 cel: ${item.scVal}${item.sc==='pct'?'%':''}` : '');
+      const scColor = habitStatus ? statusColors[habitStatus.status] : '#B09AC0';
 
       const DAYS_SHORT = ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'];
       const isActiveToday = isItemActiveToday(item, coachViewingDate);
@@ -2702,15 +2654,7 @@ function renderDashboard(project) {
           ${!currentMood?'<div style="font-size:0.75rem">😊</div>':''}
         </div>`;
       }
-      if (isAchieved) {
-        return `<div class="proj-habit proj-achieved">
-          <div class="proj-cb" style="background:#8FAAB8;border-color:#8FAAB8;font-size:0.7rem">✓</div>
-          <div style="flex:1">
-            <div class="proj-hname" style="text-decoration:line-through;color:#9B82B0">${item.name}</div>
-            <div style="font-size:0.65rem;color:#8FAAB8">Osiągnięte 🏆</div>
-          </div>
-        </div>`;
-      }
+      // isAchieved no longer used - status shown live via getHabitStatus
       if (isTask) {
         return `<div class="proj-habit proj-task ${checked?'checked':''}" data-key="${key}" onclick="${!checked?'projToggleTask(this)':''}">
           <div class="proj-cb proj-task-cb">${checked?'✓':'📌'}</div>
@@ -2735,7 +2679,7 @@ function renderDashboard(project) {
         <div style="flex:1">
           <div class="proj-hname">${item.name}</div>
           ${daysLabel?`<div style="font-size:0.62rem;color:#B09AC0;margin-top:1px">${daysLabel}</div>`:''}
-          ${scLabel?`<div style="font-size:0.65rem;color:#B09AC0;margin-top:2px">${scLabel}</div>`:''}
+          ${scLabel?`<div style="font-size:0.65rem;color:${scColor};margin-top:2px;font-weight:${habitStatus?.status==='on-track'?'500':'400'}">${scLabel}</div>`:''}
         </div>
       </div>`;
     }).join('');
