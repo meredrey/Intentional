@@ -1417,15 +1417,20 @@ function isItemActiveToday(item, date) {
 
 function projCalcCatPts(dd, cat, date) {
   const items = cat.items || [];
-  // Only count habit items that are active today
-  const habitItems = items.filter(item => item.type !== 'task' && isItemActiveToday(item, date));
-  if (!habitItems.length) return 0;
-  const checked = habitItems.filter(item => dd[cat.id + '_' + item.id]);
-  if (cat.logic === 'all') {
-    return checked.length === habitItems.length ? cat.pts : 0;
-  } else { // 'any'
-    return checked.length > 0 ? cat.pts : 0;
-  }
+  let pts = 0;
+  items.forEach(item => {
+    const key = cat.id + '_' + item.id;
+    const checked = !!dd[key];
+    if (!checked) return;
+    if (item.type === 'task') {
+      // Task: 2 pts, only count once (check any day)
+      pts += 2;
+    } else {
+      // Habit: 1 pt, only if active today
+      if (isItemActiveToday(item, date)) pts += 1;
+    }
+  });
+  return pts;
 }
 
 function projIsTaskDone(project, item, cat) {
@@ -1441,16 +1446,52 @@ function projCalcDayPts(dd, project, date) {
 
 function projMaxDayPts(project, date) {
   return project.categories.reduce((sum, cat) => {
-    const activeHabits = cat.items.filter(i => i.type !== 'task' && isItemActiveToday(i, date));
-    return sum + (activeHabits.length > 0 ? cat.pts : 0);
+    return sum + cat.items.reduce((s, item) => {
+      if (item.type === 'task') return s; // tasks not counted in daily max
+      if (!isItemActiveToday(item, date)) return s;
+      return s + 1;
+    }, 0);
   }, 0);
+}
+
+function projMaxTotalPts(project) {
+  // Max possible = all habits every day + all tasks once
+  const start = new Date(project.startDate);
+  const duration = project.duration || 90;
+  let taskPts = 0, habitPts = 0;
+  project.categories.forEach(cat => {
+    cat.items.forEach(item => {
+      if (item.type === 'task') { taskPts += 2; return; }
+      // Count active days over project duration
+      let activeDays = 0;
+      for (let i = 0; i < duration; i++) {
+        const d = new Date(start); d.setDate(d.getDate() + i);
+        if (isItemActiveToday(item, d)) activeDays++;
+      }
+      habitPts += activeDays;
+    });
+  });
+  return habitPts + taskPts;
 }
 
 function projCalcTotal(project) {
   if (!project) return 0;
   let total = 0;
-  Object.keys(project.days || {}).forEach(key => {
-    total += projCalcDayPts(project.days[key], project);
+  const countedTasks = new Set(); // tasks count only once
+  Object.keys(project.days || {}).sort().forEach(dayKey => {
+    const dd = project.days[dayKey];
+    const d = new Date(...dayKey.split('-').map((v,i)=>i===1?v-1:v));
+    project.categories.forEach(cat => {
+      cat.items.forEach(item => {
+        const key = cat.id + '_' + item.id;
+        if (!dd[key]) return;
+        if (item.type === 'task') {
+          if (!countedTasks.has(key)) { total += 2; countedTasks.add(key); }
+        } else {
+          if (isItemActiveToday(item, d)) total += 1;
+        }
+      });
+    });
   });
   return total;
 }
@@ -1515,8 +1556,7 @@ function projCheckAdaptation(project) {
 // PROJECT COACH — Rewards calculation
 // ============================================================
 function projCalcRewards(project) {
-  const maxPts = projMaxDayPts(project);
-  const duration = project.duration || 30;
+  const maxPts = projMaxTotalPts ? projMaxTotalPts(project) : (projMaxDayPts(project) * (project.duration||90));
   const budget = project.budget || 0;
   
   const TIERS = [
@@ -1532,7 +1572,7 @@ function projCalcRewards(project) {
 
   return TIERS.map((tier, i) => ({
     id: `r${i+1}`,
-    threshold: Math.round(tier.pct * duration * maxPts),
+    threshold: Math.max(1, Math.round(tier.pct * maxPts)),
     payout: Math.round(tier.budgetPct * budget),
     pct: Math.round(tier.pct * 100),
     budgetPct: Math.round(tier.budgetPct * 100),
@@ -1817,12 +1857,8 @@ function projToggle(el) {
   project.days[vkey][key] = !isChecked;
   const ptsAfter = projCalcDayPts(project.days[vkey], project);
   
-  // Recalculate total from scratch to stay accurate
-  let newTotal = 0;
-  Object.keys(project.days).forEach(k => {
-    newTotal += projCalcDayPts(project.days[k], project);
-  });
-  project.totalPoints = newTotal;
+  // Recalculate total from scratch
+  project.totalPoints = projCalcTotal(project);
 
   // Check adaptation
   const adapted = projCheckAdaptation(project);
@@ -2688,8 +2724,7 @@ function renderDashboard(project) {
       <div class="proj-section-head">
         <span class="proj-section-icon">${cat.emoji}</span>
         <span class="proj-section-title">${cat.name}</span>
-        <span class="proj-section-pts ${isDone ? 'done' : ''}">${catPts}/${cat.pts} pkt</span>
-        <span class="proj-logic-badge">${cat.logic === 'all' ? 'wszystkie' : 'dowolne'}</span>
+        <span class="proj-section-pts ${catPts > 0 ? 'done' : ''}">${catPts} pkt dziś</span>
       </div>
       <div class="proj-habit-list">${itemsHTML}</div>
     </div>`;
