@@ -626,43 +626,42 @@ function syncAll(){
       };
       remoteProject.totalPoints = projCalcTotal(remoteProject);
 
-      if (localProjects.length === 0) {
-        // No local data at all — load from remote
-        localStorage.setItem(PROJ_KEY, JSON.stringify(meta.projects.map(p => p.id===remoteActiveId ? remoteProject : p)));
-        localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
-        console.log('Loaded from Sheets:', remoteProject.name);
-        renderCoach();
-      } else if (localActive && localActive.id === remoteActiveId) {
-        // Same active project — merge days only (local wins for structure)
-        const before = Object.keys(localActive.days||{}).length;
-        // Remote days fill in gaps, local days override
-        localActive.days = Object.assign({}, remoteDays, localActive.days||{});
-        localActive.totalPoints = projCalcTotal(localActive);
+      // SHEETS DECIDES active project — local provides days history
+      const localActiveProject = localProjects.find(p => p.id === remoteActiveId);
+      
+      if (localActiveProject) {
+        // We have this project locally — merge days and activate it
+        const before = Object.keys(localActiveProject.days||{}).length;
+        localActiveProject.days = Object.assign({}, remoteDays, localActiveProject.days||{});
+        localActiveProject.totalPoints = projCalcTotal(localActiveProject);
+        
+        // Update all project statuses from remote
+        localProjects.forEach(lp => {
+          const rp = meta.projects.find(p => p.id === lp.id);
+          if (rp) lp.status = rp.status;
+        });
+        
         localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
-        const after = Object.keys(localActive.days||{}).length;
-        if (after > before) { console.log('Merged', after-before, 'days from remote'); renderCoach(); }
-      } else if (localActive && localActive.id !== remoteActiveId) {
-        // Local has different active project — LOCAL WINS, just add remote days to its project if exists
-        const remoteInLocal = localProjects.find(p => p.id === remoteActiveId);
-        if (remoteInLocal && Object.keys(remoteDays).length > 0) {
-          const before = Object.keys(remoteInLocal.days||{}).length;
-          remoteInLocal.days = Object.assign({}, remoteDays, remoteInLocal.days||{});
-          remoteInLocal.totalPoints = projCalcTotal(remoteInLocal);
-          const after = Object.keys(remoteInLocal.days||{}).length;
-          if (after > before) {
-            localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
-            console.log('Merged remote days into non-active project');
-          }
+        localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
+        
+        const after = Object.keys(localActiveProject.days||{}).length;
+        const changed = after !== before || (localActive && localActive.id !== remoteActiveId);
+        if (changed) { 
+          console.log('Synced active project:', localActiveProject.name, 'days:', after);
+          renderCoach(); 
         }
-        console.log('Local project wins:', localActive.name);
-      } else if (!localActive) {
-        // No local active — use remote
-        const idx = localProjects.findIndex(p => p.id === remoteActiveId);
-        if (idx >= 0) localProjects[idx] = remoteProject;
-        else localProjects.push(remoteProject);
-        localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
+      } else {
+        // Don't have this project locally — load everything from remote
+        const allProjects = meta.projects.map(p => 
+          p.id === remoteActiveId ? remoteProject : p
+        );
+        // Keep any local-only projects
+        localProjects.forEach(lp => {
+          if (!allProjects.find(p => p.id === lp.id)) allProjects.push(lp);
+        });
+        localStorage.setItem(PROJ_KEY, JSON.stringify(allProjects));
         localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
-        console.log('No local active, loaded remote:', remoteProject.name);
+        console.log('Loaded remote project:', remoteProject.name);
         renderCoach();
       }
     } catch(e) { console.log('Sync error:', e); }
