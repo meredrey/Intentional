@@ -601,7 +601,12 @@ function syncAll(){
       for (let i = 0; i <= 9; i++) {
         const sheet = i === 0 ? 'CoachDays' : `CoachDays${i+1}`;
         const chunk = await sheetRead(sheet);
-        if (!chunk || !chunk.days || chunk.id !== remoteActiveId) { if(i > 0) break; continue; }
+        // Skip chunks from different project
+        if (!chunk || !chunk.days) { if(i > 0) break; continue; }
+        if (chunk.id && chunk.id !== remoteActiveId) { 
+          console.log(`${sheet}: belongs to different project, skipping`);
+          if(i > 0) break; continue; 
+        }
         Object.assign(remoteDays, chunk.days);
         if (Object.keys(chunk.days).length < 30) break;
       }
@@ -1437,8 +1442,11 @@ function syncProjectsToSheets(projects) {
   // CoachDays chunks: 30 days each (fits in GET ~7000 chars)
   const days = active.days || {};
   const dayKeys = Object.keys(days).sort();
+  // Always write CoachDays (even if empty) to overwrite any old project data
   if (!dayKeys.length) {
     sheetWriteGET('CoachDays', {v:2, id:active.id, chunk:0, days:{}});
+    // Clear old chunk sheets too
+    sheetWriteGET('CoachDays2', {v:2, id:active.id, chunk:1, days:{}});
     return;
   }
   const CHUNK = 30;
