@@ -578,7 +578,16 @@ function sheetWrite(sheet,data){
     .then(r=>console.log('write ok:', JSON.stringify(r)))
     .catch(e=>console.log('write err',e));
 }
-function sheetRead(sheet){return fetch(`${SHEETS_API}?action=read&sheet=${sheet}`,{redirect:'follow'}).then(r=>r.json()).catch(()=>null)}
+function sheetRead(sheet){
+  return fetch(`${SHEETS_API}?action=read&sheet=${sheet}`)
+    .then(r=>r.json())
+    .catch(()=>
+      // Safari fallback: try with no-cors mode (returns opaque, parse from URL)
+      fetch(`${SHEETS_API}?action=read&sheet=${sheet}`, {mode:'no-cors'})
+        .then(()=>null)
+        .catch(()=>null)
+    );
+}
 function syncAll(){
   // Read project data from CoachDays
   (async () => {
@@ -2280,22 +2289,62 @@ function projSaveEdit() {
 }
 
 
-function syncAndReload() {
+async function syncAndReload() {
   showToast('Synchronizowanie...');
-  sheetRead('CoachData').then(r => {
-    if (!r || typeof r !== 'object') { showToast('Brak danych w Sheets'); return; }
-    if (r.projects && Array.isArray(r.projects)) {
-      localStorage.setItem(PROJ_KEY, JSON.stringify(r.projects));
-      const activeProj = r.projects.find(p => p.status === 'active');
-      if (activeProj) localStorage.setItem(PROJ_ACTIVE_KEY, activeProj.id);
-      renderCoach();
-      showToast('Dane zsynchronizowane! ✓');
-    } else {
-      showToast('Stary format — migrowanie...');
-      migrateOldProject();
-      renderCoach();
+  try {
+    const meta = await sheetRead('CoachData');
+    if (!meta || !meta.projects || meta.v !== 2) {
+      showToast('Brak danych w Sheets');
+      return;
     }
-  }).catch(() => showToast('Błąd połączenia z Sheets'));
+    const remoteActiveId = meta.activeId;
+    
+    // Read structure
+    const structure = await sheetRead('CoachStructure');
+    
+    // Read days
+    let remoteDays = {};
+    for (let i = 0; i <= 9; i++) {
+      const sheet = i === 0 ? 'CoachDays' : `CoachDays${i+1}`;
+      const chunk = await sheetRead(sheet);
+      if (!chunk || !chunk.days) { if(i > 0) break; continue; }
+      if (chunk.id && chunk.id !== remoteActiveId) { if(i > 0) break; continue; }
+      Object.assign(remoteDays, chunk.days);
+      if (Object.keys(chunk.days).length < 30) break;
+    }
+
+    // Build remote project
+    const remoteMeta = meta.projects.find(p => p.id === remoteActiveId);
+    if (!remoteMeta) { showToast('Brak aktywnego projektu w Sheets'); return; }
+    
+    const localProjects = projectsGet();
+    const localVersion = localProjects.find(p => p.id === remoteActiveId);
+    
+    const remoteProject = {
+      ...remoteMeta,
+      categories: (structure && structure.id === remoteActiveId) 
+        ? structure.categories 
+        : (localVersion ? localVersion.categories : []),
+      rewards: (structure && structure.id === remoteActiveId)
+        ? structure.rewards
+        : (localVersion ? localVersion.rewards : []),
+      days: Object.assign({}, remoteDays, localVersion ? (localVersion.days||{}) : {}),
+    };
+    remoteProject.totalPoints = projCalcTotal(remoteProject);
+
+    // Update local storage
+    const allProjects = meta.projects.map(p => p.id === remoteActiveId ? remoteProject : p);
+    localProjects.forEach(lp => {
+      if (!allProjects.find(p => p.id === lp.id)) allProjects.push(lp);
+    });
+    localStorage.setItem(PROJ_KEY, JSON.stringify(allProjects));
+    localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
+    renderCoach();
+    showToast('Zsynchronizowano! ✓');
+  } catch(e) {
+    showToast('Błąd połączenia z Sheets');
+    console.log('syncAndReload error:', e);
+  }
 }
 
 
