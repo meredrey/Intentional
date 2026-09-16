@@ -585,6 +585,9 @@ function syncAll(){
     if (!meta || !meta.projects || meta.v !== 2) return;
     const remoteActiveId = meta.activeId;
 
+    // Read full structure from CoachStructure
+    const structure = await sheetRead('CoachStructure');
+
     // Read all day chunks
     let remoteDays = {};
     for (let i = 0; i <= 9; i++) {
@@ -592,48 +595,49 @@ function syncAll(){
       const chunk = await sheetRead(sheetName);
       if (!chunk || !chunk.days || chunk.id !== remoteActiveId) { if(i>0) break; continue; }
       Object.assign(remoteDays, chunk.days);
-      if (Object.keys(chunk.days).length < 30) break; // last chunk
+      if (Object.keys(chunk.days).length < 30) break;
     }
     console.log('Remote days loaded:', Object.keys(remoteDays).length);
 
     const localProjects = projectsGet();
+    const localActive = localProjects.find(p => p.status === 'active');
+
+    // Build full remote project from meta + structure + days
+    const remoteMeta = meta.projects.find(p => p.id === remoteActiveId);
+    const remoteProject = remoteMeta ? {
+      ...remoteMeta,
+      categories: structure?.id === remoteActiveId ? structure.categories : (localActive?.categories || []),
+      rewards: structure?.id === remoteActiveId ? structure.rewards : (localActive?.rewards || []),
+      days: remoteDays,
+    } : null;
+
+    if (!remoteProject) return;
+
     if (localProjects.length === 0) {
-      const merged = meta.projects.map(p =>
-        p.id === remoteActiveId ? {...p, days: remoteDays} : p
-      );
-      localStorage.setItem(PROJ_KEY, JSON.stringify(merged));
-      if (remoteActiveId) localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
-      console.log('Loaded', merged.length, 'projects from Sheets ✓');
+      remoteProject.totalPoints = projCalcTotal(remoteProject);
+      localStorage.setItem(PROJ_KEY, JSON.stringify([remoteProject]));
+      localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
+      console.log('Loaded project from Sheets ✓:', remoteProject.name);
       renderCoach();
+    } else if (localActive && localActive.id === remoteActiveId) {
+      // Same project — merge days, keep local structure
+      const before = Object.keys(localActive.days||{}).length;
+      localActive.days = Object.assign({}, remoteDays, localActive.days||{});
+      localActive.totalPoints = projCalcTotal(localActive);
+      localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
+      const after = Object.keys(localActive.days||{}).length;
+      if (after > before) { console.log('Merged', after-before, 'days from remote'); renderCoach(); }
     } else {
-      const localActive = localProjects.find(p => p.status === 'active');
-      if (localActive && localActive.id === remoteActiveId) {
-        // Same active project — merge days (prefer local for same day)
-        const before = Object.keys(localActive.days||{}).length;
-        localActive.days = Object.assign({}, remoteDays, localActive.days||{});
-        localActive.totalPoints = projCalcTotal(localActive);
-        localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
-        const after = Object.keys(localActive.days||{}).length;
-        if (after > before) { console.log('Merged', after-before, 'days from remote'); renderCoach(); }
-      } else if (remoteActiveId) {
-        // Different active project on remote — remote wins, replace local
-        // Keep local projects list but update with remote versions + days
-        const remoteProject = meta.projects.find(p => p.id === remoteActiveId);
-        if (remoteProject) {
-          // Mark local active as on-hold
-          if (localActive) localActive.status = 'on-hold';
-          // Add or update remote project with days
-          const existingIdx = localProjects.findIndex(p => p.id === remoteActiveId);
-          const withDays = {...remoteProject, days: remoteDays};
-          withDays.totalPoints = projCalcTotal(withDays);
-          if (existingIdx >= 0) localProjects[existingIdx] = withDays;
-          else localProjects.push(withDays);
-          localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
-          localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
-          console.log('Switched to remote project:', remoteProject.name);
-          renderCoach();
-        }
-      }
+      // Different project — remote wins
+      if (localActive) localActive.status = 'on-hold';
+      remoteProject.totalPoints = projCalcTotal(remoteProject);
+      const existingIdx = localProjects.findIndex(p => p.id === remoteActiveId);
+      if (existingIdx >= 0) localProjects[existingIdx] = remoteProject;
+      else localProjects.push(remoteProject);
+      localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
+      localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
+      console.log('Switched to remote project:', remoteProject.name);
+      renderCoach();
     }
   }).catch(e => console.log('CoachData read error:', e));
   sheetRead('LifeGoals').then(r=>{
@@ -1386,13 +1390,33 @@ function sheetWriteGET(sheet, data) {
 function syncProjectsToSheets(projects) {
   const active = projects.find(p => p.status === 'active');
 
-  // 1. CoachData — project metadata without days (small, always fits in GET)
+  // 1. CoachData — minimal metadata only (just IDs + names, fits in GET)
   const meta = {
     v: 2,
     activeId: active ? active.id : null,
-    projects: projects.map(p => ({...p, days: {}})),
+    projects: projects.map(p => ({
+      id: p.id,
+      name: p.name,
+      status: p.status,
+      startDate: p.startDate,
+      duration: p.duration,
+      budget: p.budget,
+      totalPoints: p.totalPoints,
+      adaptiveCycle: p.adaptiveCycle || 0,
+    })),
   };
   sheetWriteGET('CoachData', meta);
+
+  // 2. CoachStructure — full project structure (categories, rewards) without days
+  if (active) {
+    const structure = {
+      v: 2,
+      id: active.id,
+      categories: active.categories,
+      rewards: active.rewards || [],
+    };
+    sheetWriteGET('CoachStructure', structure);
+  }
 
   // 2. CoachDays — active project days in chunks of 30 (fits in GET)
   if (!active) return;
