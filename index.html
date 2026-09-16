@@ -583,6 +583,11 @@ function syncAll(){
   // Read project data from CoachDays
   (async () => {
     try {
+      // Don't read if we just wrote (prevents race condition)
+      if (Date.now() - _lastWriteTime < 15000) {
+        console.log('Sync read skipped (just wrote)');
+        return;
+      }
       // Read metadata
       const meta = await sheetRead('CoachData');
       if (!meta || !meta.projects || meta.v !== 2) return;
@@ -617,27 +622,42 @@ function syncAll(){
       remoteProject.totalPoints = projCalcTotal(remoteProject);
 
       if (localProjects.length === 0) {
+        // No local data at all — load from remote
         localStorage.setItem(PROJ_KEY, JSON.stringify(meta.projects.map(p => p.id===remoteActiveId ? remoteProject : p)));
         localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
         console.log('Loaded from Sheets:', remoteProject.name);
         renderCoach();
       } else if (localActive && localActive.id === remoteActiveId) {
-        // Same project - merge days
+        // Same active project — merge days only (local wins for structure)
         const before = Object.keys(localActive.days||{}).length;
+        // Remote days fill in gaps, local days override
         localActive.days = Object.assign({}, remoteDays, localActive.days||{});
         localActive.totalPoints = projCalcTotal(localActive);
         localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
         const after = Object.keys(localActive.days||{}).length;
-        if (after > before) { console.log('Merged', after-before, 'days'); renderCoach(); }
-      } else {
-        // Different project - remote wins
-        if (localActive) localActive.status = 'on-hold';
+        if (after > before) { console.log('Merged', after-before, 'days from remote'); renderCoach(); }
+      } else if (localActive && localActive.id !== remoteActiveId) {
+        // Local has different active project — LOCAL WINS, just add remote days to its project if exists
+        const remoteInLocal = localProjects.find(p => p.id === remoteActiveId);
+        if (remoteInLocal && Object.keys(remoteDays).length > 0) {
+          const before = Object.keys(remoteInLocal.days||{}).length;
+          remoteInLocal.days = Object.assign({}, remoteDays, remoteInLocal.days||{});
+          remoteInLocal.totalPoints = projCalcTotal(remoteInLocal);
+          const after = Object.keys(remoteInLocal.days||{}).length;
+          if (after > before) {
+            localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
+            console.log('Merged remote days into non-active project');
+          }
+        }
+        console.log('Local project wins:', localActive.name);
+      } else if (!localActive) {
+        // No local active — use remote
         const idx = localProjects.findIndex(p => p.id === remoteActiveId);
         if (idx >= 0) localProjects[idx] = remoteProject;
         else localProjects.push(remoteProject);
         localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
         localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
-        console.log('Switched to:', remoteProject.name);
+        console.log('No local active, loaded remote:', remoteProject.name);
         renderCoach();
       }
     } catch(e) { console.log('Sync error:', e); }
@@ -1379,7 +1399,10 @@ function projectsSet(projects) {
   syncProjectsToSheets(projects);
 }
 
+let _lastWriteTime = 0;
+
 function sheetWriteGET(sheet, data) {
+  _lastWriteTime = Date.now();
   const encoded = encodeURIComponent(JSON.stringify(data));
   return fetch(`${SHEETS_API}?action=write&sheet=${sheet}&data=${encoded}`, {redirect:'follow'})
     .then(r => r.json())
