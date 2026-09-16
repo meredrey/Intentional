@@ -608,19 +608,31 @@ function syncAll(){
     } else {
       const localActive = localProjects.find(p => p.status === 'active');
       if (localActive && localActive.id === remoteActiveId) {
+        // Same active project — merge days (prefer local for same day)
         const before = Object.keys(localActive.days||{}).length;
         localActive.days = Object.assign({}, remoteDays, localActive.days||{});
         localActive.totalPoints = projCalcTotal(localActive);
         localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
         const after = Object.keys(localActive.days||{}).length;
         if (after > before) { console.log('Merged', after-before, 'days from remote'); renderCoach(); }
-      } else if (!localActive && remoteActiveId) {
-        const merged = meta.projects.map(p =>
-          p.id === remoteActiveId ? {...p, days: remoteDays} : p
-        );
-        localStorage.setItem(PROJ_KEY, JSON.stringify(merged));
-        localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
-        renderCoach();
+      } else if (remoteActiveId) {
+        // Different active project on remote — remote wins, replace local
+        // Keep local projects list but update with remote versions + days
+        const remoteProject = meta.projects.find(p => p.id === remoteActiveId);
+        if (remoteProject) {
+          // Mark local active as on-hold
+          if (localActive) localActive.status = 'on-hold';
+          // Add or update remote project with days
+          const existingIdx = localProjects.findIndex(p => p.id === remoteActiveId);
+          const withDays = {...remoteProject, days: remoteDays};
+          withDays.totalPoints = projCalcTotal(withDays);
+          if (existingIdx >= 0) localProjects[existingIdx] = withDays;
+          else localProjects.push(withDays);
+          localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
+          localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
+          console.log('Switched to remote project:', remoteProject.name);
+          renderCoach();
+        }
       }
     }
   }).catch(e => console.log('CoachData read error:', e));
@@ -1855,7 +1867,7 @@ function projToggleTask(el) {
   if (!project.days[today]) project.days[today] = {};
   project.days[today][key] = true;
   projectsSet(projects);
-  toast('📌 Zadanie ukończone! ✓');
+  showToast('📌 Zadanie ukończone! ✓');
   renderCoach();
 }
 
