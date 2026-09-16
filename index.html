@@ -580,46 +580,50 @@ function sheetWrite(sheet,data){
 }
 function sheetRead(sheet){return fetch(`${SHEETS_API}?action=read&sheet=${sheet}`,{redirect:'follow'}).then(r=>r.json()).catch(()=>null)}
 function syncAll(){
-  // Read project data from CoachDays
-  sheetRead('CoachDays').then(r=>{
-    if(!r||typeof r!=='object') return;
-    if(r.projects && Array.isArray(r.projects) && r.v === 2) {
-      const localProjects = projectsGet();
-      const remoteActiveId = r.activeId;
-      const remoteDays = r.activeDays || {};
-      
-      if(localProjects.length === 0) {
-        // Phone has no data - load everything from remote
-        const merged = r.projects.map(p => {
-          if(p.id === remoteActiveId) return {...p, days: remoteDays};
-          return p;
-        });
+  // Read metadata from CoachData, then days from CoachDays chunks
+  sheetRead('CoachData').then(async meta => {
+    if (!meta || !meta.projects || meta.v !== 2) return;
+    const remoteActiveId = meta.activeId;
+
+    // Read all day chunks
+    let remoteDays = {};
+    for (let i = 0; i <= 9; i++) {
+      const sheetName = i === 0 ? 'CoachDays' : `CoachDays${i+1}`;
+      const chunk = await sheetRead(sheetName);
+      if (!chunk || !chunk.days || chunk.id !== remoteActiveId) { if(i>0) break; continue; }
+      Object.assign(remoteDays, chunk.days);
+      if (Object.keys(chunk.days).length < 30) break; // last chunk
+    }
+    console.log('Remote days loaded:', Object.keys(remoteDays).length);
+
+    const localProjects = projectsGet();
+    if (localProjects.length === 0) {
+      const merged = meta.projects.map(p =>
+        p.id === remoteActiveId ? {...p, days: remoteDays} : p
+      );
+      localStorage.setItem(PROJ_KEY, JSON.stringify(merged));
+      if (remoteActiveId) localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
+      console.log('Loaded', merged.length, 'projects from Sheets ✓');
+      renderCoach();
+    } else {
+      const localActive = localProjects.find(p => p.status === 'active');
+      if (localActive && localActive.id === remoteActiveId) {
+        const before = Object.keys(localActive.days||{}).length;
+        localActive.days = Object.assign({}, remoteDays, localActive.days||{});
+        localActive.totalPoints = projCalcTotal(localActive);
+        localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
+        const after = Object.keys(localActive.days||{}).length;
+        if (after > before) { console.log('Merged', after-before, 'days from remote'); renderCoach(); }
+      } else if (!localActive && remoteActiveId) {
+        const merged = meta.projects.map(p =>
+          p.id === remoteActiveId ? {...p, days: remoteDays} : p
+        );
         localStorage.setItem(PROJ_KEY, JSON.stringify(merged));
-        if(remoteActiveId) localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
-        console.log('Loaded', merged.length, 'projects from Sheets');
+        localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
         renderCoach();
-      } else {
-        // Merge: union of days, prefer local for same day
-        const localActive = localProjects.find(p => p.status === 'active');
-        if(localActive && localActive.id === remoteActiveId) {
-          const before = Object.keys(localActive.days||{}).length;
-          localActive.days = Object.assign({}, remoteDays, localActive.days||{});
-          localActive.totalPoints = projCalcTotal(localActive);
-          localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
-          const after = Object.keys(localActive.days||{}).length;
-          if(after > before) { console.log('Merged', after-before, 'days from remote'); renderCoach(); }
-        } else if(!localActive && remoteActiveId) {
-          const merged = r.projects.map(p => {
-            if(p.id === remoteActiveId) return {...p, days: remoteDays};
-            return p;
-          });
-          localStorage.setItem(PROJ_KEY, JSON.stringify(merged));
-          localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
-          renderCoach();
-        }
       }
     }
-  }).catch(e=>console.log('CoachDays read error:', e));
+  }).catch(e => console.log('CoachData read error:', e));
   sheetRead('LifeGoals').then(r=>{
     if(!r||typeof r!=='object') return;
     // Merge: don't overwrite local customGoals or wheel data with old Sheets data
@@ -1357,24 +1361,44 @@ function projectsSet(projects) {
   syncProjectsToSheets(projects);
 }
 
+function sheetWriteGET(sheet, data) {
+  // GET-based write — works cross-origin without CORS issues
+  const encoded = encodeURIComponent(JSON.stringify(data));
+  const url = `${SHEETS_API}?action=write&sheet=${sheet}&data=${encoded}`;
+  return fetch(url, {redirect:'follow'})
+    .then(r => r.json())
+    .then(r => { console.log(`${sheet}:`, r.success ? 'ok ✓' : r.error); return r; })
+    .catch(e => console.log(`${sheet} err:`, e));
+}
+
 function syncProjectsToSheets(projects) {
   const active = projects.find(p => p.status === 'active');
-  const toSave = {
-    v: 2, // version marker
-    projects: projects.map(p => ({...p, days: {}})), // metadata without days
+
+  // 1. CoachData — project metadata without days (small, always fits in GET)
+  const meta = {
+    v: 2,
     activeId: active ? active.id : null,
-    activeDays: active ? (active.days || {}) : {}
+    projects: projects.map(p => ({...p, days: {}})),
   };
-  const json = JSON.stringify(toSave);
-  console.log('Saving to CoachDays, size:', json.length, 'chars');
-  // Use no-cors POST - bypasses CORS preflight
-  const payload = JSON.stringify({action:'write', sheet:'CoachDays', data: json});
-  fetch(SHEETS_API, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: payload
-  }).then(()=>console.log('CoachDays synced ✓'))
-    .catch(e=>console.log('sync error:', e));
+  sheetWriteGET('CoachData', meta);
+
+  // 2. CoachDays — active project days in chunks of 30 (fits in GET)
+  if (!active) return;
+  const days = active.days || {};
+  const dayKeys = Object.keys(days).sort();
+  const CHUNK = 30;
+
+  for (let i = 0; i < dayKeys.length; i += CHUNK) {
+    const chunkKeys = dayKeys.slice(i, i + CHUNK);
+    const chunkDays = {};
+    chunkKeys.forEach(k => chunkDays[k] = days[k]);
+    const sheetName = i === 0 ? 'CoachDays' : `CoachDays${Math.floor(i/CHUNK)+1}`;
+    sheetWriteGET(sheetName, {v:2, id: active.id, chunk: Math.floor(i/CHUNK), days: chunkDays});
+  }
+  // If no days yet, write empty
+  if (!dayKeys.length) {
+    sheetWriteGET('CoachDays', {v:2, id: active.id, chunk:0, days:{}});
+  }
 }
 
 
