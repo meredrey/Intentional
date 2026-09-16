@@ -580,26 +580,37 @@ function sheetWrite(sheet,data){
 }
 function sheetRead(sheet){return fetch(`${SHEETS_API}?action=read&sheet=${sheet}`,{redirect:'follow'}).then(r=>r.json()).catch(()=>null)}
 function syncAll(){
-  // Read project data from CoachDays
-  sheetRead('CoachDays').then(r=>{
-    if(!r||typeof r!=='object') return;
-    if(r.projects && Array.isArray(r.projects) && r.v === 2) {
+  // Read project metadata from CoachData
+  sheetRead('CoachData').then(meta => {
+    if(!meta||!meta.projects||!Array.isArray(meta.projects)||meta.v!==2) return;
+    const remoteActiveId = meta.activeId;
+
+    // Read days from CoachDays chunks
+    const readChunks = async () => {
+      const header = await sheetRead('CoachDays');
+      if (!header || !header.projectId) return {};
+      const totalChunks = header.totalChunks || 1;
+      let allDays = {};
+      // Read chunk 0 (CoachDays) then CoachDays2, CoachDays3...
+      if (header.days) Object.assign(allDays, header.days);
+      for (let i = 1; i < totalChunks; i++) {
+        const chunk = await sheetRead(`CoachDays${i+1}`);
+        if (chunk && chunk.days) Object.assign(allDays, chunk.days);
+      }
+      return allDays;
+    };
+
+    readChunks().then(remoteDays => {
       const localProjects = projectsGet();
-      const remoteActiveId = r.activeId;
-      const remoteDays = r.activeDays || {};
-      
       if(localProjects.length === 0) {
-        // Phone has no data - load everything from remote
-        const merged = r.projects.map(p => {
-          if(p.id === remoteActiveId) return {...p, days: remoteDays};
-          return p;
-        });
+        const merged = meta.projects.map(p =>
+          p.id === remoteActiveId ? {...p, days: remoteDays} : p
+        );
         localStorage.setItem(PROJ_KEY, JSON.stringify(merged));
         if(remoteActiveId) localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
         console.log('Loaded', merged.length, 'projects from Sheets');
         renderCoach();
       } else {
-        // Merge: union of days, prefer local for same day
         const localActive = localProjects.find(p => p.status === 'active');
         if(localActive && localActive.id === remoteActiveId) {
           const before = Object.keys(localActive.days||{}).length;
@@ -607,19 +618,19 @@ function syncAll(){
           localActive.totalPoints = projCalcTotal(localActive);
           localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
           const after = Object.keys(localActive.days||{}).length;
-          if(after > before) { console.log('Merged', after-before, 'days from remote'); renderCoach(); }
+          if(after !== before) { renderCoach(); }
+          console.log('Synced. Local days:', after, 'Remote days:', Object.keys(remoteDays).length);
         } else if(!localActive && remoteActiveId) {
-          const merged = r.projects.map(p => {
-            if(p.id === remoteActiveId) return {...p, days: remoteDays};
-            return p;
-          });
+          const merged = meta.projects.map(p =>
+            p.id === remoteActiveId ? {...p, days: remoteDays} : p
+          );
           localStorage.setItem(PROJ_KEY, JSON.stringify(merged));
           localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
           renderCoach();
         }
       }
-    }
-  }).catch(e=>console.log('CoachDays read error:', e));
+    });
+  }).catch(e=>console.log('Sync read error:', e));
   sheetRead('LifeGoals').then(r=>{
     if(!r||typeof r!=='object') return;
     // Merge: don't overwrite local customGoals or wheel data with old Sheets data
@@ -883,19 +894,19 @@ function calcHabitTotal(state, habitId) {
 function init() {
   // Render coach panel (new project system)
   renderCoach();
-  // Force push local data to Sheets on startup
+  // Force push local projects to Sheets on startup (overwrites old format)
   setTimeout(() => {
     const projects = projectsGet();
     if (projects.length > 0) {
       console.log('Force syncing', projects.length, 'projects to Sheets...');
       syncProjectsToSheets(projects);
     }
-  }, 1000);
-  // Sync from Sheets in background
-  syncFromSheets();
-  setInterval(syncFromSheets, 30000);
+  }, 2000);
+  // Pull from Sheets after push (in case other device has newer data)
+  setTimeout(() => syncAll(), 5000);
+  setInterval(syncAll, 30000);
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') syncFromSheets();
+    if (document.visibilityState === 'visible') syncAll();
   });
 }
 
@@ -1359,22 +1370,51 @@ function projectsSet(projects) {
 
 function syncProjectsToSheets(projects) {
   const active = projects.find(p => p.status === 'active');
-  const toSave = {
-    v: 2, // version marker
-    projects: projects.map(p => ({...p, days: {}})), // metadata without days
+
+  // 1. Save metadata (no days) to CoachData — small, fits in GET
+  const meta = {
+    v: 2,
+    projects: projects.map(p => ({...p, days: {}})),
     activeId: active ? active.id : null,
-    activeDays: active ? (active.days || {}) : {}
   };
-  const json = JSON.stringify(toSave);
-  console.log('Saving to CoachDays, size:', json.length, 'chars');
-  // Use no-cors POST - bypasses CORS preflight
-  const payload = JSON.stringify({action:'write', sheet:'CoachDays', data: json});
-  fetch(SHEETS_API, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: payload
-  }).then(()=>console.log('CoachDays synced ✓'))
-    .catch(e=>console.log('sync error:', e));
+  const metaEncoded = encodeURIComponent(JSON.stringify(meta));
+  fetch(`${SHEETS_API}?action=write&sheet=CoachData&data=${metaEncoded}`, {redirect:'follow'})
+    .then(r => r.json())
+    .then(r => console.log('CoachData meta:', r.success ? 'ok ✓' : r.error))
+    .catch(e => console.log('CoachData write err:', e));
+
+  // 2. Save active project days to CoachDays in chunks if needed
+  if (!active) return;
+  const days = active.days || {};
+  const dayKeys = Object.keys(days).sort();
+  
+  // Split days into chunks of 30 to stay under URL limit
+  const CHUNK = 30;
+  const chunks = [];
+  for (let i = 0; i < dayKeys.length; i += CHUNK) {
+    const chunkKeys = dayKeys.slice(i, i + CHUNK);
+    const chunkDays = {};
+    chunkKeys.forEach(k => chunkDays[k] = days[k]);
+    chunks.push(chunkDays);
+  }
+
+  // Write chunk index to CoachDays (header)
+  const header = {v:2, projectId: active.id, totalChunks: chunks.length};
+  fetch(`${SHEETS_API}?action=write&sheet=CoachDays&data=${encodeURIComponent(JSON.stringify(header))}`, {redirect:'follow'})
+    .then(r => r.json())
+    .then(() => {
+      // Write each chunk to CoachDays1, CoachDays2, etc.
+      chunks.forEach((chunk, i) => {
+        const sheetName = i === 0 ? 'CoachDays' : `CoachDays${i+1}`;
+        const data = {v:2, projectId: active.id, chunk: i, days: chunk};
+        const encoded = encodeURIComponent(JSON.stringify(data));
+        fetch(`${SHEETS_API}?action=write&sheet=${sheetName}&data=${encoded}`, {redirect:'follow'})
+          .then(r => r.json())
+          .then(r => console.log(`CoachDays chunk ${i}:`, r.success ? 'ok ✓' : r.error))
+          .catch(e => console.log(`chunk ${i} err:`, e));
+      });
+    })
+    .catch(e => console.log('CoachDays header err:', e));
 }
 
 
