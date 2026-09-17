@@ -2290,9 +2290,12 @@ function projSaveEdit() {
 
 
 async function syncAndReload() {
+  alert('syncAndReload start');
   showToast('Synchronizowanie...');
   try {
+    alert('fetching CoachData...');
     const meta = await sheetRead('CoachData');
+    alert('CoachData result: ' + (meta ? JSON.stringify(meta).slice(0,100) : 'null'));
     if (!meta || !meta.projects || meta.v !== 2) {
       showToast('Brak danych w Sheets');
       return;
