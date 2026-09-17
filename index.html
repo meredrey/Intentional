@@ -578,101 +578,54 @@ function sheetWrite(sheet,data){
     .then(r=>console.log('write ok:', JSON.stringify(r)))
     .catch(e=>console.log('write err',e));
 }
-function sheetRead(sheet){
-  return fetch(`${SHEETS_API}?action=read&sheet=${sheet}`)
-    .then(r=>r.json())
-    .catch(()=>
-      // Safari fallback: try with no-cors mode (returns opaque, parse from URL)
-      fetch(`${SHEETS_API}?action=read&sheet=${sheet}`, {mode:'no-cors'})
-        .then(()=>null)
-        .catch(()=>null)
-    );
-}
+function sheetRead(sheet){return fetch(`${SHEETS_API}?action=read&sheet=${sheet}`,{redirect:'follow'}).then(r=>r.json()).catch(()=>null)}
 function syncAll(){
   // Read project data from CoachDays
+  if (Date.now() - _lastWriteTime < 15000) { console.log('Sync read skipped (just wrote)'); return; }
   (async () => {
     try {
-      // Don't read if we just wrote (prevents race condition)
-      if (Date.now() - _lastWriteTime < 15000) {
-        console.log('Sync read skipped (just wrote)');
-        return;
-      }
-      // Read metadata
       const meta = await sheetRead('CoachData');
       if (!meta || !meta.projects || meta.v !== 2) return;
       const remoteActiveId = meta.activeId;
-
-      // Read structure (categories + rewards)
       const structure = await sheetRead('CoachStructure');
-
-      // Read days chunks
       let remoteDays = {};
       for (let i = 0; i <= 9; i++) {
-        const sheet = i === 0 ? 'CoachDays' : `CoachDays${i+1}`;
-        const chunk = await sheetRead(sheet);
-        // Skip chunks from different project
-        if (!chunk || !chunk.days) { if(i > 0) break; continue; }
-        if (chunk.id && chunk.id !== remoteActiveId) { 
-          console.log(`${sheet}: belongs to different project, skipping`);
-          if(i > 0) break; continue; 
-        }
+        const sn = i === 0 ? 'CoachDays' : `CoachDays${i+1}`;
+        const chunk = await sheetRead(sn);
+        if (!chunk || !chunk.days) { if(i>0) break; continue; }
+        if (chunk.id && chunk.id !== remoteActiveId) { if(i>0) break; continue; }
         Object.assign(remoteDays, chunk.days);
         if (Object.keys(chunk.days).length < 30) break;
       }
-      console.log('Remote days:', Object.keys(remoteDays).length);
-
       const localProjects = projectsGet();
-      const localActive = localProjects.find(p => p.status === 'active');
-
-      // Build remote project
+      const localVersion = localProjects.find(p => p.id === remoteActiveId);
       const remoteMeta = meta.projects.find(p => p.id === remoteActiveId);
       if (!remoteMeta) return;
       const remoteProject = {
         ...remoteMeta,
-        categories: (structure && structure.id === remoteActiveId) ? structure.categories : (localActive && localActive.id === remoteActiveId ? localActive.categories : []),
-        rewards: (structure && structure.id === remoteActiveId) ? structure.rewards : (localActive && localActive.id === remoteActiveId ? localActive.rewards : []),
-        days: remoteDays,
+        categories: (structure && structure.id === remoteActiveId && structure.categories) ? structure.categories : (localVersion ? localVersion.categories || [] : []),
+        rewards: (structure && structure.id === remoteActiveId && structure.rewards) ? structure.rewards : (localVersion ? localVersion.rewards || [] : []),
+        days: Object.assign({}, remoteDays, localVersion ? (localVersion.days||{}) : {}),
       };
       remoteProject.totalPoints = projCalcTotal(remoteProject);
-
-      // SHEETS DECIDES active project — local provides days history
-      const localActiveProject = localProjects.find(p => p.id === remoteActiveId);
-      
-      if (localActiveProject) {
-        // We have this project locally — merge days and activate it
-        const before = Object.keys(localActiveProject.days||{}).length;
-        localActiveProject.days = Object.assign({}, remoteDays, localActiveProject.days||{});
-        localActiveProject.totalPoints = projCalcTotal(localActiveProject);
-        
-        // Update all project statuses from remote
-        localProjects.forEach(lp => {
-          const rp = meta.projects.find(p => p.id === lp.id);
-          if (rp) lp.status = rp.status;
+      if (localVersion) {
+        // Update local version with remote data
+        Object.assign(localVersion, remoteProject);
+        meta.projects.forEach(rp => {
+          const lp = localProjects.find(p => p.id === rp.id);
+          if (lp && lp.id !== remoteActiveId) lp.status = rp.status;
         });
-        
         localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
         localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
-        
-        const after = Object.keys(localActiveProject.days||{}).length;
-        const changed = after !== before || (localActive && localActive.id !== remoteActiveId);
-        if (changed) { 
-          console.log('Synced active project:', localActiveProject.name, 'days:', after);
-          renderCoach(); 
-        }
+        renderCoach();
       } else {
-        // Don't have this project locally — load everything from remote
-        const allProjects = meta.projects.map(p => 
-          p.id === remoteActiveId ? remoteProject : p
-        );
-        // Keep any local-only projects
-        localProjects.forEach(lp => {
-          if (!allProjects.find(p => p.id === lp.id)) allProjects.push(lp);
-        });
-        localStorage.setItem(PROJ_KEY, JSON.stringify(allProjects));
+        const all = meta.projects.map(p => p.id === remoteActiveId ? remoteProject : p);
+        localProjects.forEach(lp => { if (!all.find(p=>p.id===lp.id)) all.push(lp); });
+        localStorage.setItem(PROJ_KEY, JSON.stringify(all));
         localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
-        console.log('Loaded remote project:', remoteProject.name);
         renderCoach();
       }
+      console.log('Synced:', remoteProject.name);
     } catch(e) { console.log('Sync error:', e); }
   })();
   sheetRead('LifeGoals').then(r=>{
@@ -1426,7 +1379,7 @@ function sheetWriteGET(sheet, data) {
 function syncProjectsToSheets(projects) {
   const active = projects.find(p => p.status === 'active');
 
-  // CoachData: minimal meta (fits in GET ~400 chars)
+  // CoachData: minimal meta
   sheetWriteGET('CoachData', {
     v: 2,
     activeId: active ? active.id : null,
@@ -1440,21 +1393,18 @@ function syncProjectsToSheets(projects) {
 
   if (!active) return;
 
-  // CoachStructure: categories + rewards (fits in GET ~2000 chars)
+  // CoachStructure: categories + rewards
   sheetWriteGET('CoachStructure', {
     v: 2, id: active.id,
     categories: active.categories,
     rewards: active.rewards || [],
   });
 
-  // CoachDays chunks: 30 days each (fits in GET ~7000 chars)
+  // CoachDays: days in chunks of 30
   const days = active.days || {};
   const dayKeys = Object.keys(days).sort();
-  // Always write CoachDays (even if empty) to overwrite any old project data
   if (!dayKeys.length) {
     sheetWriteGET('CoachDays', {v:2, id:active.id, chunk:0, days:{}});
-    // Clear old chunk sheets too
-    sheetWriteGET('CoachDays2', {v:2, id:active.id, chunk:1, days:{}});
     return;
   }
   const CHUNK = 30;
@@ -2290,62 +2240,44 @@ function projSaveEdit() {
 
 
 async function syncAndReload() {
-  alert('syncAndReload start');
   showToast('Synchronizowanie...');
   try {
-    alert('fetching CoachData...');
     const meta = await sheetRead('CoachData');
-    alert('CoachData result: ' + (meta ? JSON.stringify(meta).slice(0,100) : 'null'));
-    if (!meta || !meta.projects || meta.v !== 2) {
-      showToast('Brak danych w Sheets');
-      return;
-    }
+    if (!meta || !meta.projects || meta.v !== 2) { showToast('Brak danych'); return; }
     const remoteActiveId = meta.activeId;
-    
-    // Read structure
     const structure = await sheetRead('CoachStructure');
-    
-    // Read days
     let remoteDays = {};
     for (let i = 0; i <= 9; i++) {
-      const sheet = i === 0 ? 'CoachDays' : `CoachDays${i+1}`;
-      const chunk = await sheetRead(sheet);
-      if (!chunk || !chunk.days) { if(i > 0) break; continue; }
-      if (chunk.id && chunk.id !== remoteActiveId) { if(i > 0) break; continue; }
+      const sn = i === 0 ? 'CoachDays' : `CoachDays${i+1}`;
+      const chunk = await sheetRead(sn);
+      if (!chunk || !chunk.days) { if(i>0) break; continue; }
+      if (chunk.id && chunk.id !== remoteActiveId) { if(i>0) break; continue; }
       Object.assign(remoteDays, chunk.days);
       if (Object.keys(chunk.days).length < 30) break;
     }
-
-    // Build remote project
-    const remoteMeta = meta.projects.find(p => p.id === remoteActiveId);
-    if (!remoteMeta) { showToast('Brak aktywnego projektu w Sheets'); return; }
-    
     const localProjects = projectsGet();
     const localVersion = localProjects.find(p => p.id === remoteActiveId);
-    
+    const remoteMeta = meta.projects.find(p => p.id === remoteActiveId);
+    if (!remoteMeta) { showToast('Brak projektu w Sheets'); return; }
     const remoteProject = {
       ...remoteMeta,
-      categories: (structure && structure.id === remoteActiveId) 
-        ? structure.categories 
-        : (localVersion ? localVersion.categories : []),
-      rewards: (structure && structure.id === remoteActiveId)
-        ? structure.rewards
-        : (localVersion ? localVersion.rewards : []),
+      categories: (structure && structure.id === remoteActiveId && structure.categories) ? structure.categories : (localVersion ? localVersion.categories||[] : []),
+      rewards: (structure && structure.id === remoteActiveId && structure.rewards) ? structure.rewards : (localVersion ? localVersion.rewards||[] : []),
       days: Object.assign({}, remoteDays, localVersion ? (localVersion.days||{}) : {}),
     };
     remoteProject.totalPoints = projCalcTotal(remoteProject);
-
-    // Update local storage
-    const allProjects = meta.projects.map(p => p.id === remoteActiveId ? remoteProject : p);
-    localProjects.forEach(lp => {
-      if (!allProjects.find(p => p.id === lp.id)) allProjects.push(lp);
+    const all = localProjects.filter(p => p.id !== remoteActiveId);
+    all.unshift(remoteProject);
+    meta.projects.forEach(rp => {
+      const lp = all.find(p => p.id === rp.id);
+      if (lp && lp.id !== remoteActiveId) lp.status = rp.status;
     });
-    localStorage.setItem(PROJ_KEY, JSON.stringify(allProjects));
+    localStorage.setItem(PROJ_KEY, JSON.stringify(all));
     localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
     renderCoach();
     showToast('Zsynchronizowano! ✓');
   } catch(e) {
-    showToast('Błąd połączenia z Sheets');
+    showToast('Błąd: ' + e.message);
     console.log('syncAndReload error:', e);
   }
 }
@@ -2719,7 +2651,6 @@ function renderDashboard(project) {
       <div class="proj-empty-sub">${hasProjects ? 
         'Masz ' + allProjects.length + ' projekt(y) — aktywuj jeden lub stwórz nowy.' : 
         'Synchronizowanie danych... lub stwórz nowy projekt.'}</div>
-      <button onclick="syncAndReload()" style="margin-top:12px;padding:10px 20px;background:#4a6741;color:#c8d9a0;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.82rem;cursor:pointer">↻ Synchronizuj dane</button>
       ${hasProjects ? 
         `<button onclick="coachView='projects';renderCoach()" class="proj-btn-primary" style="margin-top:16px">☰ Pokaż projekty</button>` : 
         `<button onclick="syncAndReload()" class="proj-btn-primary" style="margin-top:16px">↻ Synchronizuj dane</button>`}
@@ -2869,7 +2800,7 @@ function renderDashboard(project) {
         <div class="proj-project-name">${project.name}</div>
         <div style="display:flex;gap:8px">
           <button onclick="syncAndReload()" class="proj-icon-btn" title="Synchronizuj">↻</button>
-          <button onclick="coachView='projects';renderCoach()" class="proj-icon-btn" title="Projekty">☰</button>
+        <button onclick="coachView='projects';renderCoach()" class="proj-icon-btn" title="Projekty">☰</button>
           <button onclick="coachStartCreate()" class="proj-icon-btn" title="Nowy projekt">+</button>
         </div>
       </div>
@@ -2948,7 +2879,6 @@ function renderDashboard(project) {
         </div>
         <button class="btn-dark" style="background:#4a6741;width:100%" onclick="openWeeklyReview()">📋 Weekly Review</button>
         </div>
-        <button onclick="syncAndReload()" style="width:100%;padding:10px;background:none;border:1px solid #d4e8c8;border-radius:8px;color:#6a8858;font-family:'DM Sans',sans-serif;font-size:0.72rem;cursor:pointer;margin-top:6px">↻ Synchronizuj z chmurą</button>
         <div style="display:flex;gap:8px">
           <button class="btn-ghost" style="flex:1;margin-top:0" onclick="projExport()">⬇ Eksportuj dane</button>
           <button class="btn-ghost" style="flex:1;margin-top:0" onclick="document.getElementById('projImportInput').click()">⬆ Importuj dane</button>
@@ -3132,11 +3062,7 @@ function renderProjectsList() {
     <div class="proj-dashboard">
       <div class="proj-header-bar">
         <div class="proj-project-name">Moje projekty</div>
-        <button onclick="coachView='dashboard';renderCoach()" class="proj-icon-btn" style="font-size:1.2rem;padding:8px">✕</button>
-        <button onclick="coachView='dashboard';switchTab('coach')" 
-          style="background:#4a6741;color:#c8d9a0;border:none;border-radius:8px;padding:6px 12px;font-size:0.7rem;cursor:pointer;font-family:'Jost',sans-serif">
-          ← Daily
-        </button>
+        <button onclick="coachView='dashboard';renderCoach()" class="proj-icon-btn">✕</button>
       </div>
       <div style="padding:16px">
         ${projHTML}
