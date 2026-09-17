@@ -2719,6 +2719,7 @@ function renderDashboard(project) {
       <div class="proj-empty-sub">${hasProjects ? 
         'Masz ' + allProjects.length + ' projekt(y) — aktywuj jeden lub stwórz nowy.' : 
         'Synchronizowanie danych... lub stwórz nowy projekt.'}</div>
+      <button onclick="syncAndReload()" style="margin-top:12px;padding:10px 20px;background:#4a6741;color:#c8d9a0;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.82rem;cursor:pointer">↻ Synchronizuj dane</button>
       ${hasProjects ? 
         `<button onclick="coachView='projects';renderCoach()" class="proj-btn-primary" style="margin-top:16px">☰ Pokaż projekty</button>` : 
         `<button onclick="syncAndReload()" class="proj-btn-primary" style="margin-top:16px">↻ Synchronizuj dane</button>`}
@@ -2867,6 +2868,7 @@ function renderDashboard(project) {
       <div class="proj-header-bar">
         <div class="proj-project-name">${project.name}</div>
         <div style="display:flex;gap:8px">
+          <button onclick="syncAndReload()" class="proj-icon-btn" title="Synchronizuj">↻</button>
           <button onclick="coachView='projects';renderCoach()" class="proj-icon-btn" title="Projekty">☰</button>
           <button onclick="coachStartCreate()" class="proj-icon-btn" title="Nowy projekt">+</button>
         </div>
