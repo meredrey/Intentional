@@ -889,6 +889,8 @@ function calcHabitTotal(state, habitId) {
 }
 
 function init() {
+  const proj = projectsGet();
+  alert('Init: ' + proj.length + ' projektów. Active: ' + (localStorage.getItem(PROJ_ACTIVE_KEY)||'brak'));
   // Render coach panel (new project system)
   renderCoach();
   // Force push local data to Sheets on startup
