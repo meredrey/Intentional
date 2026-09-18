@@ -1691,7 +1691,9 @@ function coachCreateNext() {
         const type = row.querySelector('.cat-item-type')?.value || 'habit';
         const sc = row.querySelector('.cat-item-sc')?.value || (type==='task'?'once':'streak');
         const scVal = row.querySelector('.cat-item-scval')?.value?.trim() || '';
-        if (v) items.push({id: 'item_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), name: v, type, sc, scVal});
+        const allActive = row.querySelector('.day-pill[data-all].active');
+        const days = allActive ? null : [...row.querySelectorAll('.day-pill[data-day].active')].map(b=>parseInt(b.dataset.day));
+        if (v) items.push({id: 'item_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), name: v, type, sc, scVal, days: days&&days.length?days:null});
       });
       if (name) cats.push({id: 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2,5), name, emoji, logic, pts: 2, items});
     });
@@ -1721,17 +1723,30 @@ function coachAddCategory() {
   container.appendChild(div);
 }
 
-function itemRowHTML(placeholder, name, type, sc, scVal) {
+function itemRowHTML(placeholder, name, type, sc, scVal, days) {
   name = name || ''; type = type || 'habit'; sc = sc || (type==='task'?'once':'streak'); scVal = scVal || '';
+  const DAYS_W = ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'];
+  const allWeek = !days || !days.length;
   const scOptions = type === 'task'
     ? ['<option value="once"'+(sc==='once'?' selected':'')+'>✅ jednorazowe</option>',
        '<option value="date"'+(sc==='date'?' selected':'')+'>🗓️ przed datą</option>',
        '<option value="subjective"'+(sc==='subjective'?' selected':'')+'>⭐ subiektywnie</option>'].join('')
-    : ['<option value="streak"'+(sc==='streak'?' selected':'')+'>🔥 dni z rzędu</option>',
-       '<option value="weekly"'+(sc==='weekly'?' selected':'')+'>📅 razy/tydzień</option>',
-       '<option value="pct"'+(sc==='pct'?' selected':'')+'>📊 % dni</option>'].join('');
-  const needsVal = sc==='streak'||sc==='weekly'||sc==='pct'||sc==='date';
-  const vph = sc==='streak'?'ile dni':sc==='weekly'?'ile razy':sc==='pct'?'%':sc==='date'?'RRRR-MM-DD':'';
+    : ['<option value="pct"'+(sc==='pct'?' selected':'')+'>📊 % dni</option>',
+       '<option value="streak"'+(sc==='streak'?' selected':'')+'>🔥 z rzędu</option>',
+       '<option value="weekly_min"'+(sc==='weekly_min'?' selected':'')+'>📅 min/tydz</option>',
+       '<option value="max"'+(sc==='max'?' selected':'')+'>📉 maks/tydz</option>'].join('');
+  const needsVal = sc==='pct'||sc==='streak'||sc==='weekly_min'||sc==='max'||sc==='date';
+  const vph = sc==='pct'?'%':sc==='streak'?'dni':sc==='date'?'RRRR-MM-DD':'ile';
+
+  const daysHTML = type === 'habit' ? 
+    '<div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:5px">'
+    + '<button type="button" class="day-pill'+(allWeek?' active':'')+'" data-all="1" onclick="toggleDayPill(this)" style="padding:2px 7px;border-radius:12px;border:1px solid '+(allWeek?'#4a6741':'#d4e8c8')+';background:'+(allWeek?'#4a6741':'white')+';color:'+(allWeek?'#c8d9a0':'#6a8858')+';font-size:0.62rem;cursor:pointer">Codziennie</button>'
+    + DAYS_W.map((d,i) => {
+        const active = !allWeek && days && days.includes(i);
+        return '<button type="button" class="day-pill'+(active?' active':'')+'" data-day="'+i+'" onclick="toggleDayPill(this)" style="padding:2px 6px;border-radius:12px;border:1px solid '+(active?'#4a6741':'#d4e8c8')+';background:'+(active?'#4a6741':'white')+';color:'+(active?'#c8d9a0':'#6a8858')+';font-size:0.62rem;cursor:pointer">'+d+'</button>';
+      }).join('')
+    + '</div>' : '';
+
   return '<div class="item-row">'
     + '<div class="item-row-top">'
     + '<input class="cat-item-input create-input" placeholder="'+placeholder+'" value="'+name+'" style="flex:1">'
@@ -1739,11 +1754,37 @@ function itemRowHTML(placeholder, name, type, sc, scVal) {
     + '<option value="habit"'+(type==='habit'?' selected':'')+'>🔁</option>'
     + '<option value="task"'+(type==='task'?' selected':'')+'>📌</option>'
     + '</select></div>'
+    + daysHTML
     + '<div class="item-row-sc">'
     + '<select class="cat-item-sc create-select" style="flex:1" onchange="refreshItemRow(this)">'+scOptions+'</select>'
-    + '<input class="cat-item-scval create-input" placeholder="'+vph+'" value="'+scVal+'" style="width:80px;display:'+(needsVal?'block':'none')+'">'
+    + '<input class="cat-item-scval create-input" placeholder="'+vph+'" value="'+scVal+'" style="width:56px;display:'+(needsVal?'block':'none')+'">'
     + '</div></div>';
 }
+
+function toggleDayPill(btn) {
+  const row = btn.closest('.item-row');
+  const isAll = btn.dataset.all === '1';
+  if (isAll) {
+    // Activate "Codziennie", deactivate all others
+    row.querySelectorAll('.day-pill').forEach(b => {
+      const active = b.dataset.all === '1';
+      b.classList.toggle('active', active);
+      b.style.background = active ? '#4a6741' : 'white';
+      b.style.color = active ? '#c8d9a0' : '#6a8858';
+      b.style.borderColor = active ? '#4a6741' : '#d4e8c8';
+    });
+  } else {
+    // Toggle this day, deactivate "Codziennie"
+    const wasActive = btn.classList.contains('active');
+    btn.classList.toggle('active', !wasActive);
+    btn.style.background = wasActive ? 'white' : '#4a6741';
+    btn.style.color = wasActive ? '#6a8858' : '#c8d9a0';
+    btn.style.borderColor = wasActive ? '#d4e8c8' : '#4a6741';
+    const allBtn = row.querySelector('.day-pill[data-all]');
+    if (allBtn) { allBtn.classList.remove('active'); allBtn.style.background='white'; allBtn.style.color='#6a8858'; allBtn.style.borderColor='#d4e8c8'; }
+  }
+}
+
 
 function refreshItemRow(el) {
   const row = el.closest('.item-row');
