@@ -2614,7 +2614,12 @@ function renderCoach() {
   }
   
   // Dashboard view
-  panel.innerHTML = renderDashboard(project);
+  try {
+    panel.innerHTML = renderDashboard(project);
+  } catch(e) {
+    console.error('renderDashboard error:', e);
+    panel.innerHTML = '<div style="padding:20px;text-align:center"><div style="color:#c07060;margin-bottom:12px;font-size:0.85rem">Błąd: ' + e.message + '</div><button onclick="syncAndReload()" style="padding:10px 20px;background:#4a6741;color:#c8d9a0;border:none;border-radius:8px;cursor:pointer">↻ Synchronizuj</button></div>';
+  }
 }
 
 // ============================================================
@@ -2660,7 +2665,7 @@ function renderDashboard(project) {
   // Next reward
   const rewards = (project.rewards && project.rewards.length) ? project.rewards : (project.categories && project.categories.length ? projCalcRewards(project) : []);
   const maxThreshold = rewards.length ? rewards[rewards.length-1].threshold : 1;
-  const nextReward = rewards.find(r => totalPts < r.threshold);
+  const nextReward = rewards.length ? rewards.find(r => totalPts < r.threshold) : null;
   const lastReward = rewards.length ? [...rewards].reverse().find(r => totalPts >= r.threshold) : null;
 
   // Rewards progress bar
