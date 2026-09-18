@@ -2692,11 +2692,11 @@ function renderDashboard(project) {
 
   // Next reward
   const rewards = project.rewards || projCalcRewards(project);
-  const nextReward = rewards.find(r => totalPts < r.threshold);
+  const nextReward = (rewards||[]).find(r => r && totalPts < r.threshold);
   const lastReward = [...rewards].reverse().find(r => totalPts >= r.threshold);
 
   // Rewards progress bar
-  const maxThreshold = rewards[rewards.length-1].threshold;
+  const maxThreshold = (rewards && rewards.length) ? rewards[rewards.length-1].threshold : 1;
   const progPct = Math.min(100, (totalPts / maxThreshold) * 100);
 
   // Categories HTML
