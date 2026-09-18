@@ -2218,6 +2218,7 @@ async function syncAndReload() {
     if (!meta||!meta.projects||meta.v!==2) { showToast('Brak danych'); return; }
     const rid = meta.activeId;
     const structure = await sheetRead('CoachStructure');
+    alert('structure: ' + (structure ? 'cats:'+structure.categories?.length : 'NULL'));
     let remoteDays = {};
     for (let i=0;i<=9;i++) {
       const chunk = await sheetRead(i===0?'CoachDays':`CoachDays${i+1}`);
