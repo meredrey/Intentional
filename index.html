@@ -581,52 +581,39 @@ function sheetWrite(sheet,data){
 function sheetRead(sheet){return fetch(`${SHEETS_API}?action=read&sheet=${sheet}`,{redirect:'follow'}).then(r=>r.json()).catch(()=>null)}
 function syncAll(){
   // Read project data from CoachDays
-  if (Date.now() - _lastWriteTime < 15000) { console.log('Sync read skipped (just wrote)'); return; }
+  if (Date.now() - _lastWriteTime < 15000) { console.log('Sync skipped (just wrote)'); return; }
   (async () => {
     try {
       const meta = await sheetRead('CoachData');
-      if (!meta || !meta.projects || meta.v !== 2) return;
-      const remoteActiveId = meta.activeId;
+      if (!meta||!meta.projects||meta.v!==2) return;
+      const rid = meta.activeId;
       const structure = await sheetRead('CoachStructure');
       let remoteDays = {};
-      for (let i = 0; i <= 9; i++) {
-        const sn = i === 0 ? 'CoachDays' : `CoachDays${i+1}`;
-        const chunk = await sheetRead(sn);
-        if (!chunk || !chunk.days) { if(i>0) break; continue; }
-        if (chunk.id && chunk.id !== remoteActiveId) { if(i>0) break; continue; }
+      for (let i=0;i<=9;i++) {
+        const chunk = await sheetRead(i===0?'CoachDays':`CoachDays${i+1}`);
+        if (!chunk||!chunk.days) { if(i>0) break; continue; }
+        if (chunk.id && chunk.id!==rid) { if(i>0) break; continue; }
         Object.assign(remoteDays, chunk.days);
-        if (Object.keys(chunk.days).length < 30) break;
+        if (Object.keys(chunk.days).length<30) break;
       }
-      const localProjects = projectsGet();
-      const localVersion = localProjects.find(p => p.id === remoteActiveId);
-      const remoteMeta = meta.projects.find(p => p.id === remoteActiveId);
-      if (!remoteMeta) return;
-      const remoteProject = {
-        ...remoteMeta,
-        categories: (structure && structure.id === remoteActiveId && structure.categories) ? structure.categories : (localVersion ? localVersion.categories || [] : []),
-        rewards: (structure && structure.id === remoteActiveId && structure.rewards) ? structure.rewards : (localVersion ? localVersion.rewards || [] : []),
-        days: Object.assign({}, remoteDays, localVersion ? (localVersion.days||{}) : {}),
+      const local = projectsGet();
+      const lv = local.find(p=>p.id===rid);
+      const rm = meta.projects.find(p=>p.id===rid);
+      if (!rm) return;
+      const rp = {
+        ...rm,
+        categories: (structure&&structure.id===rid&&structure.categories)?structure.categories:(lv?lv.categories||[]:projGetDefaultCats&&projGetDefaultCats()||[]),
+        rewards: (structure&&structure.id===rid&&structure.rewards)?structure.rewards:(lv?lv.rewards||[]:[]),
+        days: Object.assign({},remoteDays,lv?lv.days||{}:{}),
       };
-      remoteProject.totalPoints = projCalcTotal(remoteProject);
-      if (localVersion) {
-        // Update local version with remote data
-        Object.assign(localVersion, remoteProject);
-        meta.projects.forEach(rp => {
-          const lp = localProjects.find(p => p.id === rp.id);
-          if (lp && lp.id !== remoteActiveId) lp.status = rp.status;
-        });
-        localStorage.setItem(PROJ_KEY, JSON.stringify(localProjects));
-        localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
-        renderCoach();
-      } else {
-        const all = meta.projects.map(p => p.id === remoteActiveId ? remoteProject : p);
-        localProjects.forEach(lp => { if (!all.find(p=>p.id===lp.id)) all.push(lp); });
-        localStorage.setItem(PROJ_KEY, JSON.stringify(all));
-        localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
-        renderCoach();
-      }
-      console.log('Synced:', remoteProject.name);
-    } catch(e) { console.log('Sync error:', e); }
+      rp.totalPoints = projCalcTotal(rp);
+      if (lv) { Object.assign(lv,rp); } else { local.push(rp); }
+      meta.projects.forEach(p=>{ const l=local.find(x=>x.id===p.id); if(l&&l.id!==rid) l.status=p.status; });
+      localStorage.setItem(PROJ_KEY, JSON.stringify(local));
+      localStorage.setItem(PROJ_ACTIVE_KEY, rid);
+      console.log('Synced:', rp.name);
+      renderCoach();
+    } catch(e) { console.log('Sync err:',e); }
   })();
   sheetRead('LifeGoals').then(r=>{
     if(!r||typeof r!=='object') return;
@@ -889,8 +876,6 @@ function calcHabitTotal(state, habitId) {
 }
 
 function init() {
-  const proj = projectsGet();
-  alert('Init: ' + proj.length + ' projektów. Active: ' + (localStorage.getItem(PROJ_ACTIVE_KEY)||'brak'));
   // Render coach panel (new project system)
   renderCoach();
   // Force push local data to Sheets on startup
@@ -1380,8 +1365,6 @@ function sheetWriteGET(sheet, data) {
 
 function syncProjectsToSheets(projects) {
   const active = projects.find(p => p.status === 'active');
-
-  // CoachData: minimal meta
   sheetWriteGET('CoachData', {
     v: 2,
     activeId: active ? active.id : null,
@@ -1392,29 +1375,16 @@ function syncProjectsToSheets(projects) {
       adaptiveCycle: p.adaptiveCycle || 0,
     })),
   });
-
   if (!active) return;
-
-  // CoachStructure: categories + rewards
-  sheetWriteGET('CoachStructure', {
-    v: 2, id: active.id,
-    categories: active.categories,
-    rewards: active.rewards || [],
-  });
-
-  // CoachDays: days in chunks of 30
+  sheetWriteGET('CoachStructure', {v:2, id:active.id, categories:active.categories, rewards:active.rewards||[]});
   const days = active.days || {};
   const dayKeys = Object.keys(days).sort();
-  if (!dayKeys.length) {
-    sheetWriteGET('CoachDays', {v:2, id:active.id, chunk:0, days:{}});
-    return;
-  }
+  if (!dayKeys.length) { sheetWriteGET('CoachDays', {v:2, id:active.id, chunk:0, days:{}}); return; }
   const CHUNK = 30;
   for (let i = 0; i < dayKeys.length; i += CHUNK) {
     const chunkDays = {};
     dayKeys.slice(i, i+CHUNK).forEach(k => chunkDays[k] = days[k]);
-    const sheet = i === 0 ? 'CoachDays' : `CoachDays${Math.floor(i/CHUNK)+1}`;
-    sheetWriteGET(sheet, {v:2, id:active.id, chunk:Math.floor(i/CHUNK), days:chunkDays});
+    sheetWriteGET(i===0?'CoachDays':`CoachDays${Math.floor(i/CHUNK)+1}`, {v:2, id:active.id, chunk:Math.floor(i/CHUNK), days:chunkDays});
   }
 }
 
@@ -2245,43 +2215,36 @@ async function syncAndReload() {
   showToast('Synchronizowanie...');
   try {
     const meta = await sheetRead('CoachData');
-    if (!meta || !meta.projects || meta.v !== 2) { showToast('Brak danych'); return; }
-    const remoteActiveId = meta.activeId;
+    if (!meta||!meta.projects||meta.v!==2) { showToast('Brak danych'); return; }
+    const rid = meta.activeId;
     const structure = await sheetRead('CoachStructure');
     let remoteDays = {};
-    for (let i = 0; i <= 9; i++) {
-      const sn = i === 0 ? 'CoachDays' : `CoachDays${i+1}`;
-      const chunk = await sheetRead(sn);
-      if (!chunk || !chunk.days) { if(i>0) break; continue; }
-      if (chunk.id && chunk.id !== remoteActiveId) { if(i>0) break; continue; }
-      Object.assign(remoteDays, chunk.days);
-      if (Object.keys(chunk.days).length < 30) break;
+    for (let i=0;i<=9;i++) {
+      const chunk = await sheetRead(i===0?'CoachDays':`CoachDays${i+1}`);
+      if (!chunk||!chunk.days) { if(i>0) break; continue; }
+      if (chunk.id&&chunk.id!==rid) { if(i>0) break; continue; }
+      Object.assign(remoteDays,chunk.days);
+      if (Object.keys(chunk.days).length<30) break;
     }
-    const localProjects = projectsGet();
-    const localVersion = localProjects.find(p => p.id === remoteActiveId);
-    const remoteMeta = meta.projects.find(p => p.id === remoteActiveId);
-    if (!remoteMeta) { showToast('Brak projektu w Sheets'); return; }
-    const remoteProject = {
-      ...remoteMeta,
-      categories: (structure && structure.id === remoteActiveId && structure.categories) ? structure.categories : (localVersion ? localVersion.categories||[] : []),
-      rewards: (structure && structure.id === remoteActiveId && structure.rewards) ? structure.rewards : (localVersion ? localVersion.rewards||[] : []),
-      days: Object.assign({}, remoteDays, localVersion ? (localVersion.days||{}) : {}),
+    const local = projectsGet();
+    const lv = local.find(p=>p.id===rid);
+    const rm = meta.projects.find(p=>p.id===rid);
+    if (!rm) { showToast('Brak projektu'); return; }
+    const rp = {
+      ...rm,
+      categories: (structure&&structure.id===rid&&structure.categories)?structure.categories:(lv?lv.categories||[]:projGetDefaultCats&&projGetDefaultCats()||[]),
+      rewards: (structure&&structure.id===rid&&structure.rewards)?structure.rewards:(lv?lv.rewards||[]:[]),
+      days: Object.assign({},remoteDays,lv?lv.days||{}:{}),
     };
-    remoteProject.totalPoints = projCalcTotal(remoteProject);
-    const all = localProjects.filter(p => p.id !== remoteActiveId);
-    all.unshift(remoteProject);
-    meta.projects.forEach(rp => {
-      const lp = all.find(p => p.id === rp.id);
-      if (lp && lp.id !== remoteActiveId) lp.status = rp.status;
-    });
+    rp.totalPoints = projCalcTotal(rp);
+    const all = local.filter(p=>p.id!==rid);
+    all.unshift(rp);
+    meta.projects.forEach(p=>{ const l=all.find(x=>x.id===p.id); if(l&&l.id!==rid) l.status=p.status; });
     localStorage.setItem(PROJ_KEY, JSON.stringify(all));
-    localStorage.setItem(PROJ_ACTIVE_KEY, remoteActiveId);
+    localStorage.setItem(PROJ_ACTIVE_KEY, rid);
     renderCoach();
     showToast('Zsynchronizowano! ✓');
-  } catch(e) {
-    showToast('Błąd: ' + e.message);
-    console.log('syncAndReload error:', e);
-  }
+  } catch(e) { showToast('Błąd: '+e.message); }
 }
 
 
@@ -2621,16 +2584,10 @@ function saveWeeklyNotes() {
 
 function renderCoach() {
   const panel = document.getElementById('panel-coach');
-  if (!panel) { alert('panel-coach not found!'); return; }
+  if (!panel) return;
 
-  try {
-    migrateOldProject();
-  } catch(e) { alert('migrateOldProject error: ' + e.message); return; }
-  
-  let project;
-  try {
-    project = activeProjectGet();
-  } catch(e) { alert('activeProjectGet error: ' + e.message); return; }
+  migrateOldProject();
+  const project = activeProjectGet();
   
   if (coachView === 'create') {
     panel.innerHTML = renderCreateWizard();
@@ -2642,12 +2599,7 @@ function renderCoach() {
   }
   
   // Dashboard view
-  try {
-    panel.innerHTML = renderDashboard(project);
-  } catch(e) {
-    alert('renderDashboard error: ' + e.message);
-    panel.innerHTML = '<div style="padding:20px"><p>Błąd: ' + e.message + '</p><button onclick="syncAndReload()" style="padding:10px;background:#4a6741;color:white;border:none;border-radius:8px;margin-top:10px">↻ Synchronizuj</button></div>';
-  }
+  panel.innerHTML = renderDashboard(project);
 }
 
 // ============================================================
@@ -2692,11 +2644,11 @@ function renderDashboard(project) {
 
   // Next reward
   const rewards = project.rewards || projCalcRewards(project);
-  const nextReward = (rewards||[]).find(r => r && totalPts < r.threshold);
-  const lastReward = [...rewards].reverse().find(r => totalPts >= r.threshold);
+  const nextReward = rewards.find(r => totalPts < r.threshold);
+  const lastReward = rewards.length ? [...rewards].reverse().find(r => totalPts >= r.threshold) : null;
 
   // Rewards progress bar
-  const maxThreshold = (rewards && rewards.length) ? rewards[rewards.length-1].threshold : 1;
+  const maxThreshold = (rewards.length ? rewards[rewards.length-1].threshold : 1);
   const progPct = Math.min(100, (totalPts / maxThreshold) * 100);
 
   // Categories HTML
@@ -2790,16 +2742,16 @@ function renderDashboard(project) {
       <div class="proj-reward-top">
         <div>
           <div class="proj-reward-label">Następna nagroda</div>
-          <div class="proj-reward-name">${nextReward.payout} zł</div>
-          <div class="proj-reward-sub">przy ${nextReward.threshold} pkt (${nextReward.pct}% czasu)</div>
+          <div class="proj-reward-name">${nextReward?.payout} zł</div>
+          <div class="proj-reward-sub">przy ${nextReward?.threshold} pkt (${nextReward?.pct}% czasu)</div>
         </div>
         <div style="text-align:right">
-          <div class="proj-reward-remain">${nextReward.threshold - totalPts} pkt</div>
+          <div class="proj-reward-remain">${nextReward?.threshold - totalPts} pkt</div>
           <div class="proj-reward-label">do nagrody</div>
         </div>
       </div>
       <div class="proj-prog-bar">
-        <div class="proj-prog-fill" style="width:${Math.max(2, (totalPts/(nextReward.threshold||1))*100)}%"></div>
+        <div class="proj-prog-fill" style="width:${Math.max(2, (totalPts/(nextReward?.threshold||1))*100)}%"></div>
       </div>
     </div>` : `<div class="proj-reward-card" style="text-align:center;padding:20px">
       <div style="font-size:1.5rem">🏆</div>
