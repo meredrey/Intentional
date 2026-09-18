@@ -2643,6 +2643,7 @@ function renderDashboard(project) {
     </div>`;
   }
 
+  const today = coachViewingDate;
   const vkey = projDateKey(coachViewingDate);
   const isToday = vkey === projTodayKey();
   const dd = project.days?.[vkey] || {};
