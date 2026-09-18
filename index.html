@@ -2214,10 +2214,8 @@ function projSaveEdit() {
 async function syncAndReload() {
   showToast('Synchronizowanie...');
   try {
-    alert('Fetching CoachData...');
     const meta = await sheetRead('CoachData');
-    alert('CoachData: ' + JSON.stringify(meta).slice(0,200));
-    if (!meta||!meta.projects||meta.v!==2) { showToast('Brak danych: ' + JSON.stringify(meta).slice(0,100)); return; }
+    if (!meta||!meta.projects||meta.v!==2) { showToast('Brak danych'); return; }
     const rid = meta.activeId;
     const structure = await sheetRead('CoachStructure');
     let remoteDays = {};
@@ -2645,12 +2643,12 @@ function renderDashboard(project) {
   }
 
   // Next reward
-  const rewards = project.rewards || projCalcRewards(project);
+  const rewards = (project.rewards && project.rewards.length) ? project.rewards : (project.categories && project.categories.length ? projCalcRewards(project) : []);
+  const maxThreshold = rewards.length ? rewards[rewards.length-1].threshold : 1;
   const nextReward = rewards.find(r => totalPts < r.threshold);
   const lastReward = rewards.length ? [...rewards].reverse().find(r => totalPts >= r.threshold) : null;
 
   // Rewards progress bar
-  const maxThreshold = (rewards.length ? rewards[rewards.length-1].threshold : 1);
   const progPct = Math.min(100, (totalPts / maxThreshold) * 100);
 
   // Categories HTML
