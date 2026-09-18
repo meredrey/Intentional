@@ -2621,10 +2621,16 @@ function saveWeeklyNotes() {
 
 function renderCoach() {
   const panel = document.getElementById('panel-coach');
-  if (!panel) return;
+  if (!panel) { alert('panel-coach not found!'); return; }
 
-  migrateOldProject();
-  const project = activeProjectGet();
+  try {
+    migrateOldProject();
+  } catch(e) { alert('migrateOldProject error: ' + e.message); return; }
+  
+  let project;
+  try {
+    project = activeProjectGet();
+  } catch(e) { alert('activeProjectGet error: ' + e.message); return; }
   
   if (coachView === 'create') {
     panel.innerHTML = renderCreateWizard();
@@ -2636,7 +2642,12 @@ function renderCoach() {
   }
   
   // Dashboard view
-  panel.innerHTML = renderDashboard(project);
+  try {
+    panel.innerHTML = renderDashboard(project);
+  } catch(e) {
+    alert('renderDashboard error: ' + e.message);
+    panel.innerHTML = '<div style="padding:20px"><p>Błąd: ' + e.message + '</p><button onclick="syncAndReload()" style="padding:10px;background:#4a6741;color:white;border:none;border-radius:8px;margin-top:10px">↻ Synchronizuj</button></div>';
+  }
 }
 
 // ============================================================
