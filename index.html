@@ -2214,8 +2214,10 @@ function projSaveEdit() {
 async function syncAndReload() {
   showToast('Synchronizowanie...');
   try {
+    alert('Fetching CoachData...');
     const meta = await sheetRead('CoachData');
-    if (!meta||!meta.projects||meta.v!==2) { showToast('Brak danych'); return; }
+    alert('CoachData: ' + JSON.stringify(meta).slice(0,200));
+    if (!meta||!meta.projects||meta.v!==2) { showToast('Brak danych: ' + JSON.stringify(meta).slice(0,100)); return; }
     const rid = meta.activeId;
     const structure = await sheetRead('CoachStructure');
     let remoteDays = {};
