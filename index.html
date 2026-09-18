@@ -399,6 +399,10 @@ h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.9rem; 
 .item-row-top{display:flex;gap:6px;align-items:center;margin-bottom:6px}
 .item-row-sc{display:flex;gap:6px;align-items:center}
 .proj-task{border-style:dashed;background:#FAFAFA}
+.task-toggle{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f5f0fa;border-radius:8px;cursor:pointer;font-size:0.78rem;color:#6B5878;margin-top:4px;border:1px solid #ede7f5}
+.task-toggle-arrow{transition:transform 0.2s;font-size:1rem}
+.task-toggle.open .task-toggle-arrow{transform:rotate(90deg)}
+.task-list{margin-top:4px}
 .proj-task.checked{background:#EEF3F6;border-color:#8FAAB8;border-style:solid}
 .proj-task-cb{border-style:dashed;font-size:0.8rem}
 .proj-task.checked .proj-task-cb{background:#8FAAB8;border-color:#8FAAB8;font-size:0.7rem}
@@ -1846,6 +1850,16 @@ function projToggleTask(el) {
   renderCoach();
 }
 
+
+function toggleTaskList(btn, uid) {
+  const list = document.getElementById(uid);
+  if (!list) return;
+  const open = list.style.display === 'none';
+  list.style.display = open ? 'block' : 'none';
+  const arrow = btn.querySelector('.task-toggle-arrow');
+  if (arrow) arrow.style.transform = open ? 'rotate(90deg)' : 'none';
+}
+
 function projToggle(el) {
   const projects = projectsGet();
   const project = projects.find(p => p.id === localStorage.getItem(PROJ_ACTIVE_KEY));
@@ -2656,62 +2670,64 @@ function renderDashboard(project) {
   const catsHTML = project.categories.map(cat => {
     const catPts = projCalcCatPts(dd, cat);
     const isDone = catPts > 0;
-    const itemsHTML = cat.items.map(item => {
+    const habitsHTML = cat.items.filter(item => {
+      if (item.type === 'task') return false; // tasks handled separately
+      const isMoodItem = (cat.id + '_' + item.id) === 'mood_mood_daily';
+      if (isMoodItem) return true;
+      return isItemActiveToday(item, today); // hide inactive days completely
+    }).map(item => {
       const key = cat.id + '_' + item.id;
       const isMoodItem = key === 'mood_mood_daily';
-      const isTask = item.type === 'task';
-      const isAchieved = !!item.scAchieved;
-      const checked = isTask ? projIsTaskDone(project, item, cat) : !!dd[key];
+      const checked = !!dd[key];
       const habitStatus = item.sc ? getHabitStatus(project, item, cat) : null;
       const statusColors = {'on-track':'#4a7a4a','at-risk':'#8a6a20','off-track':'#8a3030'};
-      const scLabel = habitStatus ? habitStatus.label : (item.sc ? `📊 cel: ${item.scVal}${item.sc==='pct'?'%':''}` : '');
+      const scLabel = habitStatus ? habitStatus.label : '';
       const scColor = habitStatus ? statusColors[habitStatus.status] : '#B09AC0';
-
-      const DAYS_SHORT = ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'];
-      const isActiveToday = isItemActiveToday(item, coachViewingDate);
-      const daysLabel = item.days && item.days.length && item.days.length < 7
-        ? item.days.map(d => DAYS_SHORT[d]).join('/') : null;
 
       if (isMoodItem) {
         const currentMood = dd._mood;
         return `<div class="proj-habit ${currentMood?'checked':''}" data-key="${key}" onclick="projToggle(this)">
           <div class="proj-cb" style="${currentMood?'background:#9B82B0;border-color:#9B82B0;font-size:1rem':''}">${currentMood||''}</div>
-          <div style="flex:1">
-            <div class="proj-hname">${currentMood?'Nastrój zapisany':'Zapisz nastrój dnia'}</div>
-            ${currentMood?'<div style="font-size:0.65rem;color:#9B82B0">Kliknij żeby zmienić</div>':''}
-          </div>
+          <div style="flex:1"><div class="proj-hname">${currentMood?'Nastrój zapisany':'Zapisz nastrój dnia'}</div>
+          ${currentMood?'<div style="font-size:0.65rem;color:#9B82B0">Kliknij żeby zmienić</div>':''}</div>
           ${!currentMood?'<div style="font-size:0.75rem">😊</div>':''}
         </div>`;
       }
-      // isAchieved no longer used - status shown live via getHabitStatus
-      if (isTask) {
-        return `<div class="proj-habit proj-task ${checked?'checked':''}" data-key="${key}" onclick="${!checked?'projToggleTask(this)':''}">
-          <div class="proj-cb proj-task-cb">${checked?'✓':'📌'}</div>
-          <div style="flex:1">
-            <div class="proj-hname">${item.name}</div>
-            ${scLabel?`<div style="font-size:0.65rem;color:#B09AC0;margin-top:2px">${scLabel}</div>`:''}
-          </div>
-          ${checked?'<div style="font-size:0.65rem;color:#8FAAB8">Ukończone ✓</div>':''}
-        </div>`;
-      }
-      if (!isActiveToday) {
-        return `<div class="proj-habit" style="opacity:0.35;cursor:default">
-          <div class="proj-cb"></div>
-          <div style="flex:1">
-            <div class="proj-hname" style="color:#aaa">${item.name}</div>
-            <div style="font-size:0.62rem;color:#bbb">Nie dziś (${daysLabel||''})</div>
-          </div>
-        </div>`;
-      }
-      return `<div class="proj-habit ${checked?'checked':''}" data-key="${key}" onclick="projToggle(this)">
-        <div class="proj-cb">${checked?'✓':''}</div>
-        <div style="flex:1">
-          <div class="proj-hname">${item.name}</div>
-          ${daysLabel?`<div style="font-size:0.62rem;color:#B09AC0;margin-top:1px">${daysLabel}</div>`:''}
-          ${scLabel?`<div style="font-size:0.65rem;color:${scColor};margin-top:2px;font-weight:${habitStatus?.status==='on-track'?'500':'400'}">${scLabel}</div>`:''}
-        </div>
-      </div>`;
+      const DAYS_PL = ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'];
+      const daysLabel = item.days && item.days.length && item.days.length < 7
+        ? item.days.map(d => DAYS_PL[d]).join('/') : null;
+      return '<div class="proj-habit ' + (checked?'checked':'') + '" data-key="' + key + '" onclick="projToggle(this)">'
+        + '<div class="proj-cb">' + (checked?'✓':'') + '</div>'
+        + '<div style="flex:1"><div class="proj-hname">' + item.name + '</div>'
+        + (daysLabel ? '<div style="font-size:0.62rem;color:#B09AC0;margin-top:1px">' + daysLabel + '</div>' : '')
+        + (scLabel ? '<div style="font-size:0.65rem;color:' + scColor + ';margin-top:2px">' + scLabel + '</div>' : '')
+        + '</div></div>';
     }).join('');
+
+    // Tasks - collapsed by default
+    const tasks = cat.items.filter(i => i.type === 'task');
+    const doneTasks = tasks.filter(i => projIsTaskDone(project, i, cat));
+    const pendingTasks = tasks.filter(i => !projIsTaskDone(project, i, cat));
+    let tasksHTML = '';
+    if (tasks.length) {
+      const taskRows = tasks.map(item => {
+        const key = cat.id + '_' + item.id;
+        const done = projIsTaskDone(project, item, cat);
+        const style = done ? 'text-decoration:line-through;color:#aaa' : '';
+        return '<div class="proj-habit proj-task ' + (done?'checked':'') + '" data-key="' + key + '" onclick="' + (!done?'projToggleTask(this)':'') + '">'
+          + '<div class="proj-cb proj-task-cb">' + (done?'✓':'📌') + '</div>'
+          + '<div style="flex:1"><div class="proj-hname" style="' + style + '">' + item.name + '</div></div>'
+          + (done ? '<div style="font-size:0.65rem;color:#8FAAB8">✓</div>' : '')
+          + '</div>';
+      }).join('');
+      const label = '📌 ' + pendingTasks.length + ' zadań' + (doneTasks.length ? ' (' + doneTasks.length + ' ukończonych)' : '');
+      const uid = 'tasks_' + cat.id;
+      tasksHTML = '<div class="task-toggle" onclick="toggleTaskList(this,\'' + uid + '\')">'
+        + '<span>' + label + '</span><span class="task-toggle-arrow" style="display:inline-block;transition:transform 0.2s">›</span></div>'
+        + '<div id="' + uid + '" style="display:none">' + taskRows + '</div>'; '</div>';
+    }
+
+    const itemsHTML = habitsHTML + tasksHTML;
 
     return `<div class="proj-section">
       <div class="proj-section-head">
