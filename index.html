@@ -2962,7 +2962,7 @@ function renderCreateWizard() {
             </select>
           </div>
           <div class="cat-items-list">
-            ${cat.items.map(item=>itemRowHTML('Cel szczegółowy', item.name, item.type, item.sc, item.scVal)).join('')}
+            ${cat.items.map(item=>itemRowHTML('Cel szczegółowy', item.name, item.type, item.sc, item.scVal, item.days)).join('')}
             ${itemRowHTML('Cel szczegółowy (opcjonalnie)')}
           </div>
           <button onclick="coachAddItem(this)" class="create-add-btn">+ dodaj cel</button>
